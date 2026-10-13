@@ -22,12 +22,12 @@ class AdminAuthTest extends TestCase
     public function test_admin_login_succeeds_and_redirects_to_admin_dashboard(): void
     {
         $admin = User::factory()->admin()->create([
-            'email' => 'admin@mutyastore.com',
+            'email' => 'admin@mhscarfstore.com',
             'password' => Hash::make('admin1234'),
         ]);
 
         $response = $this->post(route('admin.login.submit'), [
-            'email' => 'admin@mutyastore.com',
+            'email' => 'admin@mhscarfstore.com',
             'password' => 'admin1234',
         ]);
 
@@ -38,12 +38,12 @@ class AdminAuthTest extends TestCase
     public function test_customer_credentials_cannot_login_as_admin(): void
     {
         $customer = User::factory()->customer()->create([
-            'email' => 'customer@mutyastore.com',
+            'email' => 'customer@MH Scarfstore.com',
             'password' => Hash::make('password123'),
         ]);
 
         $response = $this->post(route('admin.login.submit'), [
-            'email' => 'customer@mutyastore.com',
+            'email' => 'customer@MH Scarfstore.com',
             'password' => 'password123',
         ]);
 
@@ -54,12 +54,12 @@ class AdminAuthTest extends TestCase
     public function test_invalid_admin_login_is_rejected(): void
     {
         User::factory()->admin()->create([
-            'email' => 'admin@mutyastore.com',
+            'email' => 'admin@MH Scarfstore.com',
             'password' => Hash::make('admin1234'),
         ]);
 
         $response = $this->post(route('admin.login.submit'), [
-            'email' => 'admin@mutyastore.com',
+            'email' => 'admin@MH Scarfstore.com',
             'password' => 'wrong_password',
         ]);
 
@@ -70,16 +70,16 @@ class AdminAuthTest extends TestCase
     public function test_admin_can_access_admin_dashboard(): void
     {
         $admin = User::factory()->admin()->create([
-            'name' => 'Owner Mutya',
-            'email' => 'owner@mutyastore.com',
+            'name' => 'Owner MH Scarf',
+            'email' => 'owner@MH Scarfstore.com',
         ]);
 
         $response = $this->actingAs($admin)->get(route('admin.dashboard'));
 
         $response->assertStatus(200);
         $response->assertSee('Admin Dashboard');
-        $response->assertSee('Owner Mutya');
-        $response->assertSee('owner@mutyastore.com');
+        $response->assertSee('Owner MH Scarf');
+        $response->assertSee('owner@MH Scarfstore.com');
         $response->assertSee('admin');
     }
 

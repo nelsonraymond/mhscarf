@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title ?? 'Admin Panel' }} - Mutya Store</title>
+    <title>{{ $title ?? 'Admin Panel' }} - MH Scarf Store</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,7 +30,7 @@
         <div class="p-5 border-b border-[#EBDDE2] flex items-center justify-between">
             <a href="{{ route('admin.dashboard') }}" class="inline-flex items-center space-x-2">
                 <span class="text-[#D98FAF] text-lg">❀</span>
-                <span class="font-serif-display text-lg font-bold tracking-wider text-[#3A3033] uppercase">MUTYA ADMIN</span>
+                <span class="font-serif-display text-lg font-bold tracking-wider text-[#3A3033] uppercase">MH Scarf ADMIN</span>
             </a>
         </div>
 
@@ -90,7 +90,7 @@
         <header class="bg-white border-b border-[#EBDDE2] px-6 py-3.5 flex items-center justify-between">
             <h2 class="text-sm font-medium text-[#75686D]">{{ $header ?? 'Manajemen Toko' }}</h2>
             <div class="text-xs text-[#75686D]">
-                Mutya Store &copy; {{ date('Y') }}
+                MH Scarf Store &copy; {{ date('Y') }}
             </div>
         </header>
 

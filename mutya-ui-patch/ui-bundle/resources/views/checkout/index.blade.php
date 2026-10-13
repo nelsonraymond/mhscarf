@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', 'Checkout Pesanan — Mutya Store')
+    @section('title', 'Checkout Pesanan — MH Scarf Store')
 
     {{-- Tahap 4: migrated to shared app layout; per-field errors surfaced; shipping card gets
          selected state + keyboard focus ring; fake "Diskon Voucher - Rp 0" row removed (checkout
@@ -183,7 +183,7 @@
                                                 <img src="{{ Storage::url($primaryImage->image_path) }}" alt="{{ $product->name }}"
                                                     loading="lazy" class="w-full h-full object-cover">
                                             @else
-                                                <span class="text-[10px] tracking-widest text-pink-deep uppercase" aria-hidden="true">Mutya</span>
+                                                <span class="text-[10px] tracking-widest text-pink-deep uppercase" aria-hidden="true">MH Scarf</span>
                                             @endif
                                         </div>
                                         <div class="min-w-0">

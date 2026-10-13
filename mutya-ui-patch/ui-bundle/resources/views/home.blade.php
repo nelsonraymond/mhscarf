@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', 'Mutya Store — Modern Indonesian Modest Fashion')
+    @section('title', 'MH Scarf Store — Modern Indonesian Modest Fashion')
 
     {{-- =========================================================================
          1. ANNOUNCEMENT BAR  ──▶ Rendered via <x-announcement-bar /> in app layout
@@ -71,7 +71,7 @@
                                         <p class="font-display italic text-2xl sm:text-3xl text-ink mt-2">The Modern Silhouette</p>
                                     </div>
                                     <div class="py-6 my-auto">
-                                        <p class="font-display text-4xl sm:text-5xl font-light text-ink/20 tracking-widest uppercase">MUTYA</p>
+                                        <p class="font-display text-4xl sm:text-5xl font-light text-ink/20 tracking-widest uppercase">MH Scarf</p>
                                         <p class="text-xs text-muted/80 mt-2 font-normal">Kenyamanan & keanggunan sehari-hari</p>
                                     </div>
                                     <div class="w-full pt-4 border-t border-line/60 flex items-center justify-between text-[11px] text-muted">
@@ -179,7 +179,7 @@
                             $campaignImg = $featuredProducts->get(1)?->primaryImage() ?? $featuredProducts->first()?->primaryImage();
                         @endphp
                         @if ($campaignImg)
-                            <img src="{{ Storage::url($campaignImg->image_path) }}" alt="Editorial Mutya"
+                            <img src="{{ Storage::url($campaignImg->image_path) }}" alt="Editorial MH Scarf"
                                 class="w-full h-full object-cover">
                         @else
                             {{-- Tasteful editorial placeholder --}}
@@ -194,7 +194,7 @@
                                     </p>
                                 </div>
                                 <div class="pt-4 border-t border-line/60 flex items-center justify-between text-xs text-muted">
-                                    <span>Mutya Studio Collection</span>
+                                    <span>MH Scarf Studio Collection</span>
                                     <span class="text-pink-mauve font-medium">Modest & Modern</span>
                                 </div>
                             </div>
@@ -209,7 +209,7 @@
                         Keanggunan yang Tenang untuk Momen Sehari-Hari
                     </h2>
                     <p class="text-sm sm:text-base text-muted leading-relaxed">
-                        Di Mutya Store, kami percaya bahwa hijab bukan sekadar penutup kepala, melainkan perpanjangan dari karakter dan kenyamanan perempuan muslimah modern.
+                        Di MH Scarf Store, kami percaya bahwa hijab bukan sekadar penutup kepala, melainkan perpanjangan dari karakter dan kenyamanan perempuan muslimah modern.
                     </p>
                     <p class="text-sm text-muted leading-relaxed">
                         Kami mengutamakan kurasi bahan bernapas lega, drape kain yang jatuh rapi tanpa perlu usaha ekstra, serta pilihan warna lembut yang melengkapi ragam rona kulit Indonesia.
@@ -217,7 +217,7 @@
 
                     <div class="pt-3">
                         <x-primary-button :href="route('shop.index')" class="inline-flex">
-                            Jelajahi Koleksi Mutya
+                            Jelajahi Koleksi MH Scarf
                         </x-primary-button>
                     </div>
                 </div>
@@ -336,7 +336,7 @@
             {{-- Tasteful minimal promo block linking to catalog sale/promotions --}}
             <div class="rounded-md border border-line bg-gradient-to-r from-cream via-[#FDF6F8] to-cream p-6 sm:p-10 md:p-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div class="max-w-xl">
-                    <p class="text-[11px] tracking-[0.2em] uppercase text-pink-mauve font-semibold">Program Belanja Mutya</p>
+                    <p class="text-[11px] tracking-[0.2em] uppercase text-pink-mauve font-semibold">Program Belanja MH Scarf</p>
                     <h2 class="font-display text-2xl sm:text-3xl font-semibold text-ink mt-1.5 leading-tight">
                         Gratis Ongkir & Penawaran Spesial
                     </h2>
@@ -361,7 +361,7 @@
             <x-section-heading
                 align="center"
                 eyebrow="Kepuasan Pelanggan"
-                title="Kata Sahabat Mutya"
+                title="Kata Sahabat MH Scarf"
                 subtitle="Ulasan nyata dari pelanggan yang telah mengenakan koleksi hijab kami."
             />
 
@@ -383,7 +383,7 @@
                             </div>
                             <div class="mt-5 pt-3.5 border-t border-line/60 flex items-center justify-between text-xs text-muted">
                                 <div>
-                                    <p class="font-medium text-ink">{{ $rev->user?->name ?? 'Pelanggan Mutya' }}</p>
+                                    <p class="font-medium text-ink">{{ $rev->user?->name ?? 'Pelanggan MH Scarf' }}</p>
                                     <p class="text-[11px] text-muted">{{ $rev->product?->name }}</p>
                                 </div>
                                 @if ($rev->is_verified_purchase)

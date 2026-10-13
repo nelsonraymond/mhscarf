@@ -1,12 +1,12 @@
 {{-- Navbar — DESIGN.md §13: sticky, white/cream bg, thin bottom border, restrained shadow.
      Desktop: Logo | Shop | Collections | About | Journal | Search | Wishlist | Cart | Account
      About / Journal anchor to real homepage sections (#tentang-kami, #style-journal) — no dead links. --}}
-<header id="mutya-navbar"
+<header id="mh-scarf-navbar"
     class="bg-white/95 backdrop-blur border-b border-line sticky top-0 z-40 transition-shadow duration-300">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
 
-        {{-- Mobile hamburger (opens dedicated MobileNav, not a collapsed desktop menu) --}}
-        <button type="button" aria-label="Buka menu navigasi" aria-expanded="false" aria-controls="mutya-mobile-nav"
+        {{-- Mobile hamburger --}}
+        <button type="button" aria-label="Buka menu navigasi" aria-expanded="false" aria-controls="mh-scarf-mobile-nav"
             class="js-mobile-nav-toggle md:hidden -ml-1 p-2 rounded-lg text-ink hover:bg-pink-soft/40 transition shrink-0 min-h-[40px] min-w-[40px]">
             <svg data-icon="open" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-width="1.8" d="M4 7h16M4 12h16M4 17h10"/>
@@ -16,9 +16,9 @@
             </svg>
         </button>
 
-        {{-- Logo: typographic serif wordmark only (DESIGN.md v3 — no floral ornaments) --}}
-        <a href="{{ route('home') }}" class="inline-flex items-center space-x-2 shrink-0" aria-label="Mutya — Beranda">
-            <span class="font-display text-xl font-bold tracking-[0.18em] text-ink uppercase">Mutya</span>
+        {{-- Logo --}}
+        <a href="{{ route('home') }}" class="inline-flex items-center space-x-2 shrink-0" aria-label="MH Scarf — Beranda">
+            <span class="font-display text-xl font-bold tracking-[0.18em] text-ink uppercase">MH Scarf</span>
         </a>
 
         {{-- Desktop nav --}}
@@ -31,7 +31,6 @@
 
         {{-- Right actions: search / wishlist / cart / account --}}
         <div class="flex items-center gap-2 sm:gap-4 shrink-0">
-            {{-- Search (submits GET /shop?q= — reuses existing catalog search) --}}
             <form method="GET" action="{{ route('shop.index') }}" class="hidden lg:flex items-center relative">
                 <label for="desktop-search" class="sr-only">Cari produk</label>
                 <input id="desktop-search" type="search" name="q" value="{{ request('q') }}"
@@ -42,8 +41,8 @@
                 </svg>
             </form>
 
-            {{-- Mobile search icon — expands a full-width panel per DESIGN.md §13 --}}
-            <button type="button" aria-label="Buka pencarian" aria-expanded="false" aria-controls="mutya-search-panel"
+            {{-- Mobile search icon --}}
+            <button type="button" aria-label="Buka pencarian" aria-expanded="false" aria-controls="mh-scarf-search-panel"
                 class="js-search-toggle lg:hidden p-2 rounded-lg text-muted hover:text-pink-deep hover:bg-pink-soft/30 transition min-h-[40px] min-w-[40px] inline-flex items-center justify-center">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
                     <circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="M20 20l-3.5-3.5"/>
@@ -76,7 +75,6 @@
                         <button type="submit" class="text-muted hover:text-pink-mauve transition cursor-pointer">Keluar</button>
                     </form>
                 </div>
-                {{-- Compact account icon on small screens handled inside MobileNav panel --}}
             @else
                 <div class="hidden sm:flex items-center gap-3 text-xs font-medium shrink-0">
                     <a href="{{ route('login') }}" class="text-muted hover:text-pink-deep transition">Masuk</a>
@@ -87,16 +85,92 @@
     </div>
 </header>
 
+{{-- Expandable full-width search panel (mobile / tablet) --}}
+<div id="mh-scarf-search-panel" class="hidden lg:hidden sticky top-16 z-30 bg-white border-b border-line shadow-card">
+    <form method="GET" action="{{ route('shop.index') }}" class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
+        <label for="panel-search" class="sr-only">Cari produk</label>
+        <div class="relative flex-1">
+            <input id="panel-search" type="search" name="q" placeholder="Cari hijab, bahan, kategori…"
+                class="w-full pl-10 pr-3 py-3 rounded-xl border border-line bg-cream text-sm placeholder:text-muted/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-deep">
+            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted pointer-events-none" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="M20 20l-3.5-3.5"/>
+            </svg>
+        </div>
+        <button type="submit" class="shrink-0 inline-flex items-center justify-center px-4 py-3 rounded-xl bg-pink-deep text-white text-sm font-medium min-h-[44px] cursor-pointer hover:bg-pink-mauve transition">Cari</button>
+    </form>
+</div>
+
+{{-- Dedicated mobile navigation panel --}}
+<div id="mh-scarf-mobile-nav" class="hidden md:hidden sticky top-16 z-30 bg-white border-b border-line shadow-card">
+    <div class="px-4 py-4 space-y-5 max-h-[calc(100dvh-8rem)] overflow-y-auto overscroll-contain">
+        {{-- Search --}}
+        <form method="GET" action="{{ route('shop.index') }}" class="relative">
+            <label for="mobile-search" class="sr-only">Cari produk</label>
+            <input id="mobile-search" type="search" name="q" placeholder="Cari hijab, bahan, kategori…"
+                class="w-full pl-10 pr-3 py-3 rounded-xl border border-line bg-cream text-sm placeholder:text-muted/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-deep">
+            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted pointer-events-none" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="M20 20l-3.5-3.5"/>
+            </svg>
+        </form>
+
+        {{-- Primary nav --}}
+        <nav class="grid" aria-label="Navigasi mobile">
+            <a href="{{ route('shop.index') }}" class="flex items-center justify-between py-3 text-sm font-medium text-ink border-b border-line/60 active:bg-pink-soft/20">Shop <span class="text-pink-deep" aria-hidden="true">→</span></a>
+            <a href="{{ route('shop.category', 'pashmina') }}" class="flex items-center justify-between py-3 text-sm text-muted border-b border-line/60 active:bg-pink-soft/20">Collections <span class="text-pink-deep" aria-hidden="true">→</span></a>
+            <a href="{{ route('home') }}#tentang-kami" class="flex items-center justify-between py-3 text-sm text-muted border-b border-line/60">About <span class="text-pink-deep" aria-hidden="true">→</span></a>
+            <a href="{{ route('home') }}#style-journal" class="flex items-center justify-between py-3 text-sm text-muted">Journal <span class="text-pink-deep" aria-hidden="true">→</span></a>
+        </nav>
+
+        {{-- Category shortcuts --}}
+        <div>
+            <p class="text-[10px] uppercase tracking-[0.2em] text-pink-mauve font-semibold mb-2">Belanja per gaya</p>
+            <div class="flex flex-wrap gap-2">
+                @foreach (\App\Models\Category::query()->active()->orderBy('name')->take(6)->get() as $mCat)
+                    <a href="{{ route('shop.category', $mCat->slug) }}"
+                        class="px-3.5 py-2 rounded-full border border-line bg-cream text-xs text-ink hover:border-pink-deep hover:text-pink-deep transition min-h-[36px] inline-flex items-center">
+                        {{ $mCat->name }}
+                    </a>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- Account / help --}}
+        <div class="pt-1 border-t border-line grid">
+            @auth
+                <a href="{{ route('orders.index') }}" class="py-3 text-sm text-ink border-b border-line/60">Pesanan Saya</a>
+                <a href="{{ route('wishlist.index') }}" class="py-3 text-sm text-ink border-b border-line/60 flex items-center justify-between">
+                    <span>Wishlist Saya</span>
+                    @php $wishlistMobileCount = auth()->user()->wishlists()->count(); @endphp
+                    @if ($wishlistMobileCount > 0)
+                        <span class="min-w-[20px] h-5 px-1.5 rounded-full bg-pink-deep text-white text-[10px] font-semibold flex items-center justify-center">{{ $wishlistMobileCount }}</span>
+                    @endif
+                </a>
+                <a href="{{ route('addresses.index') }}" class="py-3 text-sm text-ink border-b border-line/60">Buku Alamat</a>
+                <a href="{{ route('profile') }}" class="py-3 text-sm text-ink border-b border-line/60">Profil Saya</a>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="py-3 text-sm text-muted text-left cursor-pointer w-full">Keluar</button>
+                </form>
+            @else
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <a href="{{ route('login') }}" class="inline-flex justify-center py-3 rounded-xl border border-pink-deep text-pink-deep text-sm font-medium min-h-[44px]">Masuk</a>
+                    <a href="{{ route('register') }}" class="inline-flex justify-center py-3 rounded-xl bg-pink-deep text-white text-sm font-medium min-h-[44px]">Daftar</a>
+                </div>
+            @endauth
+        </div>
+    </div>
+</div>
+
+{{-- Script SENGAJA di paling bawah: panel di atas harus sudah ada di DOM sebelum script jalan --}}
 <script>
-    // Navbar interactions — scroll shadow, mobile menu, expandable search panel.
     (function () {
-        const nav = document.getElementById('mutya-navbar');
-        const mobileNav = document.getElementById('mutya-mobile-nav');
-        const searchPanel = document.getElementById('mutya-search-panel');
+        const nav = document.getElementById('mh-scarf-navbar');
+        const mobileNav = document.getElementById('mh-scarf-mobile-nav');
+        const searchPanel = document.getElementById('mh-scarf-search-panel');
         const navToggle = nav ? nav.querySelector('.js-mobile-nav-toggle') : null;
         const searchToggle = nav ? nav.querySelector('.js-search-toggle') : null;
 
-        // Subtle scroll state: add hairline shadow once the page scrolls (DESIGN.md §30: understated motion)
+        // Hairline shadow saat halaman di-scroll
         if (nav) {
             const setShadow = () => nav.classList.toggle('shadow-card', window.scrollY > 8);
             window.addEventListener('scroll', setShadow, { passive: true });
@@ -146,14 +220,14 @@
             });
         }
 
-        // Close the mobile menu after tapping a link (avoids sticky panels stacking on navigation)
+        // Tutup menu mobile setelah tap link anchor (#...)
         if (mobileNav) {
-            mobileNav.querySelectorAll('a[href^="#"]').forEach((link) => {
+            mobileNav.querySelectorAll('a[href*="#"]').forEach((link) => {
                 link.addEventListener('click', closeMobileNav);
             });
         }
 
-        // Escape key closes both overlays
+        // Escape menutup kedua panel
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 closeMobileNav();
@@ -162,79 +236,3 @@
         });
     })();
 </script>
-
-{{-- Expandable full-width search panel (mobile / tablet) --}}
-<div id="mutya-search-panel" class="hidden lg:hidden sticky top-16 z-30 bg-white border-b border-line shadow-card">
-    <form method="GET" action="{{ route('shop.index') }}" class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
-        <label for="panel-search" class="sr-only">Cari produk</label>
-        <div class="relative flex-1">
-            <input id="panel-search" type="search" name="q" placeholder="Cari hijab, bahan, kategori…"
-                class="w-full pl-10 pr-3 py-3 rounded-xl border border-line bg-cream text-sm placeholder:text-muted/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-deep">
-            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted pointer-events-none" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="M20 20l-3.5-3.5"/>
-            </svg>
-        </div>
-        <button type="submit" class="shrink-0 inline-flex items-center justify-center px-4 py-3 rounded-xl bg-pink-deep text-white text-sm font-medium min-h-[44px] cursor-pointer hover:bg-pink-mauve transition">Cari</button>
-    </form>
-</div>
-
-{{-- Dedicated mobile navigation panel (intentionally designed, not a collapsed desktop menu) --}}
-<div id="mutya-mobile-nav" class="hidden md:hidden sticky top-16 z-30 bg-white border-b border-line shadow-card">
-    <div class="px-4 py-4 space-y-5 max-h-[calc(100dvh-8rem)] overflow-y-auto overscroll-contain">
-        {{-- Search --}}
-        <form method="GET" action="{{ route('shop.index') }}" class="relative">
-            <label for="mobile-search" class="sr-only">Cari produk</label>
-            <input id="mobile-search" type="search" name="q" placeholder="Cari hijab, bahan, kategori…"
-                class="w-full pl-10 pr-3 py-3 rounded-xl border border-line bg-cream text-sm placeholder:text-muted/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-deep">
-            <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-muted pointer-events-none" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="M20 20l-3.5-3.5"/>
-            </svg>
-        </form>
-
-        {{-- Primary nav --}}
-        <nav class="grid" aria-label="Navigasi mobile">
-            <a href="{{ route('shop.index') }}" class="flex items-center justify-between py-3 text-sm font-medium text-ink border-b border-line/60 active:bg-pink-soft/20">Shop <span class="text-pink-deep" aria-hidden="true">→</span></a>
-            <a href="{{ route('shop.category', 'pashmina') }}" class="flex items-center justify-between py-3 text-sm text-muted border-b border-line/60 active:bg-pink-soft/20">Collections <span class="text-pink-deep" aria-hidden="true">→</span></a>
-            <a href="{{ route('home') }}#tentang-kami" class="flex items-center justify-between py-3 text-sm text-muted border-b border-line/60">About <span class="text-pink-deep" aria-hidden="true">→</span></a>
-            <a href="{{ route('home') }}#style-journal" class="flex items-center justify-between py-3 text-sm text-muted">Journal <span class="text-pink-deep" aria-hidden="true">→</span></a>
-        </nav>
-
-        {{-- Category shortcuts (real DB slugs) --}}
-        <div>
-            <p class="text-[10px] uppercase tracking-[0.2em] text-pink-mauve font-semibold mb-2">Belanja per gaya</p>
-            <div class="flex flex-wrap gap-2">
-                @foreach (\App\Models\Category::query()->active()->orderBy('name')->take(6)->get() as $mCat)
-                    <a href="{{ route('shop.category', $mCat->slug) }}"
-                        class="px-3.5 py-2 rounded-full border border-line bg-cream text-xs text-ink hover:border-pink-deep hover:text-pink-deep transition min-h-[36px] inline-flex items-center">
-                        {{ $mCat->name }}
-                    </a>
-                @endforeach
-            </div>
-        </div>
-
-        {{-- Account / help --}}
-        <div class="pt-1 border-t border-line grid">
-            @auth
-                <a href="{{ route('orders.index') }}" class="py-3 text-sm text-ink border-b border-line/60">Pesanan Saya</a>
-                <a href="{{ route('wishlist.index') }}" class="py-3 text-sm text-ink border-b border-line/60 flex items-center justify-between">
-                    <span>Wishlist Saya</span>
-                    @php $wishlistMobileCount = auth()->user()->wishlists()->count(); @endphp
-                    @if ($wishlistMobileCount > 0)
-                        <span class="min-w-[20px] h-5 px-1.5 rounded-full bg-pink-deep text-white text-[10px] font-semibold flex items-center justify-center">{{ $wishlistMobileCount }}</span>
-                    @endif
-                </a>
-                <a href="{{ route('addresses.index') }}" class="py-3 text-sm text-ink border-b border-line/60">Buku Alamat</a>
-                <a href="{{ route('profile') }}" class="py-3 text-sm text-ink border-b border-line/60">Profil Saya</a>
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="py-3 text-sm text-muted text-left cursor-pointer w-full">Keluar</button>
-                </form>
-            @else
-                <div class="grid grid-cols-2 gap-3 pt-2">
-                    <a href="{{ route('login') }}" class="inline-flex justify-center py-3 rounded-xl border border-pink-deep text-pink-deep text-sm font-medium min-h-[44px]">Masuk</a>
-                    <a href="{{ route('register') }}" class="inline-flex justify-center py-3 rounded-xl bg-pink-deep text-white text-sm font-medium min-h-[44px]">Daftar</a>
-                </div>
-            @endauth
-        </div>
-    </div>
-</div>

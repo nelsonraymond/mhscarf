@@ -1,125 +1,231 @@
 <x-layouts.app>
-    @section('title', 'Mutya Store — Modern Indonesian Modest Fashion')
+    @section('title', 'MH Scarf Store — Modern Indonesian Modest Fashion')
 
     {{-- =========================================================================
          1. ANNOUNCEMENT BAR  ──▶ Rendered via <x-announcement-bar /> in app layout
          2. NAVBAR            ──▶ Rendered via <x-navbar /> in app layout
          ========================================================================= --}}
 
-    {{-- =========================================================================
-         3. HERO CAMPAIGN (DESIGN.md v3 §6 & §7.3: Image-led, editorial typography)
-         ========================================================================= --}}
-    <section id="hero-campaign" class="relative overflow-hidden bg-gradient-to-b from-[#FFFDFB] via-cream to-[#FCF8F9] border-b border-line/60">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 md:py-20 lg:py-24">
-            <div class="grid md:grid-cols-12 gap-8 lg:gap-12 items-center">
+    {{-- 3. HERO SLIDER: 3 gambar full-bleed (gaya lozy.id) --}}
+@php
+    $heroSlides = [
+        [
+            'file'    => 'images/hero/hero-1.png',
+            'mobile'  => 'images/hero/hero-1-mobile.png',
+            'eyebrow' => 'Koleksi Baru',
+            'title'   => 'Voal Pastel',
+            'accent'  => 'Ringan & Rapi',
+            'cta'     => 'Lihat Koleksi',
+            'url'     => route('shop.index', ['sort' => 'newest']),
+        ],
+        [
+            'file'    => 'images/hero/hero-2.png',
+            'mobile'  => 'images/hero/hero-2-mobile.png',
+            'eyebrow' => 'Promo',
+            'title'   => 'Gratis Ongkir',
+            'accent'  => 'Mulai Rp75.000',
+            'cta'     => 'Belanja Sekarang',
+            'url'     => route('shop.index'),
+        ],
+        [
+            'file'    => 'images/hero/hero-3.png',
+            'mobile'  => 'images/hero/hero-3-mobile.png',
+            'eyebrow' => 'Rilis Terbaru',
+            'title'   => 'Silk Satin',
+            'accent'  => 'Untuk Acara Spesial',
+            'cta'     => 'Lihat Silk',
+            'url'     => route('shop.index', ['q' => 'Silk']),
+        ],
+    ];
+@endphp
 
-                {{-- Left Text Composition (6 cols on lg) --}}
-                <div class="md:col-span-7 lg:col-span-6 text-center md:text-left order-2 md:order-1">
-                    <p class="text-[11px] tracking-[0.25em] uppercase text-pink-mauve font-semibold mb-3">
-                        Koleksi Modest Kontemporer
-                    </p>
-                    <h1 class="font-display text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-semibold text-ink leading-[1.15] tracking-tight">
-                        Elegance in Every <span class="italic font-normal text-pink-mauve">Drape</span>
-                    </h1>
-                    <p class="mt-4 sm:mt-5 text-sm sm:text-base text-muted leading-relaxed max-w-lg mx-auto md:mx-0">
-                        Koleksi hijab dan modest-wear Indonesia yang menggabungkan kelembutan material terbaik, kerapian jahitan, dan keanggunan bersahaja untuk setiap momen harian Anda.
-                    </p>
+<style>
+    /* ===== MOBILE: gambar tinggi, fade ke cream, teks naik menimpa fade ===== */
+    #hero-campaign { position: relative; display: grid; background: #FFF9F5; overflow: hidden; }
+    #hero-campaign .hero-slide { grid-area: 1 / 1; display: flex; flex-direction: column; }
 
-                    <div class="mt-7 sm:mt-8 flex flex-col sm:flex-row items-center gap-3 justify-center md:justify-start">
-                        <x-primary-button :href="route('shop.index')" class="w-full sm:w-auto">
-                            Belanja Sekarang
-                        </x-primary-button>
-                        <x-secondary-button href="#koleksi-kategori" class="w-full sm:w-auto">
-                            Jelajahi Kategori
-                        </x-secondary-button>
-                    </div>
+    #hero-campaign .hero-media { position: relative; aspect-ratio: 4 / 5; background: #F3EAEE; overflow: hidden; }
+    #hero-campaign .hero-media img {
+        position: absolute; inset: 0; width: 100%; height: 100%;
+        object-fit: cover; object-position: 80% center;
+        transform: scale(1); transition: transform 6s ease-out;
+    }
+    #hero-campaign .hero-slide.opacity-100 .hero-media img { transform: scale(1.05); }
 
-                    {{-- Restrained Trust Features (Clean text pills, no sparkles or emojis per §2) --}}
-                    <div class="mt-9 sm:mt-10 pt-6 border-t border-line/60 flex flex-wrap items-center justify-center md:justify-start gap-x-6 gap-y-2 text-xs text-muted">
-                        <span class="inline-flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 rounded-full bg-pink-mauve"></span>
-                            Material Pilihan
-                        </span>
-                        <span class="inline-flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 rounded-full bg-pink-mauve"></span>
-                            Pengiriman Cepat
-                        </span>
-                        <span class="inline-flex items-center gap-1.5">
-                            <span class="w-1.5 h-1.5 rounded-full bg-pink-mauve"></span>
-                            100% Original
-                        </span>
-                    </div>
-                </div>
+    #hero-campaign .hero-shade {
+        display: block; position: absolute; inset: 0;
+        background: linear-gradient(to top, #FFF9F5 0%, rgba(255,249,245,.9) 16%, rgba(255,249,245,0) 46%);
+    }
 
-                {{-- Right Campaign Visual Area (5-6 cols on lg) --}}
-                <div class="md:col-span-5 lg:col-span-6 order-1 md:order-2 w-full">
-                    <div class="relative max-w-md mx-auto md:max-w-none">
-                        <div class="relative aspect-[4/5] rounded-md overflow-hidden bg-[#FAF6F7] border border-line shadow-xs">
-                            @php
-                                $heroProduct = $featuredProducts->first() ?? $bestSellers->first();
-                                $heroImg = $heroProduct?->primaryImage();
-                            @endphp
+    #hero-campaign .hero-copy {
+        position: relative; z-index: 2; margin-top: -6.5rem;
+        padding: 0 1.5rem 3.75rem; text-align: center;
+    }
+    #hero-campaign .hero-eyebrow {
+        display: inline-flex; align-items: center; gap: .75rem;
+        font-size: 11px; font-weight: 600; letter-spacing: .28em;
+        text-transform: uppercase; color: #b97897; margin-bottom: .75rem;
+    }
+    #hero-campaign .hero-eyebrow::before,
+    #hero-campaign .hero-eyebrow::after {
+        content: ""; width: 1.5rem; height: 1px; background: currentColor; opacity: .6;
+    }
+    #hero-campaign .hero-title { font-size: 2.5rem; line-height: 1.05; }
+    #hero-campaign .hero-cta {
+        display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+        margin-top: 1.5rem; min-width: 14rem; padding: .85rem 1.75rem;
+        border-radius: 9999px; background: #d98faf; color: #fff;
+        font-size: .875rem; font-weight: 500;
+        box-shadow: 0 10px 25px rgba(217,143,175,.35);
+        transition: background-color .2s ease, transform .2s ease;
+    }
+    #hero-campaign .hero-cta:hover { background: #b97897; }
+    #hero-campaign .hero-cta:active { transform: scale(.97); }
 
-                            @if ($heroImg)
-                                <img src="{{ Storage::url($heroImg->image_path) }}" alt="{{ $heroProduct->name }}"
-                                    class="w-full h-full object-cover">
-                            @else
-                                {{-- Tasteful neutral editorial hero panel per §10 --}}
-                                <div class="w-full h-full flex flex-col items-center justify-between p-8 sm:p-10 text-center bg-gradient-to-br from-[#FAF5F7] via-[#FFF9F5] to-[#F3EAEE]">
-                                    <div class="pt-4">
-                                        <p class="text-[10px] tracking-[0.3em] uppercase text-pink-mauve font-semibold">Editorial Series</p>
-                                        <p class="font-display italic text-2xl sm:text-3xl text-ink mt-2">The Modern Silhouette</p>
-                                    </div>
-                                    <div class="py-6 my-auto">
-                                        <p class="font-display text-4xl sm:text-5xl font-light text-ink/20 tracking-widest uppercase">MUTYA</p>
-                                        <p class="text-xs text-muted/80 mt-2 font-normal">Kenyamanan & keanggunan sehari-hari</p>
-                                    </div>
-                                    <div class="w-full pt-4 border-t border-line/60 flex items-center justify-between text-[11px] text-muted">
-                                        <span>Voal & Silk Edition</span>
-                                        <span class="text-pink-mauve font-medium">Musim Ini</span>
-                                    </div>
-                                </div>
-                            @endif
+    #hero-campaign .hero-dots {
+        position: absolute; left: 0; right: 0; bottom: 1.25rem;
+        display: flex; justify-content: center; gap: .5rem; z-index: 10;
+    }
 
-                            {{-- Editorial Caption Overlay Card --}}
-                            <div class="absolute bottom-4 left-4 right-4 sm:right-auto sm:max-w-xs bg-white/95 backdrop-blur-md rounded-md p-3.5 border border-line/80 shadow-xs">
-                                <p class="text-[10px] uppercase tracking-[0.2em] text-pink-mauve font-semibold">Sorotan Musim Ini</p>
-                                <p class="font-display text-sm font-medium text-ink mt-0.5">
-                                    {{ $heroProduct?->name ?? 'Signature Collection' }}
-                                </p>
-                                <a href="{{ $heroProduct ? route('shop.product', $heroProduct->slug) : route('shop.index') }}"
-                                    class="text-xs text-pink-mauve hover:text-[#A56684] font-medium mt-1 inline-flex items-center gap-1">
-                                    <span>Lihat Detail</span>
-                                    <span aria-hidden="true">→</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    @media (prefers-reduced-motion: reduce) {
+        #hero-campaign .hero-media img { transition: none; transform: none !important; }
+    }
 
+    /* ===== DESKTOP: full-bleed, teks di atas gambar ===== */
+    @media (min-width: 1024px) {
+        #hero-campaign { display: block; aspect-ratio: 16 / 7; max-height: 52rem; }
+        #hero-campaign .hero-slide { position: absolute; inset: 0; display: block; }
+        #hero-campaign .hero-media { position: absolute; inset: 0; aspect-ratio: auto; }
+        #hero-campaign .hero-media img { object-position: 70% center; }
+        #hero-campaign .hero-shade {
+            background: linear-gradient(to right, rgba(255,249,245,.8), rgba(255,249,245,.25), transparent);
+        }
+        #hero-campaign .hero-copy {
+            position: relative; height: 100%; max-width: 80rem; margin: 0 auto;
+            padding: 0 2rem; display: flex; flex-direction: column;
+            justify-content: center; align-items: flex-start; text-align: left;
+        }
+        #hero-campaign .hero-eyebrow::before { display: none; }
+        #hero-campaign .hero-title { font-size: 3.75rem; }
+        #hero-campaign .hero-cta { min-width: 0; margin-top: 1.75rem; }
+        #hero-campaign .hero-dots { left: auto; right: 2rem; justify-content: flex-end; }
+    }
+</style>
+
+<section id="hero-campaign" aria-roledescription="carousel" aria-label="Kampanye MH Scarf">
+
+    @foreach ($heroSlides as $i => $slide)
+        <div class="hero-slide transition-opacity duration-700 ease-out motion-reduce:transition-none
+                    {{ $i === 0 ? 'opacity-100' : 'opacity-0 pointer-events-none' }}"
+             data-hero-slide
+             aria-hidden="{{ $i === 0 ? 'false' : 'true' }}">
+
+            <div class="hero-media">
+                @if (file_exists(public_path($slide['file'])))
+                    <picture>
+                        @if (file_exists(public_path($slide['mobile'])))
+                            <source media="(max-width: 1023px)" srcset="{{ asset($slide['mobile']) }}">
+                        @endif
+                        <img src="{{ asset($slide['file']) }}"
+                             alt="{{ $slide['title'] }} {{ $slide['accent'] }}"
+                             @if ($i === 0) fetchpriority="high" @else loading="lazy" @endif>
+                    </picture>
+                @endif
+                <div class="hero-shade"></div>
+            </div>
+
+            <div class="hero-copy">
+                <p class="hero-eyebrow">{{ $slide['eyebrow'] }}</p>
+                <h2 class="hero-title font-display font-semibold tracking-tight text-ink">
+                    {{ $slide['title'] }}
+                    <span class="block font-normal italic text-pink-mauve">{{ $slide['accent'] }}</span>
+                </h2>
+                <a href="{{ $slide['url'] }}" class="hero-cta">
+                    <span>{{ $slide['cta'] }}</span>
+                    <span aria-hidden="true">→</span>
+                </a>
             </div>
         </div>
-    </section>
+    @endforeach
+
+    <div class="hero-dots">
+        @foreach ($heroSlides as $i => $slide)
+            <button type="button" data-hero-dot="{{ $i }}"
+                    aria-label="Slide {{ $i + 1 }}"
+                    class="h-2 rounded-full transition-all duration-300 {{ $i === 0 ? 'w-6 bg-pink-mauve' : 'w-2 bg-ink/30' }}"></button>
+        @endforeach
+    </div>
+</section>
+
+<script>
+    (function () {
+        const root = document.getElementById('hero-campaign');
+        if (!root) return;
+        const slides = root.querySelectorAll('[data-hero-slide]');
+        const dots = root.querySelectorAll('[data-hero-dot]');
+        if (slides.length < 2) return;
+
+        let current = 0, timer = null;
+        const INTERVAL = 5000;
+
+        function show(n) {
+            current = (n + slides.length) % slides.length;
+            slides.forEach((s, i) => {
+                const on = i === current;
+                s.classList.toggle('opacity-100', on);
+                s.classList.toggle('opacity-0', !on);
+                s.classList.toggle('pointer-events-none', !on);
+                s.setAttribute('aria-hidden', on ? 'false' : 'true');
+            });
+            dots.forEach((d, i) => {
+                const on = i === current;
+                d.classList.toggle('w-6', on);
+                d.classList.toggle('bg-pink-mauve', on);
+                d.classList.toggle('w-2', !on);
+                d.classList.toggle('bg-ink/30', !on);
+            });
+        }
+
+        function start() {
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            stop();
+            timer = setInterval(() => show(current + 1), INTERVAL);
+        }
+        function stop() { if (timer) { clearInterval(timer); timer = null; } }
+
+        dots.forEach((d) => d.addEventListener('click', () => {
+            show(parseInt(d.dataset.heroDot, 10));
+            start();
+        }));
+        root.addEventListener('mouseenter', stop);
+        root.addEventListener('mouseleave', start);
+
+        // Swipe di mobile
+        let x0 = null;
+        root.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; stop(); }, { passive: true });
+        root.addEventListener('touchend', (e) => {
+            if (x0 !== null) {
+                const dx = e.changedTouches[0].clientX - x0;
+                if (Math.abs(dx) > 50) show(current + (dx < 0 ? 1 : -1));
+            }
+            x0 = null;
+            start();
+        });
+
+        start();
+    })();
+</script>
 
     {{-- =========================================================================
          4. SHOP BY CATEGORY (DESIGN.md v3 §7.4: Editorial category discovery)
          ========================================================================= --}}
-    <section id="koleksi-kategori" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16 md:py-20">
-        <x-section-heading
-            eyebrow="Kurasi Gaya"
-            title="Kategori Pilihan"
-            subtitle="Temukan potongan hijab dan modest-wear yang dirancang sesuai preferensi berbusana Anda."
-            :href="route('shop.index')"
-            linkLabel="Lihat Semua Kategori"
-        />
-
-        {{-- Editorial Grid: Varied layout for genuine fashion aesthetic --}}
-        <div class="mt-8 sm:mt-10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
-            @foreach ($categories->take(8) as $index => $cat)
-                <x-category-card :category="$cat" :size="$index === 0 ? 'tall' : 'md'" />
-            @endforeach
-        </div>
-    </section>
+    <section id="koleksi-kategori" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 scroll-mt-24">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-8 sm:gap-x-5 sm:gap-y-10">
+        @foreach ($categories->take(8) as $cat)
+            <x-category-card :category="$cat" />
+        @endforeach
+    </div>
+</section>
 
     {{-- =========================================================================
          5. BEST SELLERS / MOST LOVED (DESIGN.md v3 §7.5: High-converting curation)
@@ -127,13 +233,9 @@
     @if ($bestSellers->isNotEmpty())
         <section id="best-sellers" class="bg-surface/50 border-y border-line/60 py-14 sm:py-16 md:py-20">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <x-section-heading
-                    eyebrow="Paling Dicari"
-                    title="Most Loved"
-                    subtitle="Pilihan favorit yang paling sering dipilih untuk menemani hari-harimu."
-                    :href="route('shop.index', ['sort' => 'best_seller'])"
-                    linkLabel="Semua Best Seller"
-                />
+                <h2 class="text-center text-xl font-normal uppercase tracking-[0.25em] text-ink/80 sm:text-2xl">
+    Most Loved
+</h2>
 
                 <div class="mt-8 sm:mt-10 grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
                     @foreach ($bestSellers as $prod)
@@ -144,26 +246,6 @@
         </section>
     @endif
 
-    {{-- =========================================================================
-         6. NEW ARRIVALS / JUST IN (DESIGN.md v3 §7.6: Latest catalog drops)
-         ========================================================================= --}}
-    @if ($newArrivals->isNotEmpty())
-        <section id="new-arrivals" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16 md:py-20">
-            <x-section-heading
-                eyebrow="Baru Tiba"
-                title="Just In"
-                subtitle="Rilisan terbaru dengan sentuhan modern, warna lembut, dan kenyamanan harian."
-                :href="route('shop.index', ['sort' => 'newest'])"
-                linkLabel="Semua Koleksi Baru"
-            />
-
-            <div class="mt-8 sm:mt-10 grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 lg:gap-6">
-                @foreach ($newArrivals as $prod)
-                    <x-product-card :product="$prod" />
-                @endforeach
-            </div>
-        </section>
-    @endif
 
     {{-- =========================================================================
          7. EDITORIAL CAMPAIGN (DESIGN.md v3 §7.7: Asymmetric fashion storytelling)
@@ -179,7 +261,7 @@
                             $campaignImg = $featuredProducts->get(1)?->primaryImage() ?? $featuredProducts->first()?->primaryImage();
                         @endphp
                         @if ($campaignImg)
-                            <img src="{{ Storage::url($campaignImg->image_path) }}" alt="Editorial Mutya"
+                            <img src="{{ Storage::url($campaignImg->image_path) }}" alt="Editorial MH Scarf"
                                 class="w-full h-full object-cover">
                         @else
                             {{-- Tasteful editorial placeholder --}}
@@ -194,7 +276,7 @@
                                     </p>
                                 </div>
                                 <div class="pt-4 border-t border-line/60 flex items-center justify-between text-xs text-muted">
-                                    <span>Mutya Studio Collection</span>
+                                    <span>MH Scarf Studio Collection</span>
                                     <span class="text-pink-mauve font-medium">Modest & Modern</span>
                                 </div>
                             </div>
@@ -209,7 +291,7 @@
                         Keanggunan yang Tenang untuk Momen Sehari-Hari
                     </h2>
                     <p class="text-sm sm:text-base text-muted leading-relaxed">
-                        Di Mutya Store, kami percaya bahwa hijab bukan sekadar penutup kepala, melainkan perpanjangan dari karakter dan kenyamanan perempuan muslimah modern.
+                        Di MH Scarf Store, kami percaya bahwa hijab bukan sekadar penutup kepala, melainkan perpanjangan dari karakter dan kenyamanan perempuan muslimah modern.
                     </p>
                     <p class="text-sm text-muted leading-relaxed">
                         Kami mengutamakan kurasi bahan bernapas lega, drape kain yang jatuh rapi tanpa perlu usaha ekstra, serta pilihan warna lembut yang melengkapi ragam rona kulit Indonesia.
@@ -217,7 +299,7 @@
 
                     <div class="pt-3">
                         <x-primary-button :href="route('shop.index')" class="inline-flex">
-                            Jelajahi Koleksi Mutya
+                            Jelajahi Koleksi MH Scarf
                         </x-primary-button>
                     </div>
                 </div>
@@ -229,290 +311,124 @@
     {{-- =========================================================================
          8. MATERIAL EDUCATION (DESIGN.md v3 §7.8: Fabric craftsmanship guide)
          ========================================================================= --}}
-    <section id="material-education" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16 md:py-20">
-        <x-section-heading
-            align="center"
-            eyebrow="Edukasi Bahan"
-            title="Kenali Karakteristik Material"
-            subtitle="Panduan memilih kain hijab yang paling sesuai dengan aktivitas dan kenyamanan Anda."
-        />
+  @php
+    $material = [
+        'img'     => 'images/material/material-banner.jpg',
+        'mobile'  => 'images/material/material-banner-mobile.jpg', // opsional
+        'label'   => 'Voal Premium',
+        'tagline' => 'Rapi dari Pagi',
+        'tone'    => 'dark', // 'dark' = teks gelap, 'light' = teks putih
+        'url'     => route('shop.index'),
+    ];
+@endphp
 
-        <div class="mt-8 sm:mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {{-- Card 1: Voal --}}
-            <div class="bg-white border border-line rounded-md p-6 hover:border-pink-mauve/60 transition-colors shadow-2xs flex flex-col justify-between">
-                <div>
-                    <span class="text-[10px] tracking-[0.2em] uppercase text-pink-mauve font-semibold block mb-2">Harian & Formal</span>
-                    <h3 class="font-display text-xl font-medium text-ink">Voal Premium</h3>
-                    <p class="text-xs sm:text-sm text-muted mt-2.5 leading-relaxed">
-                        Serat halus dengan sirkulasi udara optimal. Tegak sempurna di dahi, tidak berdengung di telinga, dan tetap rapi sepanjang hari.
-                    </p>
-                </div>
-                <div class="mt-5 pt-4 border-t border-line/60">
-                    <a href="{{ route('shop.index', ['q' => 'Voal']) }}" class="text-xs font-medium text-ink hover:text-pink-mauve transition-colors inline-flex items-center gap-1">
-                        <span>Belanja Koleksi Voal</span>
-                        <span aria-hidden="true">→</span>
-                    </a>
-                </div>
-            </div>
+<style>
+    .mat-banner { position: relative; display: block; width: 100%; overflow: hidden; background: #F3EAEE; aspect-ratio: 4 / 5; }
+    .mat-banner img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .7s ease-out; }
+    .mat-banner:hover img { transform: scale(1.03); }
+    .mat-copy {
+        position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+        display: flex; flex-direction: column; align-items: center; gap: .9rem;
+        padding: 0 1.25rem 2rem;
+    }
+    .mat-pill {
+        display: inline-flex; align-items: center; justify-content: center;
+        padding: .75rem 2rem; border: 2px solid currentColor; border-radius: 9999px;
+        font-size: 1.05rem; font-weight: 600; transition: background-color .2s ease, color .2s ease;
+    }
+    .mat-tagline { font-size: 1.5rem; font-weight: 700; line-height: 1.1; }
+    .mat-banner[data-tone="dark"]  { color: #3a3033; }
+    .mat-banner[data-tone="light"] { color: #ffffff; }
+    .mat-banner[data-tone="dark"]:hover .mat-pill  { background: #3a3033; color: #fff; }
+    .mat-banner[data-tone="light"]:hover .mat-pill { background: #fff; color: #3a3033; }
 
-            {{-- Card 2: Ceruty --}}
-            <div class="bg-white border border-line rounded-md p-6 hover:border-pink-mauve/60 transition-colors shadow-2xs flex flex-col justify-between">
-                <div>
-                    <span class="text-[10px] tracking-[0.2em] uppercase text-pink-mauve font-semibold block mb-2">Flowy & Anggun</span>
-                    <h3 class="font-display text-xl font-medium text-ink">Ceruty Babydoll</h3>
-                    <p class="text-xs sm:text-sm text-muted mt-2.5 leading-relaxed">
-                        Tekstur pasir lembut berkarakter flowy nan jatuh. Sangat elegan untuk layering pashmina syari dan gaya formal bersahaja.
-                    </p>
-                </div>
-                <div class="mt-5 pt-4 border-t border-line/60">
-                    <a href="{{ route('shop.index', ['q' => 'Ceruty']) }}" class="text-xs font-medium text-ink hover:text-pink-mauve transition-colors inline-flex items-center gap-1">
-                        <span>Belanja Koleksi Ceruty</span>
-                        <span aria-hidden="true">→</span>
-                    </a>
-                </div>
-            </div>
+    @media (min-width: 1024px) {
+        .mat-banner { aspect-ratio: 16 / 7; max-height: 52rem; }
+        .mat-copy {
+            top: 0; flex-direction: row; align-items: center; justify-content: space-between;
+            padding: 0 6%; gap: 2rem;
+        }
+        .mat-pill { font-size: 1.5rem; padding: 1.1rem 3rem; }
+        .mat-tagline { font-size: 2.5rem; }
+    }
+</style>
 
-            {{-- Card 3: Silk / Satin --}}
-            <div class="bg-white border border-line rounded-md p-6 hover:border-pink-mauve/60 transition-colors shadow-2xs flex flex-col justify-between sm:col-span-2 lg:col-span-1">
-                <div>
-                    <span class="text-[10px] tracking-[0.2em] uppercase text-pink-mauve font-semibold block mb-2">Mewah & Berkilau</span>
-                    <h3 class="font-display text-xl font-medium text-ink">Silk & Satin Grade A</h3>
-                    <p class="text-xs sm:text-sm text-muted mt-2.5 leading-relaxed">
-                        Kilau lembut berkelas yang tidak licin berlebihan. Sentuhan sempurna untuk menghadiri resepsi, acara resmi, dan hari raya.
-                    </p>
-                </div>
-                <div class="mt-5 pt-4 border-t border-line/60">
-                    <a href="{{ route('shop.index', ['q' => 'Silk']) }}" class="text-xs font-medium text-ink hover:text-pink-mauve transition-colors inline-flex items-center gap-1">
-                        <span>Belanja Koleksi Silk</span>
-                        <span aria-hidden="true">→</span>
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    {{-- =========================================================================
-         9. PROMOTION / SALE (DESIGN.md v3 §7.9: Real voucher & campaign banner)
-         ========================================================================= --}}
-    <section id="promo" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-14 sm:pb-16 md:pb-20">
-        @if ($vouchers->isNotEmpty())
-            {{-- Display real database vouchers --}}
-            <div class="rounded-md border border-line bg-gradient-to-r from-cream via-[#FFF5F7] to-cream p-6 sm:p-10 md:p-12">
-                <div class="max-w-xl">
-                    <p class="text-[11px] tracking-[0.2em] uppercase text-pink-mauve font-semibold">Penawaran Eksklusif</p>
-                    <h2 class="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-ink mt-2 leading-tight">
-                        Gunakan Kode Promo Pilihan
-                    </h2>
-                    <p class="text-xs sm:text-sm text-muted mt-2.5 leading-relaxed">
-                        Potongan harga langsung saat menyelesaikan checkout untuk pesanan Anda.
-                    </p>
-
-                    <div class="mt-6 flex flex-wrap gap-4">
-                        @foreach ($vouchers as $v)
-                            <div class="bg-white border border-line rounded-md px-4 py-3 flex items-center justify-between gap-4 shadow-2xs">
-                                <div>
-                                    <p class="font-mono text-xs font-semibold text-pink-mauve tracking-widest">{{ $v->code }}</p>
-                                    <p class="text-[11px] text-muted">
-                                        @if ($v->type === 'percentage')
-                                            Diskon {{ (int) $v->value }}%
-                                        @elseif ($v->type === 'free_shipping')
-                                            Gratis Ongkir
-                                        @else
-                                            Potongan Rp{{ number_format($v->value, 0, ',', '.') }}
-                                        @endif
-                                    </p>
-                                </div>
-                                <button type="button"
-                                    data-copy-code="{{ $v->code }}"
-                                    class="js-copy-code text-xs text-ink hover:text-pink-mauve font-medium border border-line rounded-sm px-2.5 py-1 hover:border-pink-mauve transition-colors cursor-pointer">
-                                    Salin
-                                </button>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            </div>
-        @else
-            {{-- Tasteful minimal promo block linking to catalog sale/promotions --}}
-            <div class="rounded-md border border-line bg-gradient-to-r from-cream via-[#FDF6F8] to-cream p-6 sm:p-10 md:p-12 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div class="max-w-xl">
-                    <p class="text-[11px] tracking-[0.2em] uppercase text-pink-mauve font-semibold">Program Belanja Mutya</p>
-                    <h2 class="font-display text-2xl sm:text-3xl font-semibold text-ink mt-1.5 leading-tight">
-                        Gratis Ongkir & Penawaran Spesial
-                    </h2>
-                    <p class="text-xs sm:text-sm text-muted mt-2 leading-relaxed">
-                        Nikmati layanan pengiriman aman dan bebas biaya kirim dengan minimum belanja ke seluruh wilayah Indonesia.
-                    </p>
-                </div>
-                <div class="shrink-0">
-                    <x-primary-button :href="route('shop.index')">
-                        Mulai Belanja
-                    </x-primary-button>
-                </div>
-            </div>
+<section id="material-education" aria-label="Karakteristik material">
+    <a href="{{ $material['url'] }}" class="mat-banner" data-tone="{{ $material['tone'] }}">
+        @if (file_exists(public_path($material['img'])))
+            <picture>
+                @if (file_exists(public_path($material['mobile'])))
+                    <source media="(max-width: 1023px)" srcset="{{ asset($material['mobile']) }}">
+                @endif
+                <img src="{{ asset($material['img']) }}" alt="{{ $material['label'] }}" loading="lazy">
+            </picture>
         @endif
-    </section>
-
-    {{-- =========================================================================
-         10. CUSTOMER REVIEWS (DESIGN.md v3 §7.10: Real published reviews)
-         ========================================================================= --}}
-    <section id="customer-reviews" class="bg-surface/50 border-y border-line/60 py-14 sm:py-16 md:py-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <x-section-heading
-                align="center"
-                eyebrow="Kepuasan Pelanggan"
-                title="Kata Sahabat Mutya"
-                subtitle="Ulasan nyata dari pelanggan yang telah mengenakan koleksi hijab kami."
-            />
-
-            @if ($reviews->isNotEmpty())
-                {{-- Display genuine published reviews from database --}}
-                <div class="mt-8 sm:mt-12 grid md:grid-cols-3 gap-6">
-                    @foreach ($reviews as $rev)
-                        <div class="bg-white border border-line rounded-md p-6 shadow-2xs flex flex-col justify-between">
-                            <div>
-                                <div class="text-gold text-xs tracking-wider" aria-label="Rating {{ $rev->rating }} bintang">
-                                    {{ str_repeat('★', (int) $rev->rating) }}{{ str_repeat('☆', max(0, 5 - (int) $rev->rating)) }}
-                                </div>
-                                @if ($rev->title)
-                                    <h4 class="font-medium text-sm text-ink mt-2">{{ $rev->title }}</h4>
-                                @endif
-                                <p class="text-xs sm:text-sm text-muted mt-2 leading-relaxed italic">
-                                    “{{ $rev->comment }}”
-                                </p>
-                            </div>
-                            <div class="mt-5 pt-3.5 border-t border-line/60 flex items-center justify-between text-xs text-muted">
-                                <div>
-                                    <p class="font-medium text-ink">{{ $rev->user?->name ?? 'Pelanggan Mutya' }}</p>
-                                    <p class="text-[11px] text-muted">{{ $rev->product?->name }}</p>
-                                </div>
-                                @if ($rev->is_verified_purchase)
-                                    <span class="text-[10px] text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-xs font-medium">
-                                        Terverifikasi
-                                    </span>
-                                @endif
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            @else
-                {{-- Graceful empty state: NO fake testimonials per §2 & §12 --}}
-                <div class="mt-8 sm:mt-10 max-w-lg mx-auto text-center p-8 bg-white border border-line rounded-md shadow-2xs">
-                    <p class="font-display italic text-base sm:text-lg text-ink">
-                        Komitmen kami adalah kepuasan setiap pelanggan.
-                    </p>
-                    <p class="text-xs text-muted mt-2 leading-relaxed">
-                        Setiap pesanan hijab dikurasi dengan teliti dan dikemas higienis. Sampaikan ulasan jujur Anda setelah paket tiba.
-                    </p>
-                    <div class="mt-4">
-                        <a href="{{ route('shop.index') }}" class="text-xs font-medium text-pink-mauve hover:text-[#A56684] inline-flex items-center gap-1">
-                            <span>Jelajahi Koleksi Kami</span>
-                            <span aria-hidden="true">→</span>
-                        </a>
-                    </div>
-                </div>
-            @endif
+        <div class="mat-copy">
+            <span class="mat-pill">{{ $material['label'] }}</span>
+            <span class="mat-tagline font-display">{{ $material['tagline'] }}</span>
         </div>
-    </section>
+    </a>
+</section>
 
     {{-- =========================================================================
          11. JOURNAL / STYLE GUIDE (DESIGN.md v3 §7.11: Visual styling guide placeholder)
          ========================================================================= --}}
-    <section id="style-journal" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16 md:py-20">
-        <x-section-heading
-            eyebrow="Inspirasi Gaya"
-            title="Style Guide & Lookbook"
-            subtitle="Inspirasi padu padan warna dan tekstur untuk beragam agenda formal maupun santai."
-            :href="route('shop.index')"
-            linkLabel="Lihat Seluruh Koleksi"
-        />
+    @php
+    $diaries = [
+        [
+            'img'   => 'images/diaries/diary-1.jpg',
+            'title' => 'Daily Minimalist Wrap',
+            'desc'  => 'Teknik lilit praktis tanpa lipatan rumit, cocok untuk kuliah dan rapat pagi.',
+            'url'   => route('shop.index', ['q' => 'Voal']),
+        ],
+        [
+            'img'   => 'images/diaries/diary-2.jpg',
+            'title' => 'Pastel & Earthy Harmony',
+            'desc'  => 'Palet rose blush, cream, dan sage yang tenang dan menyegarkan.',
+            'url'   => route('shop.index'),
+        ],
+        [
+            'img'   => 'images/diaries/diary-3.jpg',
+            'title' => 'The Evening Elegance',
+            'desc'  => 'Silk satin berpadu gaun malam atau gamis formal dengan drape yang mewah.',
+            'url'   => route('shop.index', ['q' => 'Silk']),
+        ],
+    ];
+@endphp
 
-        <div class="mt-8 sm:mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {{-- Look 1 --}}
-            <article class="group bg-white border border-line rounded-md overflow-hidden hover:border-pink-mauve/60 transition-all duration-300">
-                <div class="aspect-[16/10] bg-[#FAF6F7] flex flex-col items-center justify-center p-6 text-center">
-                    <span class="text-[10px] tracking-[0.25em] uppercase text-pink-mauve font-semibold">Style Guide 01</span>
-                    <span class="font-display text-lg text-ink mt-1 font-medium">Daily Minimalist Wrap</span>
-                    <span class="text-xs text-muted mt-1">Paduan Voal Ultrafine & Busana Kasual</span>
-                </div>
-                <div class="p-5">
-                    <p class="text-xs text-muted leading-relaxed">
-                        Teknik lilit praktis tanpa lipatan rumit. Cocok untuk kuliah, rapat kerja pagi, atau aktivitas dinamis di luar ruangan.
-                    </p>
-                    <a href="{{ route('shop.index', ['q' => 'Voal']) }}" class="mt-4 inline-flex items-center text-xs font-medium text-pink-mauve hover:text-[#A56684] transition-colors gap-1">
-                        <span>Lihat Produk Terkait</span>
-                        <span aria-hidden="true">→</span>
-                    </a>
-                </div>
-            </article>
+<section id="style-journal" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-16 md:py-20 scroll-mt-24">
+    <h2 class="text-center text-xl font-normal uppercase tracking-[0.2em] text-ink/80 sm:text-2xl">
+        MH Scarf Diaries
+    </h2>
 
-            {{-- Look 2 --}}
-            <article class="group bg-white border border-line rounded-md overflow-hidden hover:border-pink-mauve/60 transition-all duration-300">
-                <div class="aspect-[16/10] bg-[#F9F5F8] flex flex-col items-center justify-center p-6 text-center">
-                    <span class="text-[10px] tracking-[0.25em] uppercase text-pink-mauve font-semibold">Style Guide 02</span>
-                    <span class="font-display text-lg text-ink mt-1 font-medium">Pastel & Earthy Harmony</span>
-                    <span class="text-xs text-muted mt-1">Palet Rose Blush, Cream, dan Sage</span>
+    <div class="mt-10 sm:mt-14 grid sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-10">
+        @foreach ($diaries as $d)
+            <a href="{{ $d['url'] }}" class="group block text-center">
+                <div class="aspect-[5/4] overflow-hidden bg-[#F6EEF1]">
+                    @if (file_exists(public_path($d['img'])))
+                        <img src="{{ asset($d['img']) }}" alt="{{ $d['title'] }}" loading="lazy"
+                             class="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]">
+                    @else
+                        <div class="h-full w-full bg-gradient-to-br from-[#FAF5F7] via-[#F6EEF1] to-[#EFE2E7]"></div>
+                    @endif
                 </div>
-                <div class="p-5">
-                    <p class="text-xs text-muted leading-relaxed">
-                        Menyelaraskan tone hangat kulit Indonesia dengan spektrum warna pastel yang tenang dan menyegarkan penampilan.
-                    </p>
-                    <a href="{{ route('shop.index') }}" class="mt-4 inline-flex items-center text-xs font-medium text-pink-mauve hover:text-[#A56684] transition-colors gap-1">
-                        <span>Lihat Produk Terkait</span>
-                        <span aria-hidden="true">→</span>
-                    </a>
-                </div>
-            </article>
-
-            {{-- Look 3 --}}
-            <article class="group bg-white border border-line rounded-md overflow-hidden hover:border-pink-mauve/60 transition-all duration-300 sm:col-span-2 lg:col-span-1">
-                <div class="aspect-[16/10] bg-[#FAF6F7] flex flex-col items-center justify-center p-6 text-center">
-                    <span class="text-[10px] tracking-[0.25em] uppercase text-pink-mauve font-semibold">Style Guide 03</span>
-                    <span class="font-display text-lg text-ink mt-1 font-medium">The Evening Elegance</span>
-                    <span class="text-xs text-muted mt-1">Sentuhan Silk Satin & Aksesori Halus</span>
-                </div>
-                <div class="p-5">
-                    <p class="text-xs text-muted leading-relaxed">
-                        Kilau anggun silk satin berpadu dengan gaun malam atau gamis formal. Memberikan siluet rapi dan drapery yang mewah.
-                    </p>
-                    <a href="{{ route('shop.index', ['q' => 'Silk']) }}" class="mt-4 inline-flex items-center text-xs font-medium text-pink-mauve hover:text-[#A56684] transition-colors gap-1">
-                        <span>Lihat Produk Terkait</span>
-                        <span aria-hidden="true">→</span>
-                    </a>
-                </div>
-            </article>
-        </div>
-    </section>
+                <h3 class="mt-4 text-sm font-medium uppercase tracking-wide text-ink transition-colors group-hover:text-pink-mauve">
+                    {{ $d['title'] }}
+                </h3>
+                <p class="mx-auto mt-1.5 max-w-xs text-xs leading-relaxed text-muted">
+                    {{ $d['desc'] }}
+                </p>
+            </a>
+        @endforeach
+    </div>
+</section>
 
     {{-- =========================================================================
          12. NEWSLETTER (DESIGN.md v3 §7.12: Typography-led community invitation)
          ========================================================================= --}}
     <x-newsletter-section id="newsletter" />
 
-    {{-- =========================================================================
-         13. SERVICE INFO & FAQ (anchors referenced by the footer — real content,
-             no dead links). Compact editorial strip + three honest answers.
-         ========================================================================= --}}
-    <section id="layanan" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-14 sm:pb-16 md:pb-20">
-        <div class="grid md:grid-cols-3 gap-6 border-t border-line/70 pt-10 mt-2">
-            @php
-                $faqItems = [
-                    ['id' => 'pengiriman', 'title' => 'Pengiriman',
-                        'body' => 'Pesanan diproses dan dikirim setiap hari kerja (Senin–Sabtu) melalui kurir terpercaya ke seluruh Indonesia. Gratis ongkir untuk pesanan mulai Rp75.000. Nomor lacak dibagikan otomatis setelah pesanan diberangkatkan.'],
-                    ['id' => 'pengembalian', 'title' => 'Pengembalian & Penukaran',
-                        'body' => 'Produk belum digunakan, masih berlabel, dan dalam kemasan asli dapat dikembalikan dalam 7 hari setelah barang diterima. Hubungi tim kami untuk arrange penukaran warna atau ukuran.'],
-                    ['id' => 'faq', 'title' => 'Pertanyaan Umum',
-                        'body' => 'Ukuran dan warna nyata dapat sedikit berbeda karena pencahayaan layar — detail bahan tercantum pada setiap halaman produk. Pembayaran diproses aman saat checkout, dan status pesanan dapat dipantau kapan saja di halaman Pesanan Saya.'],
-                ];
-            @endphp
-            @foreach ($faqItems as $item)
-                <div id="{{ $item['id'] }}" class="bg-white border border-line rounded-md p-6 shadow-2xs scroll-mt-24">
-                    <p class="font-display text-base font-medium text-ink">{{ $item['title'] }}</p>
-                    <p class="mt-3 text-xs sm:text-sm text-muted leading-relaxed">{{ $item['body'] }}</p>
-                </div>
-            @endforeach
-        </div>
-    </section>
+
 
     {{-- =========================================================================
          14. FOOTER           ──▶ Rendered via <x-footer /> in app layout

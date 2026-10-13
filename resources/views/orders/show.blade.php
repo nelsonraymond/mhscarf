@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', 'Detail Pesanan #' . $order->order_number . ' — Mutya Store')
+    @section('title', 'Detail Pesanan #' . $order->order_number . ' — MH Scarf Store')
 
     {{-- Stage 6: migrated to shared app layout + design tokens.
          Backend contract unchanged: orders.show (GET) / orders.cancel (POST). --}}
@@ -189,7 +189,7 @@
                     <div class="space-y-3 text-xs">
                         <div class="flex justify-between">
                             <span class="text-muted">Kurir:</span>
-                            <span class="font-medium text-ink">{{ $order->shipment?->courier ?? 'Mutya Express Delivery' }}</span>
+                            <span class="font-medium text-ink">{{ $order->shipment?->courier ?? 'MH Scarf Express Delivery' }}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-muted">Layanan:</span>

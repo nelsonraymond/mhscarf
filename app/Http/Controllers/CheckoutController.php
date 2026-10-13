@@ -2,19 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ProductVariant;
 use App\Services\CheckoutService;
+use App\Services\PaymentService;
 use App\Services\ShippingService;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use Illuminate\View\View;
 
 class CheckoutController extends Controller
 {
     public function __construct(
         protected CheckoutService $checkoutService,
         protected ShippingService $shippingService,
+        protected PaymentService $paymentService,
     ) {}
 
     /**
@@ -23,31 +27,62 @@ class CheckoutController extends Controller
     public function index(Request $request): View|RedirectResponse
     {
         $user = $request->user();
-
-        try {
-            $cartData = $this->checkoutService->getValidatedCartData($user);
-        } catch (ValidationException $e) {
-            $message = $e->validator->errors()->first('cart') ?: 'Keranjang belanja Anda kosong.';
-
-            return redirect()->route('cart.index')->with('warning', $message);
-        }
-
         $addresses = $user->addresses()
             ->orderByDesc('is_default')
             ->latest()
             ->get();
-
         $shippingMethods = $this->shippingService->getAvailableMethods();
         $defaultShipping = 'regular';
         $shippingCost = $shippingMethods[$defaultShipping]['cost'];
-        $subtotal = $cartData['subtotal'];
+
+        // Buy‑Now flow
+        if ($request->session()->has('buy_now')) {
+            $buyNow = $request->session()->get('buy_now');
+            $variant = ProductVariant::with('product')->findOrFail($buyNow['product_variant_id']);
+            $quantity = (int) $buyNow['quantity'];
+
+            // Validate variant and stock
+            if (! $variant->is_active || ! $variant->product || ! $variant->product->is_active) {
+                return redirect()->route('cart.index')->with('warning', 'Produk tidak tersedia.');
+            }
+            if ($variant->stock_qty <= 0) {
+                return redirect()->route('cart.index')->with('warning', "Stok untuk {$variant->product->name} ({$variant->name}) habis.");
+            }
+            if ($quantity > $variant->stock_qty) {
+                return redirect()->route('cart.index')->with('warning', "Kuantitas melebihi stok (tersedia: {$variant->stock_qty}).");
+            }
+
+            $subtotal = $variant->finalPrice() * $quantity;
+            $itemCount = $quantity;
+            $cartItems = collect([
+                (object) [
+                    'variant' => $variant,
+                    'quantity' => $quantity,
+                ],
+            ]);
+            $cart = null;
+        } else {
+            // Regular cart flow
+            try {
+                $cartData = $this->checkoutService->getValidatedCartData($user);
+            } catch (ValidationException $e) {
+                $message = $e->validator->errors()->first('cart') ?: 'Keranjang belanja Anda kosong.';
+
+                return redirect()->route('cart.index')->with('warning', $message);
+            }
+            $cart = $cartData['cart'];
+            $cartItems = $cartData['items'];
+            $subtotal = $cartData['subtotal'];
+            $itemCount = $cartData['itemCount'];
+        }
+
         $grandTotal = $subtotal + $shippingCost;
 
         return view('checkout.index', [
-            'cart' => $cartData['cart'],
-            'cartItems' => $cartData['items'],
+            'cart' => $cart,
+            'cartItems' => $cartItems,
             'subtotal' => $subtotal,
-            'itemCount' => $cartData['itemCount'],
+            'itemCount' => $itemCount,
             'addresses' => $addresses,
             'defaultAddress' => $addresses->firstWhere('is_default', true) ?? $addresses->first(),
             'shippingMethods' => $shippingMethods,
@@ -60,7 +95,7 @@ class CheckoutController extends Controller
     /**
      * Handle order submission and confirmation.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
         $user = $request->user();
 
@@ -84,11 +119,41 @@ class CheckoutController extends Controller
         ]);
 
         try {
-            $order = $this->checkoutService->placeOrder($user, $validated);
+            // Store order in DB transaction (no external API calls)
+            $order = null;
+            DB::transaction(function () use ($user, $validated, &$order) {
+                $order = $this->checkoutService->placeOrder($user, $validated);
+            });
 
-            return redirect()->route('orders.show', $order)
+            // Initialize payment after order is persisted (may throw RuntimeException)
+            $payment = $this->paymentService->initializePayment($order);
+
+            // Return response based on request type
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'snap_token' => $payment->metadata['snap_token'] ?? null,
+                    'client_key' => $payment->metadata['client_key'] ?? null,
+                    'redirect_url' => $payment->metadata['redirect_url'] ?? null,
+                ]);
+            }
+
+            // Fallback for non‑AJAX submissions
+            return redirect()->route('payments.show', $order)
                 ->with('success', "Pesanan #{$order->order_number} berhasil dibuat!");
+        } catch (\RuntimeException $e) {
+            // Return error details for AJAX or fallback to redirect with error flash
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['error' => $e->getMessage()], 500);
+            }
+
+            return back()->with('error', $e->getMessage());
         } catch (ValidationException $e) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['errors' => $e->validator->errors()], 422);
+            }
+
             return back()->withInput()->withErrors($e->validator);
         }
     }

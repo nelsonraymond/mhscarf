@@ -1,5 +1,5 @@
 <x-layouts.auth>
-    <x-slot:title>Masuk - Mutya Store</x-slot:title>
+    <x-slot:title>Masuk - MH Scarf Store</x-slot:title>
 
     <div class="mb-6 text-center">
         <h1 class="font-serif-display text-2xl font-bold text-ink">Selamat Datang</h1>

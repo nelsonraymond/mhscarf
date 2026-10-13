@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title ?? config('app.name', 'Mutya Store') }}</title>
+    <title>{{ $title ?? config('app.name', 'MH Scarf Store') }}</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,7 +34,7 @@
         <a href="{{ route('home') }}" class="inline-block group">
             <div class="inline-flex items-center justify-center space-x-2">
                 <span class="text-[#D98FAF] text-lg">❀</span>
-                <span class="font-serif-display text-2xl font-semibold tracking-wider text-[#3A3033] uppercase">MUTYA</span>
+                <span class="font-serif-display text-2xl font-semibold tracking-wider text-[#3A3033] uppercase">MH Scarf</span>
                 <span class="text-[#D98FAF] text-lg">❀</span>
             </div>
             <p class="text-xs text-[#75686D] tracking-widest uppercase mt-0.5">Elegance in Every Wrap</p>

@@ -23,6 +23,6 @@
                 Join
             </button>
         </form>
-        <p data-newsletter-note class="hidden text-xs text-pink-mauve mt-3">Terima kasih — selamat datang di keluarga Mutya</p>
+        <p data-newsletter-note class="hidden text-xs text-pink-mauve mt-3">Terima kasih — selamat datang di keluarga MH Scarf</p>
     </div>
 </section>

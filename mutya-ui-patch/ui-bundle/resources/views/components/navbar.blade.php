@@ -1,12 +1,12 @@
 {{-- Navbar — DESIGN.md §13: sticky, white/cream bg, thin bottom border, restrained shadow.
      Desktop: Logo | Shop | Collections | About | Journal | Search | Wishlist | Cart | Account
      About / Journal anchor to real homepage sections (#tentang-kami, #style-journal) — no dead links. --}}
-<header id="mutya-navbar"
+<header id="MH Scarf-navbar"
     class="bg-white/95 backdrop-blur border-b border-line sticky top-0 z-40 transition-shadow duration-300">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
 
         {{-- Mobile hamburger (opens dedicated MobileNav, not a collapsed desktop menu) --}}
-        <button type="button" aria-label="Buka menu navigasi" aria-expanded="false" aria-controls="mutya-mobile-nav"
+        <button type="button" aria-label="Buka menu navigasi" aria-expanded="false" aria-controls="MH Scarf-mobile-nav"
             class="js-mobile-nav-toggle md:hidden -ml-1 p-2 rounded-lg text-ink hover:bg-pink-soft/40 transition shrink-0 min-h-[40px] min-w-[40px]">
             <svg data-icon="open" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-width="1.8" d="M4 7h16M4 12h16M4 17h10"/>
@@ -17,8 +17,8 @@
         </button>
 
         {{-- Logo: typographic serif wordmark only (DESIGN.md v3 — no floral ornaments) --}}
-        <a href="{{ route('home') }}" class="inline-flex items-center space-x-2 shrink-0" aria-label="Mutya — Beranda">
-            <span class="font-display text-xl font-bold tracking-[0.18em] text-ink uppercase">Mutya</span>
+        <a href="{{ route('home') }}" class="inline-flex items-center space-x-2 shrink-0" aria-label="MH Scarf — Beranda">
+            <span class="font-display text-xl font-bold tracking-[0.18em] text-ink uppercase">MH Scarf</span>
         </a>
 
         {{-- Desktop nav --}}
@@ -43,7 +43,7 @@
             </form>
 
             {{-- Mobile search icon — expands a full-width panel per DESIGN.md §13 --}}
-            <button type="button" aria-label="Buka pencarian" aria-expanded="false" aria-controls="mutya-search-panel"
+            <button type="button" aria-label="Buka pencarian" aria-expanded="false" aria-controls="MH Scarf-search-panel"
                 class="js-search-toggle lg:hidden p-2 rounded-lg text-muted hover:text-pink-deep hover:bg-pink-soft/30 transition min-h-[40px] min-w-[40px] inline-flex items-center justify-center">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
                     <circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="M20 20l-3.5-3.5"/>
@@ -89,9 +89,9 @@
 <script>
     // Navbar interactions — scroll shadow, mobile menu, expandable search panel.
     (function () {
-        const nav = document.getElementById('mutya-navbar');
-        const mobileNav = document.getElementById('mutya-mobile-nav');
-        const searchPanel = document.getElementById('mutya-search-panel');
+        const nav = document.getElementById('MH Scarf-navbar');
+        const mobileNav = document.getElementById('MH Scarf-mobile-nav');
+        const searchPanel = document.getElementById('MH Scarf-search-panel');
         const navToggle = nav ? nav.querySelector('.js-mobile-nav-toggle') : null;
         const searchToggle = nav ? nav.querySelector('.js-search-toggle') : null;
 
@@ -163,7 +163,7 @@
 </script>
 
 {{-- Expandable full-width search panel (mobile / tablet) --}}
-<div id="mutya-search-panel" class="hidden lg:hidden sticky top-16 z-30 bg-white border-b border-line shadow-card">
+<div id="MH Scarf-search-panel" class="hidden lg:hidden sticky top-16 z-30 bg-white border-b border-line shadow-card">
     <form method="GET" action="{{ route('shop.index') }}" class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
         <label for="panel-search" class="sr-only">Cari produk</label>
         <div class="relative flex-1">
@@ -178,7 +178,7 @@
 </div>
 
 {{-- Dedicated mobile navigation panel (intentionally designed, not a collapsed desktop menu) --}}
-<div id="mutya-mobile-nav" class="hidden md:hidden sticky top-16 z-30 bg-white border-b border-line shadow-card">
+<div id="MH Scarf-mobile-nav" class="hidden md:hidden sticky top-16 z-30 bg-white border-b border-line shadow-card">
     <div class="px-4 py-4 space-y-5 max-h-[calc(100dvh-8rem)] overflow-y-auto overscroll-contain">
         {{-- Search --}}
         <form method="GET" action="{{ route('shop.index') }}" class="relative">

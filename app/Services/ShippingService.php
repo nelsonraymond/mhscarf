@@ -17,7 +17,7 @@ class ShippingService
             'regular' => [
                 'code' => 'regular',
                 'name' => 'Reguler',
-                'courier' => 'Mutya Express Delivery',
+                'courier' => 'MH Scarf Express Delivery',
                 'service' => 'Reguler',
                 'cost' => 15000.0,
                 'estimated_days' => '2-4 Hari Kerja',
@@ -26,7 +26,7 @@ class ShippingService
             'express' => [
                 'code' => 'express',
                 'name' => 'Express',
-                'courier' => 'Mutya Express Delivery',
+                'courier' => 'MH Scarf Express Delivery',
                 'service' => 'Express',
                 'cost' => 30000.0,
                 'estimated_days' => '1-2 Hari Kerja',

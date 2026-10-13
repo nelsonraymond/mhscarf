@@ -1,5 +1,5 @@
 <x-layouts.admin>
-    <x-slot:title>Kelola Produk - Mutya Admin</x-slot:title>
+    <x-slot:title>Kelola Produk - MH Scarf Admin</x-slot:title>
     <x-slot:header>Katalog Produk</x-slot:header>
 
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">

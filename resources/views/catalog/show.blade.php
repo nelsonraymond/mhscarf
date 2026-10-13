@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', $product->name . ' — Mutya Store')
+    @section('title', $product->name . ' — MH Scarf Store')
 
     {{-- ============ PRODUCT DETAIL — DESIGN.md v3: product-first, editorial-minimal.
          Reuses: layouts.app (navbar/footer/flash), wishlist-button, price-display, primary/secondary buttons,
@@ -226,10 +226,18 @@
         </div>
 
         {{-- Cart button only: no nested Wishlist form --}}
-        <div class="pt-1">
+        <div class="pt-1 flex space-x-2">
             <x-primary-button class="w-full sm:w-auto sm:min-w-[220px]" id="pd-add-btn">
                 Tambah ke Keranjang
             </x-primary-button>
+            <form method="POST" action="{{ route('buy.now') }}" class="w-full sm:w-auto">
+                @csrf
+                <input type="hidden" name="product_variant_id" value="{{ $variant->id ?? '' }}">
+                <input type="hidden" name="quantity" value="1">
+                <x-primary-button type="submit" class="w-full sm:w-auto sm:min-w-[220px]" id="pd-buy-now-btn">
+                    Beli Sekarang
+                </x-primary-button>
+            </form>
         </div>
     </form>
 

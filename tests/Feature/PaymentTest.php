@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class PaymentTest extends TestCase
@@ -123,35 +124,6 @@ class PaymentTest extends TestCase
         $payment = $order->payments()->first();
         $this->assertSame('midtrans', $payment->provider);
         $this->assertEquals(165000, (float) $payment->amount);
-    }
-
-    public function test_simulate_payment_works_for_owner(): void
-    {
-        $customer = User::factory()->customer()->create();
-        $order = $this->createOrderWithItems($customer);
-
-        $response = $this->actingAs($customer)->post(route('payments.simulate', $order), ['status' => 'paid']);
-
-        $response->assertRedirect(route('orders.show', $order));
-
-        $order->refresh();
-        $this->assertSame('paid', $order->payment_status);
-        $this->assertSame('confirmed', $order->status);
-        $this->assertTrue($order->payments()->where('status', 'paid')->exists());
-    }
-
-    public function test_simulate_payment_is_blocked_for_another_customer(): void
-    {
-        $owner = User::factory()->customer()->create();
-        $intruder = User::factory()->customer()->create();
-        $order = $this->createOrderWithItems($owner);
-
-        $response = $this->actingAs($intruder)->post(route('payments.simulate', $order), ['status' => 'paid']);
-
-        $response->assertForbidden();
-        $order->refresh();
-        $this->assertSame('pending', $order->payment_status);
-        $this->assertSame('pending', $order->status);
     }
 
     public function test_valid_webhook_signature_is_accepted(): void
@@ -300,5 +272,13 @@ class PaymentTest extends TestCase
 
         // No authenticated user => redirected to login (bootstrap/app.php guest redirect)
         $this->get(route('payments.show', $order))->assertRedirect(route('login'));
+    }
+
+    /**
+     * Ensure the local payment simulation route is intentionally removed.
+     */
+    public function test_simulate_route_is_not_defined(): void
+    {
+        $this->assertFalse(Route::has('payments.simulate'));
     }
 }

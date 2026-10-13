@@ -117,4 +117,25 @@ class CartController extends Controller
         return redirect()->route('cart.index')
             ->with('success', 'Keranjang belanja telah dikosongkan.');
     }
+
+    /**
+     * Buy now: add a single product variant to cart and redirect to checkout.
+     */
+    public function buyNow(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'product_variant_id' => ['required', 'exists:product_variants,id'],
+            'quantity' => ['required', 'integer', 'min:1'],
+        ]);
+
+        // Store buy‑now context in session (separate from regular cart)
+        $request->session()->put('buy_now', [
+            'product_variant_id' => $validated['product_variant_id'],
+            'quantity' => $validated['quantity'],
+        ]);
+
+        // Redirect directly to checkout page
+        return redirect()->route('checkout.index')
+            ->with('success', 'Produk siap checkout via Beli Sekarang.');
+    }
 }

@@ -69,7 +69,7 @@ class OrderTest extends TestCase
         $order = Order::where('user_id', $customer->id)->first();
         $this->assertNotNull($order);
 
-        $response->assertRedirect(route('orders.show', $order));
+        $response->assertRedirect(route('payments.show', $order));
 
         // Subtotal = 2 * 45000 = 90000. Shipping = 15000. Grand total = 105000
         $this->assertEquals(90000.0, (float) $order->subtotal);

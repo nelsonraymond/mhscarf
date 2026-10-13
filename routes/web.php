@@ -52,6 +52,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [CustomerAuthController::class, 'destroy'])->name('logout');
     // Customer Profile
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
     // Customer Address Management
     Route::get('/addresses', [AddressController::class, 'index'])->name('addresses.index');
@@ -73,7 +75,7 @@ Route::middleware('auth')->group(function () {
 
     // Customer Payment (ownership enforced in controller/service)
     Route::get('/orders/{order}/payment', [PaymentController::class, 'show'])->name('payments.show');
-    Route::post('/orders/{order}/payment/simulate', [PaymentController::class, 'simulate'])->name('payments.simulate');
+    // Route::post('/orders/{order}/payment/simulate', [PaymentController::class, 'simulate'])->name('payments.simulate');
 
     // Wishlist Routes (Authenticated Customers)
     Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
@@ -90,6 +92,7 @@ Route::post('/cart/items', [CartController::class, 'store'])->name('cart.items.s
 Route::patch('/cart/items/{cartItem}', [CartController::class, 'update'])->name('cart.items.update');
 Route::delete('/cart/items/{cartItem}', [CartController::class, 'destroy'])->name('cart.items.destroy');
 Route::delete('/cart', [CartController::class, 'clear'])->name('cart.destroy');
+Route::post('buy/now', [CartController::class, 'buyNow'])->name('buy.now');
 
 // Admin Routes
 Route::prefix('admin')->name('admin.')->group(function () {
@@ -107,6 +110,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
         Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.status');
         Route::post('/orders/{order}/cancel', [AdminOrderController::class, 'cancel'])->name('orders.cancel');
+        Route::patch('/orders/{order}/shipment', [AdminOrderController::class, 'updateShipment'])->name('orders.shipment');
 
         // Category Management
         Route::resource('categories', CategoryController::class)->except(['show']);

@@ -1,27 +1,27 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    /* Mutya design tokens — single source of truth: DESIGN.md §3 & §38 */
-    --color-pink-soft: #F8C8DC;
-    --color-pink: #EFA7C1;
-    --color-pink-deep: #D98FAF;
-    --color-pink-mauve: #B97897;
-    --color-cream: #FFF9F5;
-    --color-surface: #FCF7F8;
-    --color-gold: #C9A227;
-    --color-ink: #3A3033;
-    --color-muted: #75686D;
-    --color-line: #EBDDE2;
+    /* MH Scarf design tokens — single source of truth: DESIGN.md §3 & §38 */
+    --color-pink-soft: #f8c8dc;
+    --color-pink: #efa7c1;
+    --color-pink-deep: #d98faf;
+    --color-pink-mauve: #b97897;
+    --color-cream: #fff9f5;
+    --color-surface: #fcf7f8;
+    --color-gold: #c9a227;
+    --color-ink: #3a3033;
+    --color-muted: #75686d;
+    --color-line: #ebdde2;
 
-    --font-display: 'Playfair Display', ui-serif, Georgia, serif;
-    --font-body: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+    --font-display: "Playfair Display", ui-serif, Georgia, serif;
+    --font-body: "Poppins", ui-sans-serif, system-ui, sans-serif;
 
     /* Soft shadows per DESIGN.md §10 (no strong black shadows) */
     --shadow-card: 0 8px 30px rgba(58, 48, 51, 0.06);
-    --shadow-card-hover: 0 12px 35px rgba(58, 48, 51, 0.10);
+    --shadow-card-hover: 0 12px 35px rgba(58, 48, 51, 0.1);
 }
 
 body {
@@ -53,12 +53,12 @@ html {
 
 /* Elegant, subtle motion per DESIGN.md §30 (200–400ms ease-out) */
 @media (prefers-reduced-motion: no-preference) {
-    .mutya-rise {
-        animation: mutya-rise 0.4s ease-out both;
+    .mh-scarf-rise {
+        animation: mh-scarf-rise 0.4s ease-out both;
     }
 }
 
-@keyframes mutya-rise {
+@keyframes mh-scarf-rise {
     from {
         opacity: 0;
         transform: translateY(10px);
@@ -83,7 +83,9 @@ html {
     background-color: rgba(58, 48, 51, 0.45); /* ink-tinted scrim, soft per brand */
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s ease-out, visibility 0.3s ease-out;
+    transition:
+        opacity 0.3s ease-out,
+        visibility 0.3s ease-out;
 }
 
 #shop-filtersheet-backdrop.is-open {
@@ -106,7 +108,9 @@ html {
     box-shadow: 0 -12px 35px rgba(58, 48, 51, 0.12);
     transform: translateY(100%);
     visibility: hidden;
-    transition: transform 0.3s ease-out, visibility 0.3s ease-out;
+    transition:
+        transform 0.3s ease-out,
+        visibility 0.3s ease-out;
 }
 
 #shop-filtersheet.is-open {

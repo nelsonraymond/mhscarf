@@ -1,5 +1,5 @@
 <x-layouts.admin>
-    <x-slot:title>Edit Produk: {{ $product->name }} - Mutya Admin</x-slot:title>
+    <x-slot:title>Edit Produk: {{ $product->name }} - MH Scarf Admin</x-slot:title>
     <x-slot:header>Produk / Kelola {{ $product->name }}</x-slot:header>
 
     <div class="space-y-8">

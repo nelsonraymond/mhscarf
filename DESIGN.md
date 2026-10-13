@@ -1,8 +1,8 @@
-# DESIGN.md — MUTYA STOREFRONT DESIGN SYSTEM v2
+# DESIGN.md — MH Scarf STOREFRONT DESIGN SYSTEM v2
 
-> **Purpose:** Visual source of truth for the Mutya hijab e-commerce storefront.
+> **Purpose:** Visual source of truth for the MH Scarf hijab e-commerce storefront.
 >
-> **Brand:** Mutya
+> **Brand:** MH Scarf
 >
 > **Direction:** Soft Luxury Feminine + Editorial Fashion Commerce
 >
@@ -14,7 +14,7 @@
 
 # 1. DESIGN NORTH STAR
 
-Mutya should feel like a **real Indonesian hijab fashion brand**, not a Laravel template and not a generic marketplace.
+MH Scarf should feel like a **real Indonesian hijab fashion brand**, not a Laravel template and not a generic marketplace.
 
 The previous design direction remains correct in its brand fundamentals:
 
@@ -78,12 +78,13 @@ Reference:
 https://lozy.id/
 
 Useful lessons:
+
 - Strong product/category merchandising.
 - Large product taxonomy makes it easy to browse by material/series.
 - Best Seller and product-group navigation are prominent.
 - The store feels like a fashion catalog rather than a generic shop grid.
 
-Source observed from the current site: extensive navigation around product families such as Paris, Voal, Rayon, Viscose, Tencel, Silk, Jersey, and Ceruty, plus Best Seller groupings. 
+Source observed from the current site: extensive navigation around product families such as Paris, Voal, Rayon, Viscose, Tencel, Silk, Jersey, and Ceruty, plus Best Seller groupings.
 
 ## Elzatta
 
@@ -91,13 +92,14 @@ Reference:
 https://elzatta.com/
 
 Useful lessons:
+
 - Strong editorial product storytelling.
 - Product photography receives large visual space.
 - Product pages explain comfort, coverage, material, finishing, and color choice.
 - Shopping is supported by useful decision aids such as color/undertone guidance.
 - Hero/product storytelling is more editorial than a basic product grid.
 
-Source observed from the current site: hero product storytelling, feature blocks for Comfort/Coverage/Material/Finishing, color discovery, and an undertone guide. 
+Source observed from the current site: hero product storytelling, feature blocks for Comfort/Coverage/Material/Finishing, color discovery, and an undertone guide.
 
 ## Kenan Hijab
 
@@ -105,15 +107,16 @@ Reference:
 https://kenanhijab.co.id/home/
 
 Useful lessons:
+
 - Promotional merchandising is visually prominent.
 - Product cards communicate sale pricing clearly.
 - New Arrival and Popular product groups create shopping momentum.
 - Editorial/news and brand activity are mixed with commerce content.
 - The homepage combines products, promotions, social proof/brand activity, and offline-store information.
 
-Source observed from the current site: promotional product sections, New Arrival/Popular groupings, offline-store links, and editorial/news content. 
+Source observed from the current site: promotional product sections, New Arrival/Popular groupings, offline-store links, and editorial/news content.
 
-## Mutya decision
+## MH Scarf decision
 
 Borrow the **principles**, not the identity:
 
@@ -127,7 +130,7 @@ Editorial storytelling + product education
 Kenan:
 Promotion + new arrivals + brand activity
 
-Mutya:
+MH Scarf:
 Soft luxury + floral identity + clean editorial commerce
 ```
 
@@ -214,6 +217,7 @@ Approximate visual balance:
 Do NOT tint every element pink.
 
 Pink should identify:
+
 - CTA
 - active state
 - selected state
@@ -323,26 +327,31 @@ Use for:
 ## Typography hierarchy
 
 Hero:
+
 ```text
 clamp(2.5rem, 7vw, 5.5rem)
 ```
 
 Section heading:
+
 ```text
 clamp(1.75rem, 4vw, 3.25rem)
 ```
 
 Product title:
+
 ```text
 0.95rem – 1.05rem
 ```
 
 Product price:
+
 ```text
 0.95rem – 1.1rem
 ```
 
 Micro-label:
+
 ```text
 0.65rem – 0.75rem
 ```
@@ -426,21 +435,25 @@ Base rhythm:
 Homepage section spacing:
 
 Desktop:
+
 ```text
 80–120px
 ```
 
 Mobile:
+
 ```text
 56–72px
 ```
 
 Product grids:
+
 ```text
 16–24px
 ```
 
 Editorial sections:
+
 ```text
 64–96px
 ```
@@ -550,13 +563,13 @@ Floral decoration should be discovered, not shouted.
 Logo direction:
 
 ```text
-❀ MUTYA
+❀ MH Scarf
 ```
 
 or
 
 ```text
-MUTYA
+MH Scarf
 small floral mark
 ```
 
@@ -573,7 +586,7 @@ Do not turn the flower into a complicated logo illustration.
 Recommended:
 
 ```text
-          MUTYA
+          MH Scarf
 
 SHOP   COLLECTIONS   ABOUT   JOURNAL        SEARCH  ♡  BAG
 ```
@@ -595,13 +608,13 @@ This creates a more editorial experience than a permanently boxed navbar.
 Use:
 
 ```text
-☰     MUTYA     ♡   BAG
+☰     MH Scarf     ♡   BAG
 ```
 
 or:
 
 ```text
-☰     MUTYA     BAG
+☰     MH Scarf     BAG
 ```
 
 Search can expand into a full-width search panel.
@@ -801,12 +814,14 @@ Rp129.000
 ### Interaction
 
 On desktop:
+
 - subtle image zoom
 - optional image swap on hover
 - wishlist animates
 - CTA appears subtly
 
 On mobile:
+
 - no hover dependency
 - actions visible/tappable
 
@@ -851,7 +866,7 @@ Use an editorial split:
 ```text
 [ Large editorial image ]
 
-                     About Mutya
+                     About MH Scarf
                      A quiet kind of
                      everyday elegance.
 
@@ -861,12 +876,13 @@ Use an editorial split:
 ```
 
 Background:
+
 - cream
 - white
 - very subtle botanical line-art
 
 Purpose:
-Make Mutya feel like a **brand**, not only a store.
+Make MH Scarf feel like a **brand**, not only a store.
 
 ---
 
@@ -910,6 +926,7 @@ THE EVERYDAY EDIT
 ```
 
 Visual:
+
 - large image
 - pink/cream text panel
 - subtle floral decoration
@@ -934,10 +951,12 @@ Verified Purchase
 ```
 
 If there are not enough reviews:
+
 - use a graceful empty state
 - do not fabricate customer claims
 
 Optional:
+
 - customer photo grid
 - review photo masonry
 
@@ -955,6 +974,7 @@ Prefer:
 ```
 
 Mix:
+
 - product
 - lifestyle
 - packaging
@@ -973,7 +993,7 @@ Example:
 ```text
 A little beauty, delivered.
 
-Join the Mutya list for new collections,
+Join the MH Scarf list for new collections,
 special offers, and styling inspiration.
 
 [ Email Address              ][ Join ]
@@ -993,7 +1013,7 @@ Footer should feel editorial and premium.
 Columns:
 
 ```text
-MUTYA
+MH Scarf
 Quietly elegant hijabs for everyday moments.
 
 SHOP
@@ -1113,6 +1133,7 @@ Swatch:
 ```
 
 Selected state:
+
 - 1–2px dark outline
 - subtle ring
 - accessible text label
@@ -1145,6 +1166,7 @@ Products                 Summary
 ```
 
 Mobile:
+
 - product first
 - summary below
 - sticky CTA where appropriate
@@ -1220,7 +1242,7 @@ Example:
 Welcome back.
 
 Masuk untuk melanjutkan
-ke koleksi Mutya.
+ke koleksi MH Scarf.
 
 [ Email ]
 [ Password ]
@@ -1385,10 +1407,12 @@ Do not make products too small.
 # 40. RESPONSIVE HERO
 
 Desktop:
+
 - large visual composition
 - asymmetrical layout
 
 Mobile:
+
 - stacked
 - image remains large
 - text remains readable
@@ -1657,7 +1681,7 @@ A page is visually complete when:
 
 # 50. FINAL DESIGN GOAL
 
-The final Mutya website should create this reaction:
+The final MH Scarf website should create this reaction:
 
 > **"Ini terasa seperti brand hijab premium yang benar-benar punya identitas."**
 
@@ -1681,4 +1705,4 @@ Track the order
 
 The interface must be **fashion editorial first, e-commerce second, floral third**.
 
-That balance is what makes Mutya feel premium instead of decorative.
+That balance is what makes MH Scarf feel premium instead of decorative.

@@ -257,14 +257,14 @@ class CatalogSeeder extends Seeder
             // Hijab Premium
             [
                 'category_slug' => 'hijab-premium',
-                'name' => 'Mutya Signature Rose Mulberry Silk',
+                'name' => 'MH Scarf Signature Rose Mulberry Silk',
                 'sku' => 'PRM-SGN-001',
                 'material' => '100% Mulberry Silk',
                 'base_price' => 249000,
                 'compare_at_price' => 299000,
                 'is_featured' => true,
                 'is_best_seller' => true,
-                'description' => 'Karya istimewa Mutya Store menggunakan 100% serat sutra murbei alami berhias signature botanical rose charm.',
+                'description' => 'Karya istimewa MH Scarf Store menggunakan 100% serat sutra murbei alami berhias signature botanical rose charm.',
                 'variant_count' => 3,
             ],
             [

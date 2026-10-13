@@ -26,7 +26,12 @@ class PaymentController extends Controller
             abort(403, 'Anda tidak memiliki hak akses ke pembayaran pesanan ini.');
         }
 
-        $payment = $this->paymentService->initializePayment($order);
+        try {
+            $payment = $this->paymentService->initializePayment($order);
+        } catch (\RuntimeException $e) {
+            return redirect()->route('orders.show', $order)
+                ->with('error', $e->getMessage());
+        }
         $order->load(['items.variant.product', 'shipment']);
 
         return view('payments.show', compact('order', 'payment'));
@@ -53,46 +58,6 @@ class PaymentController extends Controller
         ]);
     }
 
-    /**
-     * Payment simulator for local development and MVP testing.
-     */
-    public function simulate(Order $order, Request $request): RedirectResponse
-    {
-        if ($order->user_id !== Auth::id()) {
-            abort(403, 'Akses ditolak.');
-        }
+    // Simulation endpoint removed – payments must be processed via real Midtrans Snap.
 
-        $validated = $request->validate([
-            'status' => ['required', 'string', 'in:paid,failed,expired'],
-        ]);
-
-        $serverKey = config('services.midtrans.server_key', '');
-        $statusCode = match ($validated['status']) {
-            'paid' => '200',
-            'failed' => '400',
-            'expired' => '407',
-        };
-        $grossAmount = number_format((float) $order->grand_total, 2, '.', '');
-        $signature = hash('sha512', $order->order_number.$statusCode.$grossAmount.$serverKey);
-
-        $payload = [
-            'order_id' => $order->order_number,
-            'status_code' => $statusCode,
-            'gross_amount' => $grossAmount,
-            'signature_key' => $signature,
-            'transaction_id' => 'SIM-'.uniqid(),
-            'transaction_status' => match ($validated['status']) {
-                'paid' => 'settlement',
-                'failed' => 'deny',
-                'expired' => 'expire',
-            },
-            'payment_type' => 'bank_transfer',
-            'settlement_time' => now()->toDateTimeString(),
-        ];
-
-        $this->paymentService->handleWebhook($payload);
-
-        return redirect()->route('orders.show', $order)
-            ->with('success', 'Status simulasi pembayaran berhasil diperbarui.');
-    }
 }

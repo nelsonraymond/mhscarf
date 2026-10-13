@@ -1,9 +1,9 @@
 <x-layouts.auth>
-    <x-slot:title>Atur Ulang Kata Sandi - Mutya Store</x-slot:title>
+    <x-slot:title>Atur Ulang Kata Sandi - MH Scarf Store</x-slot:title>
 
     <div class="mb-6 text-center">
         <h1 class="font-serif-display text-2xl font-bold text-ink">Kata Sandi Baru</h1>
-        <p class="text-sm text-muted mt-1.5">Buat kata sandi baru untuk akun Mutya Store Anda</p>
+        <p class="text-sm text-muted mt-1.5">Buat kata sandi baru untuk akun MH Scarf Store Anda</p>
     </div>
 
     <form method="POST" action="{{ route('password.update') }}" class="space-y-4" novalidate>

@@ -1,5 +1,5 @@
 <x-layouts.admin>
-    <x-slot:title>Tambah Kategori - Mutya Admin</x-slot:title>
+    <x-slot:title>Tambah Kategori - MH Scarf Admin</x-slot:title>
     <x-slot:header>Kategori / Tambah Baru</x-slot:header>
 
     <div class="max-w-2xl mx-auto">

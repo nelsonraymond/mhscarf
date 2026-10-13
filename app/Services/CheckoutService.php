@@ -20,6 +20,7 @@ class CheckoutService
         protected CartService $cartService,
         protected InventoryService $inventoryService,
         protected ShippingService $shippingService,
+        protected StockReservationService $stockReservationService,
     ) {}
 
     /**
@@ -106,55 +107,55 @@ class CheckoutService
         $shippingCost = $shippingOption['cost'];
 
         return DB::transaction(function () use ($user, $address, $shippingOption, $shippingCost, $data) {
-            // Re-fetch cart for authenticated user
-            $cart = Cart::where('user_id', $user->id)->with('items')->first();
+            // Determine flow: regular cart or Buy‑Now
+            if (session()->has('buy_now')) {
+                // ----- Buy‑Now flow -----
+                $buyNow = session()->get('buy_now');
+                $variant = ProductVariant::findOrFail($buyNow['product_variant_id']);
+                $quantity = (int) $buyNow['quantity'];
 
-            if (! $cart || $cart->items->isEmpty()) {
-                throw ValidationException::withMessages([
-                    'cart' => 'Keranjang belanja Anda kosong.',
+                // Lock the single variant for update
+                $lockedVariant = ProductVariant::where('id', $variant->id)
+                    ->with('product')
+                    ->lockForUpdate()
+                    ->first();
+
+                $lockedVariants = collect([$lockedVariant->id => $lockedVariant]);
+                $cartItems = collect([
+                    (object) [
+                        'product_variant_id' => $variant->id,
+                        'quantity' => $quantity,
+                    ],
                 ]);
-            }
+            } else {
+                // ----- Regular cart flow -----
+                // ----- Regular cart flow -----
+                $cart = $this->cartService->getCart($user, session()->getId());
 
-            $variantIds = $cart->items->pluck('product_variant_id')->unique()->all();
-
-            // Lock inventory rows to prevent race condition overselling during concurrent checkout
-            $lockedVariants = ProductVariant::whereIn('id', $variantIds)
-                ->with('product')
-                ->lockForUpdate()
-                ->get()
-                ->keyBy('id');
-
-            $orderSubtotal = 0.0;
-            $orderItemsData = [];
-
-            foreach ($cart->items as $cartItem) {
-                /** @var ?ProductVariant $lockedVariant */
-                $lockedVariant = $lockedVariants->get($cartItem->product_variant_id);
-
-                if (! $lockedVariant || ! $lockedVariant->is_active || ! $lockedVariant->product?->is_active) {
+                if (! $cart || $cart->items->isEmpty()) {
                     throw ValidationException::withMessages([
-                        'cart' => 'Salah satu produk yang dipilih sudah tidak tersedia.',
+                        'cart' => 'Keranjang belanja Anda kosong.',
                     ]);
                 }
 
-                if ($cartItem->quantity > $lockedVariant->stock_qty) {
-                    throw ValidationException::withMessages([
-                        'cart' => "Stok tidak mencukupi untuk {$lockedVariant->product->name} ({$lockedVariant->name}). Sisa stok: {$lockedVariant->stock_qty}.",
-                    ]);
-                }
+                $lockedVariants = ProductVariant::whereIn('id', $cart->items->pluck('product_variant_id')->unique()->all())
+                    ->with('product')
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('id');
 
-                $unitPrice = $lockedVariant->finalPrice();
-                $itemSubtotal = $unitPrice * $cartItem->quantity;
-                $orderSubtotal += $itemSubtotal;
-
-                $orderItemsData[] = [
-                    'variant' => $lockedVariant,
-                    'quantity' => $cartItem->quantity,
-                    'unit_price' => $unitPrice,
-                    'subtotal' => $itemSubtotal,
-                ];
+                $cartItems = $cart->items;
             }
 
+            // Use StockReservationService to validate, reserve and deduct stock
+            $orderItemsData = $this->stockReservationService->reserveAndDeduct(
+                lockedVariants: $lockedVariants,
+                cartItems: $cartItems,
+                userId: $user->id,
+                shippingCost: $shippingCost
+            );
+
+            $orderSubtotal = array_sum(array_column($orderItemsData, 'subtotal'));
             $grandTotal = $orderSubtotal + $shippingCost;
 
             // Generate unique order number
@@ -182,32 +183,18 @@ class CheckoutService
                 'placed_at' => now(),
             ]);
 
-            // Create immutable OrderItems snapshots and deduct stock atomically
+            // Create immutable OrderItems snapshots using data from reservation service
             foreach ($orderItemsData as $itemData) {
-                /** @var ProductVariant $variant */
-                $variant = $itemData['variant'];
-
                 $order->items()->create([
-                    'product_id' => $variant->product_id,
-                    'product_variant_id' => $variant->id,
-                    'product_name' => $variant->product->name,
-                    'variant_name' => $variant->name,
-                    'sku' => $variant->sku,
+                    'product_id' => $itemData['variant']->product_id,
+                    'product_variant_id' => $itemData['variant']->id,
+                    'product_name' => $itemData['variant']->product->name,
+                    'variant_name' => $itemData['variant']->name,
+                    'sku' => $itemData['variant']->sku,
                     'unit_price' => $itemData['unit_price'],
                     'quantity' => $itemData['quantity'],
                     'subtotal' => $itemData['subtotal'],
                 ]);
-
-                // Inventory deduction with InventoryMovement
-                $this->inventoryService->recordMovement(
-                    variant: $variant,
-                    quantity: $itemData['quantity'],
-                    type: 'out',
-                    userId: $user->id,
-                    note: "Pesanan #{$order->order_number}",
-                    referenceType: Order::class,
-                    referenceId: $order->id,
-                );
             }
 
             // Create Shipment record
@@ -220,8 +207,15 @@ class CheckoutService
                 'status' => 'pending',
             ]);
 
-            // Clear the user's cart
-            $this->cartService->clearCart($cart);
+            // Clear the user's cart only for regular flow
+            if (isset($cart)) {
+                $this->cartService->clearCart($cart);
+            }
+
+            // Remove buy_now session flag after successful order
+            if (session()->has('buy_now')) {
+                session()->forget('buy_now');
+            }
 
             return $order;
         });

@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', ($selectedCategory ? $selectedCategory->name . ' — ' : 'Semua Koleksi — ') . 'Mutya Store')
+    @section('title', ($selectedCategory ? $selectedCategory->name . ' — ' : 'Semua Koleksi — ') . 'MH Scarf Store')
 
     {{-- ================= SHOP PAGE — DESIGN.md v3: product-first, editorial-minimal =================
          Reuses shared components (layout navbar/footer, ProductCard) and the proven CatalogController
@@ -243,7 +243,7 @@
             <div class="border border-line bg-white py-16 px-6 text-center">
                 <p class="font-display text-xl text-ink">Belum ada produk yang cocok</p>
                 <p class="text-sm text-muted mt-2 max-w-md mx-auto leading-relaxed">
-                    Coba ubah kata kunci pencarian atau pilih kategori lain untuk melihat koleksi Mutya selengkapnya.
+                    Coba ubah kata kunci pencarian atau pilih kategori lain untuk melihat koleksi MH Scarf selengkapnya.
                 </p>
                 <a href="{{ route('shop.index') }}"
                     class="mt-6 inline-flex min-h-[44px] items-center px-5 rounded-full bg-pink-deep hover:bg-pink-mauve text-white text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-pink-deep">

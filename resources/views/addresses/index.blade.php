@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Daftar Alamat Pengiriman - Mutya Store</title>
+    <title>Daftar Alamat Pengiriman - MH Scarf Store</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,7 +30,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <a href="{{ route('home') }}" class="inline-flex items-center space-x-2">
                 <span class="text-[#D98FAF] text-lg">❀</span>
-                <span class="font-serif-display text-xl font-bold tracking-wider text-[#3A3033] uppercase">MUTYA</span>
+                <span class="font-serif-display text-xl font-bold tracking-wider text-[#3A3033] uppercase">MH Scarf</span>
             </a>
 
             <nav class="hidden md:flex items-center space-x-6 text-sm">
@@ -90,7 +90,7 @@
                 </div>
                 <h2 class="font-serif-display text-xl font-bold text-[#3A3033] mb-2">Belum Ada Alamat Tersimpan</h2>
                 <p class="text-sm text-[#75686D] max-w-md mx-auto mb-6">
-                    Tambahkan alamat pengiriman utama Anda untuk mempercepat proses pemesanan hijab favorit Anda di Mutya Store.
+                    Tambahkan alamat pengiriman utama Anda untuk mempercepat proses pemesanan hijab favorit Anda di MH Scarf Store.
                 </p>
                 <a href="{{ route('addresses.create') }}"
                     class="inline-flex items-center px-5 py-2.5 bg-[#D98FAF] hover:bg-[#c97e9e] text-white text-sm font-medium rounded-xl transition">
@@ -169,7 +169,7 @@
     </main>
 
     <footer class="mt-auto bg-white border-t border-[#EBDDE2] py-6 text-center text-xs text-[#75686D]">
-        <p>&copy; {{ date('Y') }} Mutya Store. Soft Luxury Hijab Boutique.</p>
+        <p>&copy; {{ date('Y') }} MH Scarf Store. Soft Luxury Hijab Boutique.</p>
     </footer>
 </body>
 </html>

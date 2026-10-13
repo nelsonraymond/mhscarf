@@ -11,7 +11,7 @@ use Illuminate\View\View;
 class HomeController extends Controller
 {
     /**
-     * Mutya storefront homepage (PRD F-01 / DESIGN.md §13–§25).
+     * MH Scarf storefront homepage (PRD F-01 / DESIGN.md §13–§25).
      */
     public function __invoke(): View
     {

@@ -87,6 +87,30 @@ class OrderController extends Controller
     }
 
     /**
+     * Update shipment details for an order.
+     */
+    public function updateShipment(Request $request, Order $order): RedirectResponse
+    {
+        $validated = $request->validate([
+            'courier' => ['nullable', 'string', 'max:255'],
+            'service' => ['nullable', 'string', 'max:255'],
+            'tracking_number' => ['nullable', 'string', 'max:255'],
+            'shipping_cost' => ['nullable', 'numeric', 'min:0'],
+            'status' => ['nullable', 'string', 'in:pending,shipped,delivered,cancelled'],
+        ]);
+
+        // Ensure shipment exists; create if missing
+        $shipment = $order->shipment;
+        if ($shipment) {
+            $shipment->update($validated);
+        } else {
+            $order->shipment()->create($validated);
+        }
+
+        return back()->with('success', "Detail pengiriman untuk pesanan #{$order->order_number} berhasil diperbarui.");
+    }
+
+    /**
      * Cancel an order from admin panel and restore stock.
      */
     public function cancel(Request $request, Order $order): RedirectResponse

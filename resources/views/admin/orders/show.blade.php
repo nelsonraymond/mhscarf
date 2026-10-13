@@ -1,5 +1,5 @@
 <x-layouts.admin>
-    <x-slot:title>Pesanan #{{ $order->order_number }} - Mutya Admin</x-slot:title>
+    <x-slot:title>Pesanan #{{ $order->order_number }} - MH Scarf Admin</x-slot:title>
     <x-slot:header>Detail Pesanan</x-slot:header>
 
     @if(session('success'))
@@ -219,6 +219,47 @@
             <!-- Shipment Details -->
             <div class="bg-white rounded-2xl border border-[#EBDDE2] p-6 shadow-xs">
                 <h2 class="text-sm font-semibold text-[#3A3033] mb-4">Detail Pengiriman</h2>
+
+                @if ($order->shipment)
+                                            <form method="POST" action="{{ route('admin.orders.shipment', $order) }}" class="space-y-3">
+                        @csrf
+                        @method('PATCH')
+                        <div class="flex flex-col space-y-2">
+                            <label class="text-sm font-medium text-[#75686D]">Kurir</label>
+                            <input type="text" name="courier" value="{{ old('courier', $order->shipment->courier) }}" class="w-full px-3 py-2 rounded-xl border border-[#EBDDE2] text-sm focus:outline-none focus:ring-2 focus:ring-[#D98FAF] bg-white">
+                        </div>
+                        <div class="flex flex-col space-y-2">
+                            <label class="text-sm font-medium text-[#75686D]">Layanan</label>
+                            <input type="text" name="service" value="{{ old('service', $order->shipment->service) }}" class="w-full px-3 py-2 rounded-xl border border-[#EBDDE2] text-sm focus:outline-none focus:ring-2 focus:ring-[#D98FAF] bg-white">
+                        </div>
+                        <div class="flex flex-col space-y-2">
+                            <label class="text-sm font-medium text-[#75686D]">Nomor Resi</label>
+                            <input type="text" name="tracking_number" value="{{ old('tracking_number', $order->shipment->tracking_number) }}" class="w-full px-3 py-2 rounded-xl border border-[#EBDDE2] text-sm focus:outline-none focus:ring-2 focus:ring-[#D98FAF] bg-white">
+                        </div>
+                        <div class="flex flex-col space-y-2">
+                            <label class="text-sm font-medium text-[#75686D]">Biaya Pengiriman</label>
+                            <input type="number" step="0.01" name="shipping_cost" value="{{ old('shipping_cost', $order->shipment->shipping_cost) }}" class="w-full px-3 py-2 rounded-xl border border-[#EBDDE2] text-sm focus:outline-none focus:ring-2 focus:ring-[#D98FAF] bg-white">
+                        </div>
+                        <div class="flex flex-col space-y-2">
+                            <label class="text-sm font-medium text-[#75686D]">Status</label>
+                            <select name="status" class="w-full px-3 py-2 rounded-xl border border-[#EBDDE2] text-sm focus:outline-none focus:ring-2 focus:ring-[#D98FAF] bg-white">
+                                <option value="">-- Pilih Status --</option>
+                                <option value="pending" {{ $order->shipment->status == 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="shipped" {{ $order->shipment->status == 'shipped' ? 'selected' : '' }}>Dikirim</option>
+                                <option value="delivered" {{ $order->shipment->status == 'delivered' ? 'selected' : '' }}>Tiba</option>
+                                <option value="cancelled" {{ $order->shipment->status == 'cancelled' ? 'selected' : '' }}>Dibatalkan</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl font-medium text-white bg-[#D98FAF] hover:bg-[#B97897] shadow-xs transition text-sm cursor-pointer">
+                            Perbarui Pengiriman
+                        </button>
+                    </form>
+                @else
+                    <p class="text-xs text-[#75686D] italic">Data pengiriman belum dibuat.</p>
+                @endif
+            </div>
+{{--
+                <h2 class="text-sm font-semibold text-[#3A3033] mb-4">Detail Pengiriman</h2>
                 @if ($order->shipment)
                     <div class="text-xs space-y-1.5">
                         <p class="text-[#75686D]">Kurir: <span class="text-[#3A3033] font-semibold">{{ $order->shipment->courier ?? '—' }} {{ $order->shipment->service ? '('.$order->shipment->service.')' : '' }}</span></p>
@@ -234,7 +275,7 @@
                     </div>
                 @else
                     <p class="text-xs text-[#75686D] italic">Data pengiriman belum dibuat.</p>
-                @endif
+                @endif --}}
             </div>
         </div>
     </div>

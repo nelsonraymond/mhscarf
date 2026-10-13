@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', 'Profil Saya — Mutya Store')
+    @section('title', 'Profil Saya — MH Scarf Store')
 
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
 
@@ -18,7 +18,7 @@
         <div class="mb-8">
             <p class="text-[11px] uppercase tracking-[0.2em] text-pink-mauve font-semibold mb-1">Pengaturan Akun</p>
             <h1 class="font-display text-2xl sm:text-3xl font-bold text-ink">Profil Pelanggan</h1>
-            <p class="text-sm text-muted mt-1.5">Informasi akun terdaftar dan pintasan navigasi belanja Anda di Mutya Store</p>
+            <p class="text-sm text-muted mt-1.5">Informasi akun terdaftar dan pintasan navigasi belanja Anda di MH Scarf Store</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -55,6 +55,8 @@
                 {{-- Account Details Card --}}
                 <div class="bg-white rounded-2xl border border-line p-6 sm:p-7 shadow-card">
                     <h3 class="font-display text-base font-bold text-ink mb-4 pb-3 border-b border-line/60 flex items-center justify-between">
+                        <span>Data Pribadi</span>
+                        <a href="{{ route('profile.edit') }}" class="text-sm text-pink-deep hover:underline ml-2">Edit Profil</a>
                         <span>Data Pribadi</span>
                         <span class="text-xs text-muted font-normal">Terverifikasi</span>
                     </h3>

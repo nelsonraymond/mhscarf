@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title ?? config('app.name', 'Mutya Store') }}</title>
+    <title>{{ $title ?? config('app.name', 'MH Scarf Store') }}</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,8 +27,8 @@
     <div class="pointer-events-none absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-[#EFA7C1]/20 blur-3xl"></div>
 
     <div class="sm:mx-auto sm:w-full sm:max-w-md relative z-10 text-center mb-6">
-        <a href="{{ route('home') }}" class="inline-block" aria-label="Mutya — Beranda">
-            <span class="font-display text-2xl font-bold tracking-[0.18em] text-ink uppercase">Mutya</span>
+        <a href="{{ route('home') }}" class="inline-block" aria-label="MH Scarf — Beranda">
+            <span class="font-display text-2xl font-bold tracking-[0.18em] text-ink uppercase">MH Scarf</span>
             <p class="text-[11px] text-muted tracking-[0.2em] uppercase mt-1">Elegance in Every Wrap</p>
         </a>
     </div>

@@ -1,5 +1,5 @@
 <x-layouts.admin>
-    <x-slot:title>Edit Kategori - Mutya Admin</x-slot:title>
+    <x-slot:title>Edit Kategori - MH Scarf Admin</x-slot:title>
     <x-slot:header>Kategori / Edit {{ $category->name }}</x-slot:header>
 
     <div class="max-w-2xl mx-auto">

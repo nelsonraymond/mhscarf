@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', 'Checkout Pesanan — Mutya Store')
+    @section('title', 'Checkout Pesanan — MH Scarf Store')
 
     {{-- Tahap 4: migrated to shared app layout; per-field errors surfaced; shipping card gets
          selected state + keyboard focus ring; fake "Diskon Voucher - Rp 0" row removed (checkout
@@ -183,7 +183,7 @@
                                                 <img src="{{ Storage::url($primaryImage->image_path) }}" alt="{{ $product->name }}"
                                                     loading="lazy" class="w-full h-full object-cover">
                                             @else
-                                                <span class="text-[10px] tracking-widest text-pink-deep uppercase" aria-hidden="true">Mutya</span>
+                                                <span class="text-[10px] tracking-widest text-pink-deep uppercase" aria-hidden="true">MH Scarf</span>
                                             @endif
                                         </div>
                                         <div class="min-w-0">
@@ -279,6 +279,64 @@
                 </aside>
             </div>
         </form>
+
+    {{-- Include Midtrans Snap JS (Sandbox) --}}
+    <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('checkout-form');
+            if (!form) return;
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const formData = new FormData(form);
+                console.log('Checkout form data:', Object.fromEntries(formData.entries()));
+                const headers = new Headers({
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                });
+
+                fetch(form.action, {
+                    method: form.method,
+                    headers: headers,
+                    body: formData,
+                    credentials: 'same-origin'
+                })
+                .then(async response => {
+                    if (!response.ok) {
+                        const err = await response.json();
+                        return Promise.reject(err);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.snap_token && data.client_key) {
+                        window.snap.pay(data.snap_token, {
+                            onSuccess: result => console.log('Snap success', result),
+                            onPending: result => console.log('Snap pending', result),
+                            onError: result => console.error('Snap error', result),
+                            onClose: () => console.log('Snap closed')
+                        })
+                .catch(err => {
+                    console.error('Checkout error:', err);
+                    alert(err.error || 'Terjadi kesalahan saat memproses checkout.');
+                });;
+                    } else {
+                        // Fallback: redirect to payment page
+                        const orderId = data.order_id || '';
+                        if (orderId) {
+                            window.location.href = `/orders/${orderId}/payment`;
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error('Checkout error', err);
+                    alert('Terjadi kesalahan saat memproses checkout. Silakan coba lagi.');
+                });
+            });
+        });
+    </script>
 
         {{-- Sticky summary bar (mobile/tablet): total always reachable --}}
         <div class="fixed bottom-0 inset-x-0 z-50 lg:hidden bg-white border-t border-line shadow-[0_-4px_16px_rgba(58,48,51,0.08)]">

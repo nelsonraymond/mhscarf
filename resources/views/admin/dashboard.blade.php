@@ -1,10 +1,10 @@
 <x-layouts.admin>
-    <x-slot:title>Dashboard - Mutya Admin</x-slot:title>
+    <x-slot:title>Dashboard - MH Scarf Admin</x-slot:title>
     <x-slot:header>Ringkasan Dashboard</x-slot:header>
 
     <div class="mb-8">
         <h1 class="font-serif-display text-2xl font-bold text-[#3A3033]">Admin Dashboard</h1>
-        <p class="text-sm text-[#75686D] mt-1">Selamat Datang, {{ auth()->user()->name }} &bull; Panel administrasi e-commerce Mutya Hijab</p>
+        <p class="text-sm text-[#75686D] mt-1">Selamat Datang, {{ auth()->user()->name }} &bull; Panel administrasi e-commerce MH Scarf Hijab</p>
     </div>
 
     <!-- Quick Stats Cards -->

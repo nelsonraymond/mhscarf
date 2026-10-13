@@ -20,7 +20,7 @@ class ShipmentFactory extends Factory
     {
         return [
             'order_id' => Order::factory(),
-            'courier' => 'Mutya Express Delivery',
+            'courier' => 'MH Scarf Express Delivery',
             'service' => 'Reguler',
             'tracking_number' => 'MTE'.fake()->numerify('##########'),
             'shipping_cost' => 15000,

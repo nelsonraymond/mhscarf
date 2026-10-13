@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', 'Keranjang Belanja — Mutya Store')
+    @section('title', 'Keranjang Belanja — MH Scarf Store')
 
     {{-- Tahap 4: migrated to shared app layout (navbar/footer/flash), design tokens,
          stepper qty consistent with product detail, server-side max/min enforced,
@@ -85,7 +85,7 @@
                                                 class="w-16 h-20 object-cover rounded-xl border border-line bg-cream shrink-0">
                                         @else
                                             <div class="w-16 h-20 rounded-xl bg-pink-soft/20 border border-line flex items-center justify-center text-[10px] tracking-widest text-pink-deep uppercase shrink-0" aria-hidden="true">
-                                                Mutya
+                                                MH Scarf
                                             </div>
                                         @endif
                                         <div class="min-w-0">

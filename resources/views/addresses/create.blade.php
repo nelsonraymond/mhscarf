@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Tambah Alamat Baru - Mutya Store</title>
+    <title>Tambah Alamat Baru - MH Scarf Store</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,7 +30,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <a href="{{ route('home') }}" class="inline-flex items-center space-x-2">
                 <span class="text-[#D98FAF] text-lg">❀</span>
-                <span class="font-serif-display text-xl font-bold tracking-wider text-[#3A3033] uppercase">MUTYA</span>
+                <span class="font-serif-display text-xl font-bold tracking-wider text-[#3A3033] uppercase">MH Scarf</span>
             </a>
 
             <div class="flex items-center space-x-4 text-sm">

@@ -1,5 +1,5 @@
 <x-layouts.auth>
-    <x-slot:title>Admin Login - Mutya Store</x-slot:title>
+    <x-slot:title>Admin Login - MH Scarf Store</x-slot:title>
 
     <div class="mb-6 text-center">
         <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#FFF9F5] border border-[#EBDDE2] text-[#D98FAF] mb-3">
@@ -28,7 +28,7 @@
             <label for="email" class="block text-sm font-medium text-[#3A3033] mb-1">Email Administrator</label>
             <input type="email" name="email" id="email" value="{{ old('email') }}" required autofocus
                 class="w-full px-3.5 py-2.5 rounded-xl border border-[#EBDDE2] focus:outline-none focus:ring-2 focus:ring-[#D98FAF] focus:border-transparent text-sm text-[#3A3033] bg-[#FFF9F5]/40"
-                placeholder="admin@mutyastore.com">
+                placeholder="admin@MH Scarfstore.com">
         </div>
 
         <div>

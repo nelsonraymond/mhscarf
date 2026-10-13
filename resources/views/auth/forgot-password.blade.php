@@ -1,5 +1,5 @@
 <x-layouts.auth>
-    <x-slot:title>Lupa Kata Sandi - Mutya Store</x-slot:title>
+    <x-slot:title>Lupa Kata Sandi - MH Scarf Store</x-slot:title>
 
     <div class="mb-6 text-center">
         <h1 class="font-serif-display text-2xl font-bold text-ink">Lupa Kata Sandi</h1>

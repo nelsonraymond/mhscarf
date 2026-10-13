@@ -1,5 +1,5 @@
 ==============================================================================
-MUTYA STORE — DEMO IMAGE PACKAGE (development / academic use only)
+MH Scarf STORE — DEMO IMAGE PACKAGE (development / academic use only)
 ==============================================================================
 
 WHAT THIS PACKAGE ADDS (merge-safe, additive only):
@@ -13,9 +13,9 @@ WHAT THIS PACKAGE ADDS (merge-safe, additive only):
 
 The ZIP mirrors the project root. Extract its contents INTO your existing
 project folder so paths merge:
-  D:\laragon\www\mutya-store\database\seeders\...
-  D:\laragon\www\mutya-store\storage\app\public\products\...
-  D:\laragon\www\mutya-store\DEMO-IMAGES.md
+  D:\laragon\www\MH Scarf-store\database\seeders\...
+  D:\laragon\www\MH Scarf-store\storage\app\public\products\...
+  D:\laragon\www\MH Scarf-store\DEMO-IMAGES.md
 
 NOTHING ELSE in your project is touched. No migrations, no schema changes,
 no Blade/CSS/controller/route changes, no cart/wishlist/inventory/checkout/
@@ -29,7 +29,7 @@ The seeders match products/categories by SLUG and RELATIONSHIPS only — never
 by hardcoded numeric IDs — so they work with any catalog contents. But before
 running anything, confirm what exists on YOUR MySQL database:
 
-  cd D:\laragon\www\mutya-store
+  cd D:\laragon\www\MH Scarf-store
   D:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe artisan tinker --execute="
     echo 'Products: '.\App\Models\Product::count().PHP_EOL;
     echo 'Images:   '.\App\Models\ProductImage::count().PHP_EOL;
@@ -61,7 +61,7 @@ bundled copy or skip it; the seeder itself never overwrites existing files.
 ------------------------------------------------------------------------------
 STEP 2 — RUN THE SEEDER
 ------------------------------------------------------------------------------
-  cd D:\laragon\www\mutya-store
+  cd D:\laragon\www\MH Scarf-store
   D:\laragon\bin\php\php-8.3.30-Win32-vs16-x64\php.exe artisan db:seed --class=ProductImageSeeder --force
 
 Expected output lines:

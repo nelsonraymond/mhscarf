@@ -1,5 +1,5 @@
 <x-layouts.admin>
-    <x-slot:title>Pesanan - Mutya Admin</x-slot:title>
+    <x-slot:title>Pesanan - MH Scarf Admin</x-slot:title>
     <x-slot:header>Manajemen Pesanan</x-slot:header>
 
     <div class="mb-6">

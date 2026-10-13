@@ -53,7 +53,15 @@ class AdminAuthController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('admin.dashboard'));
+        // Retrieve the intended URL stored by the authentication middleware.
+        $intended = session()->pull('url.intended', null);
+        // If the intended URL is within the admin prefix, redirect there.
+        // Otherwise, default to the admin dashboard.
+        if ($intended && str_starts_with($intended, url('admin'))) {
+            return redirect($intended);
+        }
+
+        return redirect()->route('admin.dashboard');
     }
 
     /**

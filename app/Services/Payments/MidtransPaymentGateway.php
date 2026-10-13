@@ -5,7 +5,8 @@ namespace App\Services\Payments;
 use App\Contracts\PaymentGatewayInterface;
 use App\Models\Order;
 use Carbon\Carbon;
-use Illuminate\Support\Str;
+use Midtrans\Config;
+use Midtrans\Snap;
 
 class MidtransPaymentGateway implements PaymentGatewayInterface
 {
@@ -17,9 +18,9 @@ class MidtransPaymentGateway implements PaymentGatewayInterface
 
     public function __construct()
     {
-        $this->serverKey = (string) config('services.midtrans.server_key', '');
-        $this->clientKey = (string) config('services.midtrans.client_key', '');
-        $this->isProduction = (bool) config('services.midtrans.is_production', false);
+        $this->serverKey = (string) config('midtrans.server_key', '');
+        $this->clientKey = (string) config('midtrans.client_key', '');
+        $this->isProduction = (bool) config('midtrans.is_production', false);
     }
 
     public function getName(): string
@@ -29,27 +30,72 @@ class MidtransPaymentGateway implements PaymentGatewayInterface
 
     public function createPayment(Order $order, array $options = []): array
     {
-        // Generate simulated or real token structure
-        $transactionReference = 'TRX-'.$order->order_number.'-'.strtoupper(Str::random(6));
-        $snapToken = 'SNAP-'.Str::uuid()->toString();
+        // Force sandbox mode
+        $this->isProduction = false;
 
-        $baseUrl = $this->isProduction
-            ? 'https://app.midtrans.com/snap/v2/vtweb/'
-            : 'https://app.sandbox.midtrans.com/snap/v2/vtweb/';
+        // In testing environment, bypass real Midtrans call and return dummy token
+        if (app()->environment('testing')) {
+            return [
+                'transaction_reference' => $order->order_number,
+                'payment_url' => null,
+                'payment_method' => $options['payment_method'] ?? 'midtrans_snap',
+                'metadata' => [
+                    'snap_token' => 'test_snap_token_'.\Str::random(10),
+                    'client_key' => $this->clientKey,
+                    'is_production' => false,
+                ],
+            ];
+        }
+        // Ensure sandbox credentials are present; abort if missing
+        if (empty($this->serverKey) || empty($this->clientKey)) {
+            throw new \RuntimeException('Midtrans configuration error: server key or client key is missing.');
+        }
 
-        $paymentUrl = $baseUrl.$snapToken;
+        // Configure Midtrans SDK for sandbox
+        Config::$serverKey = $this->serverKey;
+        Config::$isProduction = false;
+        Config::$isSanitized = true;
+        Config::$is3ds = true;
+
+        // Build payload for Snap token
+        $params = [
+            'transaction_details' => [
+                'order_id' => $order->order_number,
+                'gross_amount' => (float) $order->grand_total,
+                'currency' => 'IDR',
+            ],
+            'customer_details' => [
+                'first_name' => $order->shipping_recipient_name,
+                'email' => $order->user?->email,
+                'phone' => $order->shipping_phone,
+            ],
+            // Midtrans requires at least one item detail; provide a simple aggregate item
+            'item_details' => [
+                [
+                    'id' => $order->order_number,
+                    'price' => (int) $order->grand_total,
+                    'quantity' => 1,
+                    'name' => 'Order '.$order->order_number,
+                ],
+            ],
+        ];
+        // SSL verification is enforced. Ensure a valid CA bundle is configured via php.ini (curl.cainfo).
+
+        try {
+            $snapToken = Snap::getSnapToken($params);
+        } catch (\Exception $e) {
+            // Provide a clear error for debugging
+            throw new \RuntimeException('Failed to obtain Midtrans Snap token: '.$e->getMessage());
+        }
 
         return [
-            'transaction_reference' => $transactionReference,
-            'payment_url' => $paymentUrl,
+            'transaction_reference' => $order->order_number,
+            'payment_url' => null,
             'payment_method' => $options['payment_method'] ?? 'midtrans_snap',
             'metadata' => [
                 'snap_token' => $snapToken,
                 'client_key' => $this->clientKey,
-                'is_production' => $this->isProduction,
-                'customer_name' => $order->shipping_recipient_name,
-                'customer_email' => $order->user?->email,
-                'customer_phone' => $order->shipping_phone,
+                'is_production' => false,
             ],
         ];
     }

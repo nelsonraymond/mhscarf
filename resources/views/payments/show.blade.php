@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', 'Pembayaran Pesanan #' . $order->order_number . ' — Mutya Store')
+    @section('title', 'Pembayaran Pesanan #' . $order->order_number . ' — MH Scarf Store')
 
     {{-- Stage 6: migrated to shared app layout + design tokens.
          Backend contract unchanged: payments.show (GET) / payments.simulate (POST). --}}
@@ -142,41 +142,24 @@
             </a>
         </div>
 
-        @if($order->status === 'pending' && $order->payment_status !== 'paid')
-            {{-- Local Development Simulator --}}
-            <div class="mt-8 bg-white rounded-2xl border-2 border-dashed border-pink-deep/30 p-5 shadow-card">
-                <div class="flex items-center gap-2 mb-1">
-                    <svg class="w-4 h-4 text-pink-deep" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17l-5.25 3.35 1-5.83-4.25-3.68 5.85-.85L11.42 3l2.6 5.16 5.85.85-4.25 3.68 1 5.83z"/></svg>
-                    <p class="text-[10px] font-bold uppercase tracking-widest text-pink-deep">Local Development Only</p>
-                </div>
-                <p class="text-xs text-muted mb-4">Simulator pembayaran untuk pengujian di lingkungan lokal. <strong class="text-ink">Bukan</strong> mekanisme pembayaran produksi.</p>
-                <div class="flex flex-wrap gap-2">
-                    <form method="POST" action="{{ route('payments.simulate', $order) }}">
-                        @csrf
-                        <input type="hidden" name="status" value="paid">
-                        <button type="submit"
-                            class="px-4 py-2.5 rounded-xl text-sm font-medium text-white bg-pink-deep hover:bg-pink-mauve shadow-card transition cursor-pointer min-h-[44px]">
-                            Simulasi: Bayar Berhasil
-                        </button>
-                    </form>
-                    <form method="POST" action="{{ route('payments.simulate', $order) }}">
-                        @csrf
-                        <input type="hidden" name="status" value="failed">
-                        <button type="submit"
-                            class="px-4 py-2.5 rounded-xl text-sm font-medium text-rose-700 border border-rose-200 bg-rose-50 hover:bg-rose-100 transition cursor-pointer min-h-[44px]">
-                            Simulasi: Gagal
-                        </button>
-                    </form>
-                    <form method="POST" action="{{ route('payments.simulate', $order) }}">
-                        @csrf
-                        <input type="hidden" name="status" value="expired">
-                        <button type="submit"
-                            class="px-4 py-2.5 rounded-xl text-sm font-medium text-amber-700 border border-amber-200 bg-amber-50 hover:bg-amber-100 transition cursor-pointer min-h-[44px]">
-                            Simulasi: Kedaluwarsa
-                        </button>
-                    </form>
-                </div>
-            </div>
-        @endif
+
+@if($payment && ($snapToken = $payment->metadata['snap_token'] ?? null))
+    @php $isFallback = \Str::startsWith($snapToken, 'fallback_snap_token_'); @endphp
+    @if(!$isFallback)
+        <!-- Load Midtrans Snap script -->
+        <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ $payment->metadata['client_key'] ?? config('midtrans.client_key') }}"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                snap.pay('{{ $snapToken }}', {
+                    onSuccess: function (result) { window.location.reload(); },
+                    onPending: function (result) { window.location.reload(); },
+                    onError: function (result) { alert('Payment failed. Please try again.'); },
+                    onClose: function () { /* user closed the popup */ }
+                });
+            });
+        </script>
+    @endif
+@endif
+
     </div>
 </x-layouts.app>
