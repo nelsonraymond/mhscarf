@@ -29,7 +29,14 @@ class InventoryService
         }
 
         return DB::transaction(function () use ($variant, $quantity, $type, $userId, $note, $referenceType, $referenceId) {
-            $currentStock = $variant->stock_qty;
+            // Kunci baris varian dan baca stok terbaru dari database. Tanpa ini, dua proses yang
+            // bersamaan (checkout, webhook, sweeper, pembatalan) bisa saling menimpa stok.
+            $locked = ProductVariant::query()
+                ->whereKey($variant->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $currentStock = (int) $locked->stock_qty;
 
             $newStock = match ($type) {
                 'in', 'return' => $currentStock + abs($quantity),
@@ -41,7 +48,11 @@ class InventoryService
                 ? ($newStock - $currentStock)
                 : abs($quantity);
 
-            $variant->update(['stock_qty' => $newStock]);
+            $locked->update(['stock_qty' => $newStock]);
+
+            // Sinkronkan instance milik pemanggil
+            $variant->setAttribute('stock_qty', $newStock);
+            $variant->syncOriginalAttribute('stock_qty');
 
             return InventoryMovement::create([
                 'product_variant_id' => $variant->id,

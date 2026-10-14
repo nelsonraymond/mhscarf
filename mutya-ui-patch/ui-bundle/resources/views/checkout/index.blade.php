@@ -241,7 +241,7 @@
                             <button type="submit"
                                 {{ $addresses->isEmpty() ? 'disabled' : '' }}
                                 class="w-full py-3.5 px-4 bg-pink-deep hover:bg-pink-mauve disabled:bg-stone-300 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-xl shadow-card transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-pink-deep">
-                                Konfirmasi &amp; Buat Pesanan
+                                Konfirmasi &amp; Bayar
                             </button>
                             @if ($addresses->isEmpty())
                                 <p class="text-xs text-rose-600 text-center mt-2" role="note">

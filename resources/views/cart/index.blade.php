@@ -1,3 +1,4 @@
+<x-confirm-dialog />
 <x-layouts.app>
     @section('title', 'Keranjang Belanja — MH Scarf Store')
 
@@ -58,11 +59,13 @@
                         <div class="p-4 bg-surface border-b border-line flex justify-between items-center text-xs font-semibold text-muted uppercase tracking-wide">
                             <span>Item Produk ({{ $cart->totalItems() }} pcs)</span>
                             <form method="POST" action="{{ route('cart.destroy') }}"
-                                onsubmit="return confirm('Kosongkan seluruh isi keranjang belanja?');">
+                            adata-confirm="Semua produk di keranjang akan dihapus. Tindakan ini tidak dapat dibatalkan."
+    data-confirm-title="Kosongkan keranjang?"
+    data-confirm-ok="Ya, Kosongkan">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit"
-                                    class="text-rose-600 hover:text-rose-700 font-normal normal-case cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 transition">
+                                    class="text-xs text-muted hover:text-pink-deep transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-deep rounded">
                                     Kosongkan Keranjang
                                 </button>
                             </form>
@@ -126,27 +129,27 @@
                                             @method('PATCH')
 
                                             <div class="flex items-center border border-line rounded-xl overflow-hidden bg-white shrink-0">
-                                                <button type="submit" name="quantity" value="{{ $item->quantity - 1 }}"
-                                                    {{ $item->quantity <= 1 ? 'disabled' : '' }}
-                                                    aria-label="Kurangi kuantitas {{ $product->name }}"
-                                                    class="w-11 h-11 text-ink hover:bg-cream text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-pink-deep disabled:opacity-40 disabled:cursor-not-allowed transition">−</button>
+    <button type="button" data-step="-1"
+        {{ $item->quantity <= 1 ? 'disabled' : '' }}
+        aria-label="Kurangi kuantitas {{ $product->name }}"
+        class="w-11 h-11 text-ink hover:bg-cream text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-pink-deep disabled:opacity-40 disabled:cursor-not-allowed transition">−</button>
 
-                                                <label class="sr-only" for="qty-{{ $item->id }}">Kuantitas {{ $product->name }}</label>
-                                                <input type="number"
-                                                    id="qty-{{ $item->id }}"
-                                                    name="quantity"
-                                                    value="{{ $item->quantity }}"
-                                                    min="1"
-                                                    max="{{ $stockMax }}"
-                                                    step="1"
-                                                    required
-                                                    class="w-14 h-11 text-center text-sm text-ink border-x border-line bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-pink-deep [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none">
+    <label class="sr-only" for="qty-{{ $item->id }}">Kuantitas {{ $product->name }}</label>
+    <input type="number"
+        id="qty-{{ $item->id }}"
+        name="quantity"
+        value="{{ $item->quantity }}"
+        min="1"
+        max="{{ $stockMax }}"
+        step="1"
+        required
+        class="w-14 h-11 text-center text-sm text-ink border-x border-line bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-pink-deep [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none">
 
-                                                <button type="submit" name="quantity" value="{{ $item->quantity + 1 }}"
-                                                    {{ $item->quantity >= $stockMax ? 'disabled' : '' }}
-                                                    aria-label="Tambah kuantitas {{ $product->name }}"
-                                                    class="w-11 h-11 text-ink hover:bg-cream text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-pink-deep disabled:opacity-40 disabled:cursor-not-allowed transition">+</button>
-                                            </div>
+    <button type="button" data-step="1"
+        {{ $item->quantity >= $stockMax ? 'disabled' : '' }}
+        aria-label="Tambah kuantitas {{ $product->name }}"
+        class="w-11 h-11 text-ink hover:bg-cream text-base focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-pink-deep disabled:opacity-40 disabled:cursor-not-allowed transition">+</button>
+</div>
                                         </form>
 
                                         <div class="text-right shrink-0">
@@ -154,12 +157,14 @@
                                                 Rp{{ number_format($item->subtotal(), 0, ',', '.') }}
                                             </span>
                                             <form method="POST" action="{{ route('cart.items.destroy', $item) }}" class="inline mt-0.5"
-                                                onsubmit="return confirm('Hapus {{ $product->name }} ({{ $variant->name }}) dari keranjang?');">
+    data-confirm="{{ $product->name }} ({{ $variant->name }}) akan dihapus dari keranjang Anda."
+    data-confirm-title="Hapus produk ini?"
+    data-confirm-ok="Ya, Hapus">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit"
-                                                    class="text-[11px] text-rose-500 hover:text-rose-700 cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 transition">
-                                                    Hapus item
+                                                    class="text-xs text-muted hover:text-pink-deep transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-deep rounded">
+                                                    Hapus
                                                 </button>
                                             </form>
                                         </div>
@@ -226,39 +231,32 @@
     </div>
 
     <script>
-        // Quantity stepper: − / + are real submit buttons carrying their value, so the page
-        // works without JS and the browser enforces min/max natively before PATCH is sent.
-        // The number input is associated to the form via the `form` attribute (no nested forms).
-        document.querySelectorAll('[data-cart-form]').forEach(function (form) {
-            var input = form.querySelector('input[type="number"]');
-            if (!input) return;
+    document.querySelectorAll('[data-cart-form]').forEach(function (form) {
+        var input = form.querySelector('input[type="number"]');
+        if (!input) return;
 
-            form.addEventListener('submit', function (e) {
-                var btn = e.submitter;
-                if (btn && btn.hasAttribute('name') && btn.getAttribute('name') === 'quantity') {
-                    // Submitting a stepper button: enforce bounds client-side too (server re-checks).
-                    var v = parseInt(btn.value, 10);
-                    var min = parseInt(input.min, 10) || 1;
-                    var max = parseInt(input.max, 10) || Number.MAX_SAFE_INTEGER;
-                    if (isNaN(v) || v < min || v > max) e.preventDefault();
-                } else {
-                    // Manual typing: clamp before send.
-                    var cur = parseInt(input.value, 10);
-                    if (isNaN(cur) || cur < (parseInt(input.min, 10) || 1)) {
-                        e.preventDefault();
-                        input.value = parseInt(input.min, 10) || 1;
-                    } else if (cur > (parseInt(input.max, 10) || cur)) {
-                        input.value = input.max;
-                    }
-                }
-            });
+        var min = parseInt(input.min, 10) || 1;
+        var max = parseInt(input.max, 10) || min;
 
-            input.addEventListener('blur', function () {
-                var min = parseInt(input.min, 10) || 1;
-                var max = parseInt(input.max, 10) || min;
-                var cur = parseInt(input.value, 10);
-                input.value = isNaN(cur) ? min : Math.min(Math.max(cur, min), max);
+        function clamp(v) {
+            return isNaN(v) ? min : Math.min(Math.max(v, min), max);
+        }
+
+        // Tombol − / +: ubah nilai input, lalu submit
+        form.querySelectorAll('[data-step]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var current = clamp(parseInt(input.value, 10));
+                var next = clamp(current + parseInt(btn.dataset.step, 10));
+                if (next === current) return;
+                input.value = next;
+                form.requestSubmit();
             });
         });
-    </script>
+
+        // Ketik manual: rapikan nilainya sebelum dikirim
+        form.addEventListener('submit', function () {
+            input.value = clamp(parseInt(input.value, 10));
+        });
+    });
+</script>
 </x-layouts.app>

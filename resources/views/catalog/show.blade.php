@@ -477,4 +477,17 @@
             });
         })();
     </script>
+
+    <script>
+    document.querySelectorAll('form[action="{{ route('buy.now') }}"]').forEach(function (form) {
+        form.addEventListener('submit', function (e) {
+            var btn = form.querySelector('.btn-sweep');
+            if (!btn || form.dataset.sweeping) return;
+            e.preventDefault();
+            form.dataset.sweeping = '1';
+            btn.classList.add('is-pressed');
+            setTimeout(function () { form.submit(); }, 300);
+        });
+    });
+</script>
 </x-layouts.app>

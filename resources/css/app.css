@@ -132,3 +132,55 @@ html {
         display: none;
     }
 }
+
+.btn-sweep {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    transition: color .35s ease, transform .3s ease, box-shadow .3s ease;
+}
+
+.btn-sweep::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: #fff;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform .45s cubic-bezier(.22, .61, .36, 1);
+}
+
+/* Aktif: tekan (semua perangkat), fokus keyboard, atau class is-pressed dari JS */
+.btn-sweep:active:not(:disabled),
+.btn-sweep:focus-visible:not(:disabled),
+.btn-sweep.is-pressed {
+    color: var(--color-pink-deep, #d98fb0);
+}
+.btn-sweep:active:not(:disabled)::before,
+.btn-sweep:focus-visible:not(:disabled)::before,
+.btn-sweep.is-pressed::before {
+    transform: scaleX(1);
+    transform-origin: left;
+}
+
+/* Hover hanya untuk perangkat dengan mouse, supaya tidak "nyangkut" di HP */
+@media (hover: hover) {
+    .btn-sweep:hover:not(:disabled) {
+        color: var(--color-pink-deep, #d98fb0);
+    }
+    .btn-sweep:hover:not(:disabled)::before {
+        transform: scaleX(1);
+        transform-origin: left;
+    }
+}
+
+/* Di layar sentuh, sapuan dibuat lebih cepat */
+@media (hover: none) {
+    .btn-sweep::before { transition-duration: .25s; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn-sweep,
+    .btn-sweep::before { transition: none; }
+}

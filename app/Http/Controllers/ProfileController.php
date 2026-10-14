@@ -5,18 +5,26 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
+use App\Models\Address;
+use App\Models\Order;
+use App\Models\Wishlist;
 
 class ProfileController extends Controller
 {
     /**
      * Display the authenticated customer profile.
      */
-    public function show(Request $request): View
-    {
-        return view('profile', [
-            'user' => $request->user(),
-        ]);
-    }
+   public function show(Request $request): View
+{
+    $user = $request->user();
+
+    return view('profile', [
+        'user' => $user,
+        'ordersCount' => Order::where('user_id', $user->id)->count(),
+        'addressesCount' => Address::where('user_id', $user->id)->count(),
+        'wishlistCount' => Wishlist::where('user_id', $user->id)->count(),
+    ]);
+}
 
     /**
      * Show the profile edit form.

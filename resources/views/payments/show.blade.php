@@ -143,22 +143,92 @@
         </div>
 
 
-@if($payment && ($snapToken = $payment->metadata['snap_token'] ?? null))
-    @php $isFallback = \Str::startsWith($snapToken, 'fallback_snap_token_'); @endphp
-    @if(!$isFallback)
-        <!-- Load Midtrans Snap script -->
-        <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ $payment->metadata['client_key'] ?? config('midtrans.client_key') }}"></script>
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                snap.pay('{{ $snapToken }}', {
-                    onSuccess: function (result) { window.location.reload(); },
-                    onPending: function (result) { window.location.reload(); },
-                    onError: function (result) { alert('Payment failed. Please try again.'); },
-                    onClose: function () { /* user closed the popup */ }
+@php
+    $snapToken = $payment?->metadata['snap_token'] ?? null;
+    $isFallback = $snapToken && \Illuminate\Support\Str::startsWith($snapToken, 'fallback_snap_token_');
+    $canPay = $snapToken
+        && ! $isFallback
+        && $order->status === 'pending'
+        && in_array($order->payment_status, ['pending', 'failed'], true);
+    $isProduction = (bool) ($payment?->metadata['is_production'] ?? false);
+    $clientKey = $payment?->metadata['client_key'] ?? config('midtrans.client_key');
+@endphp
+
+@if($canPay)
+    <div class="mt-6">
+        <button type="button" id="pay-button"
+            class="w-full inline-flex items-center justify-center px-4 py-3 rounded-xl font-semibold text-sm bg-pink-deep text-white hover:opacity-90 transition shadow-card">
+            Bayar Sekarang
+        </button>
+        <p id="pay-status" class="mt-3 text-sm text-muted text-center" aria-live="polite"></p>
+    </div>
+
+    <script src="{{ $isProduction ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}"
+        data-client-key="{{ $clientKey }}"></script>
+    <script>
+        (function () {
+            var token = @json($snapToken);
+            var statusUrl = @json(route('payments.status', $order));
+            var orderUrl = @json(route('orders.show', $order));
+            var button = document.getElementById('pay-button');
+            var message = document.getElementById('pay-status');
+            var polling = null;
+
+            function setMessage(text) {
+                message.textContent = text;
+            }
+
+            // Status pembayaran hanya dipercaya dari server (webhook), bukan dari callback popup.
+            function startPolling() {
+                if (polling) {
+                    return;
+                }
+
+                polling = setInterval(function () {
+                    fetch(statusUrl, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' })
+                        .then(function (response) { return response.ok ? response.json() : null; })
+                        .then(function (data) {
+                            if (!data) {
+                                return;
+                            }
+
+                            if (data.payment_status === 'paid') {
+                                clearInterval(polling);
+                                window.location.href = orderUrl;
+                            } else if (data.payment_status === 'expired' || data.order_status === 'cancelled') {
+                                clearInterval(polling);
+                                window.location.reload();
+                            }
+                        })
+                        .catch(function () { /* coba lagi pada putaran berikutnya */ });
+                }, 4000);
+            }
+
+            function openSnap() {
+                snap.pay(token, {
+                    onSuccess: function () {
+                        setMessage('Pembayaran diterima. Memverifikasi...');
+                    },
+                    onPending: function () {
+                        setMessage('Menunggu pembayaran. Halaman ini diperbarui otomatis setelah pembayaran terverifikasi.');
+                    },
+                    onError: function () {
+                        setMessage('Pembayaran gagal. Silakan coba lagi.');
+                    },
+                    onClose: function () {
+                        // Tidak ada redirect/reload: popup bisa ditutup, tombol di bawah membukanya lagi.
+                        setMessage('Popup ditutup. Klik "Bayar Sekarang" untuk melanjutkan.');
+                    }
                 });
+            }
+
+            button.addEventListener('click', openSnap);
+            document.addEventListener('DOMContentLoaded', function () {
+                startPolling();
+                openSnap();
             });
-        </script>
-    @endif
+        })();
+    </script>
 @endif
 
     </div>

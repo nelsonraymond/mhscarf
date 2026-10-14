@@ -75,6 +75,7 @@ Route::middleware('auth')->group(function () {
 
     // Customer Payment (ownership enforced in controller/service)
     Route::get('/orders/{order}/payment', [PaymentController::class, 'show'])->name('payments.show');
+    Route::get('/orders/{order}/payment/status', [PaymentController::class, 'status'])->name('payments.status');
     // Route::post('/orders/{order}/payment/simulate', [PaymentController::class, 'simulate'])->name('payments.simulate');
 
     // Wishlist Routes (Authenticated Customers)

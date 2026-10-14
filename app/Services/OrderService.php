@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Exceptions\InvalidOrderStateTransitionException;
 use App\Models\InventoryMovement;
 use App\Models\Order;
+use App\Models\StockReservation;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -65,25 +66,31 @@ class OrderService
 
     /**
      * Cancel an order and restore inventory atomically and idempotently.
+     *
+     * Ini satu-satunya jalur pengembalian stok untuk order. Baris order dikunci, sehingga
+     * pembatalan ganda atau balapan dengan webhook pembayaran / sweeper diproses satu per satu.
      */
     public function cancelOrder(Order $order, ?string $reason = null, ?User $actor = null): Order
     {
-        // 1. Idempotency check: if already cancelled, return immediately without restoring stock twice
-        if ($order->status === 'cancelled') {
-            return $order;
-        }
-
-        // 2. Validate cancellable states (cannot cancel once shipped, delivered, or completed)
         $cancellableStatuses = ['pending', 'confirmed', 'processing', 'packed'];
-        if (! in_array($order->status, $cancellableStatuses, true)) {
-            throw new InvalidArgumentException("Pesanan dengan status '{$order->statusLabel()}' tidak dapat dibatalkan.");
-        }
 
-        return DB::transaction(function () use ($order, $reason, $actor) {
+        $cancelled = DB::transaction(function () use ($order, $reason, $actor, $cancellableStatuses) {
+            $locked = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+
+            // 1. Idempotency: sudah dibatalkan -> jangan kembalikan stok dua kali
+            if ($locked->status === 'cancelled') {
+                return $locked;
+            }
+
+            // 2. Validate cancellable states (cannot cancel once shipped, delivered, or completed)
+            if (! in_array($locked->status, $cancellableStatuses, true)) {
+                throw new InvalidArgumentException("Pesanan dengan status '{$locked->statusLabel()}' tidak dapat dibatalkan.");
+            }
+
             // Restore product variant stock for each ordered item
-            $order->loadMissing('items.variant');
+            $locked->loadMissing('items.variant');
 
-            foreach ($order->items as $item) {
+            foreach ($locked->items as $item) {
                 $variant = $item->variant;
                 if (! $variant) {
                     continue;
@@ -91,13 +98,13 @@ class OrderService
 
                 // Guard against duplicate stock restoration
                 $alreadyReturned = InventoryMovement::where('reference_type', Order::class)
-                    ->where('reference_id', $order->id)
+                    ->where('reference_id', $locked->id)
                     ->where('product_variant_id', $variant->id)
                     ->where('type', 'return')
                     ->exists();
 
                 if (! $alreadyReturned) {
-                    $note = "Pengembalian stok pembatalan pesanan #{$order->order_number}";
+                    $note = "Pengembalian stok pembatalan pesanan #{$locked->order_number}";
                     if ($reason) {
                         $note .= " ({$reason})";
                     }
@@ -109,16 +116,27 @@ class OrderService
                         userId: $actor?->id,
                         note: $note,
                         referenceType: Order::class,
-                        referenceId: $order->id,
+                        referenceId: $locked->id,
                     );
                 }
             }
 
-            $order->update([
+            // Reservasi milik order ini sudah tidak menahan stok (stok dikembalikan di atas)
+            StockReservation::query()
+                ->whereIn('order_item_id', $locked->items->pluck('id'))
+                ->whereIn('status', [StockReservation::STATUS_PENDING, StockReservation::STATUS_RESERVED])
+                ->update(['status' => StockReservation::STATUS_RELEASED]);
+
+            $locked->update([
                 'status' => 'cancelled',
             ]);
 
-            return $order->fresh();
+            return $locked->fresh();
         });
+
+        // Sinkronkan instance milik pemanggil supaya $order->status tidak basi
+        $order->forceFill($cancelled->getAttributes())->syncOriginal();
+
+        return $cancelled;
     }
 }

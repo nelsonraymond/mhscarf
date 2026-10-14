@@ -28,14 +28,34 @@ class PaymentController extends Controller
 
         try {
             $payment = $this->paymentService->initializePayment($order);
-        } catch (\RuntimeException $e) {
+        } catch (\RuntimeException|\InvalidArgumentException $e) {
             return redirect()->route('orders.show', $order)
                 ->with('error', $e->getMessage());
         }
-        $order->load(['items.variant.product', 'shipment']);
+
+        $order->refresh()->load(['items.variant.product', 'shipment']);
 
         return view('payments.show', compact('order', 'payment'));
     }
+
+    /**
+     * Status ringan untuk polling dari halaman pembayaran.
+     */
+  
+
+    public function status(Request $request, Order $order): JsonResponse
+{
+    abort_unless($order->user_id === $request->user()->id, 403);
+
+    // Tanya Midtrans langsung, jadi tetap jalan tanpa webhook/ngrok
+    $order = $this->paymentService->syncFromGateway($order);
+
+    return response()->json([
+        'payment_status' => $order->payment_status,
+        'order_status'   => $order->status,
+        'paid'           => $order->payment_status === 'paid',
+    ]);
+}
 
     /**
      * Handle webhook callback from payment gateway.
@@ -57,7 +77,4 @@ class PaymentController extends Controller
             ],
         ]);
     }
-
-    // Simulation endpoint removed – payments must be processed via real Midtrans Snap.
-
 }
