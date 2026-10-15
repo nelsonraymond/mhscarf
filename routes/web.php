@@ -20,6 +20,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\WishlistController;
 use App\Models\Product;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\GoogleAuthController;
 
 Route::get('/', HomeController::class)->name('home');
 
@@ -36,15 +37,17 @@ Route::get('/product/{product:slug}', fn (Product $product) => redirect()->route
 // Customer Guest Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [CustomerAuthController::class, 'create'])->name('login');
-    Route::post('/login', [CustomerAuthController::class, 'store'])->name('login.submit');
+    Route::post('/login', [CustomerAuthController::class, 'store'])->name('login.submit')->middleware('throttle:5,1');
     Route::get('/register', [CustomerAuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [CustomerAuthController::class, 'register'])->name('register.submit');
+    Route::post('/register', [CustomerAuthController::class, 'register'])->name('register.submit')->middleware('throttle:5,1');
 
     // Forgot Password & Reset Password
     Route::get('/forgot-password', [PasswordResetController::class, 'showLinkRequestForm'])->name('password.request');
     Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLinkEmail'])->name('password.email');
     Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');
     Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('password.update');
+    Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google');
+Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
 });
 
 // Customer Authenticated Routes

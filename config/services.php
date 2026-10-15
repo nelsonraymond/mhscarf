@@ -42,4 +42,15 @@ return [
         'merchant_id' => env('MIDTRANS_MERCHANT_ID', 'G123456789'),
     ],
 
+    'google' => [
+    'client_id' => env('GOOGLE_CLIENT_ID'),
+    'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+    'redirect' => env('GOOGLE_REDIRECT_URI'),
+],
+
+    'recaptcha' => [
+    'enabled' => env('RECAPTCHA_ENABLED', true),
+    'site_key' => env('RECAPTCHA_SITE_KEY'),
+    'secret_key' => env('RECAPTCHA_SECRET_KEY'),
+],
 ];

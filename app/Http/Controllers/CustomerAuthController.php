@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use App\Rules\Recaptcha;
 
 class CustomerAuthController extends Controller
 {
@@ -35,7 +36,12 @@ class CustomerAuthController extends Controller
         $credentials = $request->validate([
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
+            'g-recaptcha-response' => ['required', new Recaptcha()],
+        ], [
+           'g-recaptcha-response.required' => 'Silakan centang "Saya bukan robot" terlebih dahulu.',
         ]);
+
+        $credentials = collect($credentials)->only(['email', 'password'])->all();
 
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
             throw ValidationException::withMessages([
@@ -78,11 +84,14 @@ class CustomerAuthController extends Controller
     public function register(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:100'],
-            'email' => ['required', 'string', 'email', 'max:150', 'unique:users,email'],
-            'phone' => ['nullable', 'string', 'max:30'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
+    'name' => ['required', 'string', 'max:100'],
+    'email' => ['required', 'string', 'email', 'max:150', 'unique:users,email'],
+    'phone' => ['nullable', 'string', 'max:30'],
+    'password' => ['required', 'string', 'min:8', 'confirmed'],
+    'g-recaptcha-response' => ['required', new Recaptcha],
+], [
+    'g-recaptcha-response.required' => 'Silakan centang "Saya bukan robot" terlebih dahulu.',
+]);
 
         $user = User::create([
             'name' => $validated['name'],
