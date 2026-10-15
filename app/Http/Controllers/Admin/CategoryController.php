@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\UpdateCategoryRequest;
 use App\Models\Category;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class CategoryController extends Controller
@@ -56,6 +57,12 @@ class CategoryController extends Controller
         $data = $request->validated();
         $data['is_active'] = $request->boolean('is_active', true);
 
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('categories', 'public');
+        } else {
+            unset($data['image']);
+        }
+
         Category::create($data);
 
         return redirect()->route('admin.categories.index')
@@ -82,6 +89,20 @@ class CategoryController extends Controller
     {
         $data = $request->validated();
         $data['is_active'] = $request->boolean('is_active');
+
+        if ($request->boolean('remove_image')) {
+            if ($category->image && Storage::disk('public')->exists($category->image)) {
+                Storage::disk('public')->delete($category->image);
+            }
+            $data['image'] = null;
+        } elseif ($request->hasFile('image')) {
+            if ($category->image && Storage::disk('public')->exists($category->image)) {
+                Storage::disk('public')->delete($category->image);
+            }
+            $data['image'] = $request->file('image')->store('categories', 'public');
+        } else {
+            unset($data['image']);
+        }
 
         $category->update($data);
 

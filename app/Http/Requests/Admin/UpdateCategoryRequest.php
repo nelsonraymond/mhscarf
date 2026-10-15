@@ -31,7 +31,8 @@ class UpdateCategoryRequest extends FormRequest
             'name' => ['required', 'string', 'max:100'],
             'slug' => ['required', 'string', 'max:120', Rule::unique('categories', 'slug')->ignore($categoryId)],
             'description' => ['nullable', 'string'],
-            'image' => ['nullable', 'string', 'max:255'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:5120'],
+            'remove_image' => ['nullable', 'boolean'],
             'parent_id' => [
                 'nullable',
                 Rule::notIn([$categoryId]),
@@ -45,6 +46,9 @@ class UpdateCategoryRequest extends FormRequest
     {
         return [
             'parent_id.not_in' => 'Kategori tidak dapat menjadi induk bagi dirinya sendiri.',
+            'image.image' => 'File harus berupa gambar.',
+            'image.mimes' => 'Format gambar yang diperbolehkan: jpeg, jpg, png, webp.',
+            'image.max' => 'Ukuran gambar maksimal 5MB.',
         ];
     }
 }

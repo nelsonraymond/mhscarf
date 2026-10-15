@@ -1,15 +1,17 @@
 @props(['category'])
 
 @php
-    // Prioritas: file statis public/images/categories/{slug}.jpg -> kolom gambar kategori -> foto produk pertama
-    $static = collect(['jpg', 'jpeg', 'png', 'webp'])
+    // Prioritas: gambar terupload kategori -> file statis public/images/categories/{slug}.jpg -> foto produk pertama
+    $src = null;
+
+    if (! empty($category->image)) {
+        $src = Storage::url($category->image);
+    } elseif ($static = collect(['jpg', 'jpeg', 'png', 'webp'])
         ->map(fn ($ext) => "images/categories/{$category->slug}.{$ext}")
-        ->first(fn ($p) => file_exists(public_path($p)));
-
-    $src = $static ? asset($static) : null;
-
-    if (! $src) {
-        $path = data_get($category, 'image_path') ?? data_get($category, 'image')
+        ->first(fn ($p) => file_exists(public_path($p)))) {
+        $src = asset($static);
+    } else {
+        $path = data_get($category, 'image_path')
             ?? $category->products?->first()?->primaryImage()?->image_path;
         $src = $path ? Storage::url($path) : null;
     }

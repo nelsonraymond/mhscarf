@@ -2,158 +2,143 @@
     <x-slot:title>Pesanan #{{ $order->order_number }} - MH Scarf Admin</x-slot:title>
     <x-slot:header>Detail Pesanan</x-slot:header>
 
-    @if(session('success'))
-        <div class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm">{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm">{{ session('error') }}</div>
-    @endif
-    @if($errors->any())
-        <div class="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm">
-            {{ $errors->first() }}
-        </div>
-    @endif
+    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <a href="{{ route('admin.orders.index') }}" class="text-sm text-admin-muted hover:text-admin-text">← Kembali ke daftar pesanan</a>
+    </div>
 
-    <!-- Header -->
-    <div class="bg-white rounded-2xl border border-[#EBDDE2] p-6 shadow-xs mb-6">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="admin-card mb-6 p-6">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <p class="text-xs text-[#75686D] mb-1">
+                <p class="mb-1 text-xs text-admin-muted">
                     {{ ($order->placed_at ?? $order->created_at)->format('d M Y, H:i') }}
                 </p>
-                <h1 class="font-serif-display text-xl font-bold text-[#3A3033]">
-                    Pesanan <span class="font-mono text-[#D98FAF]">#{{ $order->order_number }}</span>
+                <h1 class="text-xl font-semibold text-admin-text">
+                    Pesanan <span class="font-mono text-admin-accent">#{{ $order->order_number }}</span>
                 </h1>
             </div>
-            <div class="flex items-center space-x-2 flex-wrap gap-y-2">
-                <span class="px-3 py-1 rounded-full text-xs font-semibold border {{ $order->statusBadgeClass() }}">
-                    Status: {{ $order->statusLabel() }}
-                </span>
-                <span class="px-3 py-1 rounded-full text-xs font-semibold border {{ $order->paymentStatusBadgeClass() }}">
-                    Pembayaran: {{ $order->paymentStatusLabel() }}
-                </span>
+            <div class="flex flex-wrap items-center gap-2">
+                <span class="admin-badge {{ $order->statusBadgeClass() }}">Status: {{ $order->statusLabel() }}</span>
+                <span class="admin-badge {{ $order->paymentStatusBadgeClass() }}">Pembayaran: {{ $order->paymentStatusLabel() }}</span>
             </div>
         </div>
 
-        <!-- Timeline -->
-        <div class="mt-6 pt-5 border-t border-[#EBDDE2] overflow-x-auto">
-            <div class="flex items-center min-w-max space-x-2">
-                @foreach ($order->trackingTimeline() as $i => $step)
-                    <div class="flex items-center space-x-2">
-                        <div class="flex flex-col items-center w-24">
-                            <div class="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border
-                                {{ $step['is_completed'] ? 'bg-[#D98FAF] border-[#D98FAF] text-white' : 'bg-white border-[#EBDDE2] text-[#75686D]' }}">
-                                ✓
+        <div class="mt-6 overflow-x-auto border-t border-admin-border pt-5">
+            <ol class="flex min-w-max items-center gap-2">
+                @foreach ($order->trackingTimeline() as $step)
+                    <li class="flex items-center gap-2">
+                        <div class="flex w-24 flex-col items-center">
+                            <div class="flex h-6 w-6 items-center justify-center rounded-full border text-[10px] font-bold
+                                {{ $step['is_completed'] ? 'border-admin-accent bg-admin-accent text-white' : 'border-admin-border bg-white text-admin-muted' }}">
+                                <span class="sr-only">{{ $step['is_completed'] ? 'Selesai: ' : 'Belum: ' }}</span>
+                                {{ $loop->iteration }}
                             </div>
-                            <p class="mt-1.5 text-[10px] text-center leading-tight {{ $step['is_current'] ? 'text-[#D98FAF] font-bold' : ($step['is_completed'] ? 'text-[#3A3033] font-medium' : 'text-[#75686D]') }}">
+                            <p class="mt-1.5 text-center text-[10px] leading-tight {{ $step['is_current'] ? 'font-bold text-admin-accent' : ($step['is_completed'] ? 'font-medium text-admin-text' : 'text-admin-muted') }}">
                                 {{ $step['title'] }}
                             </p>
                         </div>
                         @if (! $loop->last)
-                            <div class="w-8 h-px {{ $step['is_completed'] ? 'bg-[#D98FAF]' : 'bg-[#EBDDE2]' }}"></div>
+                            <div class="h-px w-8 {{ $step['is_completed'] ? 'bg-admin-accent' : 'bg-admin-border' }}" aria-hidden="true"></div>
                         @endif
-                    </div>
+                    </li>
                 @endforeach
-            </div>
+            </ol>
             @if ($order->status === 'cancelled')
-                <p class="mt-3 text-xs text-rose-600 font-medium">⛔ Pesanan ini telah dibatalkan.</p>
+                <p class="mt-3 text-xs font-medium text-admin-danger">Pesanan ini telah dibatalkan.</p>
             @endif
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Left column: items + customer -->
-        <div class="lg:col-span-2 space-y-6">
-            <!-- Items -->
-            <div class="bg-white rounded-2xl border border-[#EBDDE2] shadow-xs overflow-hidden">
-                <div class="px-6 py-4 border-b border-[#EBDDE2]">
-                    <h2 class="text-sm font-semibold text-[#3A3033]">Item Pesanan</h2>
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div class="space-y-6 lg:col-span-2">
+            <div class="admin-card overflow-hidden">
+                <div class="border-b border-admin-border px-6 py-4">
+                    <h2 class="text-sm font-semibold text-admin-text">Item pesanan</h2>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-[#EBDDE2] text-sm">
-                        <thead class="bg-[#FFF9F5]">
+                <div class="admin-table-wrap">
+                    <table class="admin-table">
+                        <thead>
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[#75686D]">Produk / Varian</th>
-                                <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-[#75686D]">Qty</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-[#75686D]">Harga Satuan</th>
-                                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-[#75686D]">Subtotal</th>
+                                <th>Produk / varian</th>
+                                <th class="text-center">Qty</th>
+                                <th class="text-right">Harga satuan</th>
+                                <th class="text-right">Subtotal</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-[#EBDDE2]">
+                        <tbody>
                             @foreach ($order->items as $item)
                                 <tr>
-                                    <td class="px-4 py-3">
-                                        <p class="text-[#3A3033] font-medium">{{ $item->product_name }}</p>
-                                        <p class="text-xs text-[#75686D]">{{ $item->variant_name }} · SKU: {{ $item->sku }}</p>
+                                    <td>
+                                        <p class="font-medium text-admin-text">{{ $item->product_name }}</p>
+                                        <p class="text-xs text-admin-muted">{{ $item->variant_name }} · SKU: {{ $item->sku }}</p>
                                     </td>
-                                    <td class="px-4 py-3 text-center text-[#3A3033]">{{ $item->quantity }}</td>
-                                    <td class="px-4 py-3 text-right text-[#75686D]">Rp {{ number_format($item->unit_price, 0, ',', '.') }}</td>
-                                    <td class="px-4 py-3 text-right text-[#3A3033] font-semibold">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                                    <td class="text-center">{{ $item->quantity }}</td>
+                                    <td class="text-right text-admin-muted">Rp {{ number_format($item->unit_price, 0, ',', '.') }}</td>
+                                    <td class="text-right font-semibold">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
-                        <tfoot class="bg-[#FFF9F5]">
+                        <tfoot class="bg-slate-50">
                             <tr>
-                                <td colspan="3" class="px-4 py-2.5 text-right text-xs text-[#75686D]">Subtotal pesanan</td>
-                                <td class="px-4 py-2.5 text-right text-[#3A3033] font-medium">{{ $order->formattedSubtotal() }}</td>
+                                <td colspan="3" class="px-4 py-2.5 text-right text-xs text-admin-muted">Subtotal pesanan</td>
+                                <td class="px-4 py-2.5 text-right font-medium">{{ $order->formattedSubtotal() }}</td>
                             </tr>
                             @if ((float) $order->discount_amount > 0)
                                 <tr>
-                                    <td colspan="3" class="px-4 py-2.5 text-right text-xs text-[#75686D]">Diskon {{ $order->voucher_code ? "( {$order->voucher_code} )" : '' }}</td>
-                                    <td class="px-4 py-2.5 text-right text-emerald-600 font-medium">-Rp {{ number_format($order->discount_amount, 0, ',', '.') }}</td>
+                                    <td colspan="3" class="px-4 py-2.5 text-right text-xs text-admin-muted">Diskon {{ $order->voucher_code ? '(' . $order->voucher_code . ')' : '' }}</td>
+                                    <td class="px-4 py-2.5 text-right font-medium text-admin-success">-Rp {{ number_format($order->discount_amount, 0, ',', '.') }}</td>
                                 </tr>
                             @endif
                             <tr>
-                                <td colspan="3" class="px-4 py-2.5 text-right text-xs text-[#75686D]">Ongkos kirim</td>
-                                <td class="px-4 py-2.5 text-right text-[#3A3033] font-medium">{{ $order->formattedShippingCost() }}</td>
+                                <td colspan="3" class="px-4 py-2.5 text-right text-xs text-admin-muted">Ongkos kirim</td>
+                                <td class="px-4 py-2.5 text-right font-medium">{{ $order->formattedShippingCost() }}</td>
                             </tr>
                             <tr>
-                                <td colspan="3" class="px-4 py-3 text-right text-sm font-bold text-[#3A3033]">Grand Total</td>
-                                <td class="px-4 py-3 text-right font-serif-display text-base font-bold text-[#D98FAF]">{{ $order->formattedGrandTotal() }}</td>
+                                <td colspan="3" class="px-4 py-3 text-right text-sm font-bold">Grand total</td>
+                                <td class="px-4 py-3 text-right text-base font-bold text-admin-text">{{ $order->formattedGrandTotal() }}</td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
             </div>
 
-            <!-- Customer & Shipping Info -->
-            <div class="bg-white rounded-2xl border border-[#EBDDE2] p-6 shadow-xs">
-                <h2 class="text-sm font-semibold text-[#3A3033] mb-4">Informasi Pelanggan &amp; Pengiriman</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            <div class="admin-card p-6">
+                <h2 class="mb-4 text-sm font-semibold text-admin-text">Informasi pelanggan &amp; pengiriman</h2>
+                <div class="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
                     <div>
-                        <p class="text-xs uppercase tracking-wide text-[#75686D] mb-1">Akun Pelanggan</p>
-                        <p class="text-[#3A3033] font-medium">{{ $order->user?->name ?? '—' }}</p>
-                        <p class="text-xs text-[#75686D]">{{ $order->user?->email ?? '—' }}</p>
+                        <p class="mb-1 text-xs uppercase tracking-wide text-admin-muted">Akun pelanggan</p>
+                        <p class="font-medium text-admin-text">{{ $order->user?->name ?? '—' }}</p>
+                        <p class="text-xs text-admin-muted">{{ $order->user?->email ?? '—' }}</p>
                     </div>
                     <div>
-                        <p class="text-xs uppercase tracking-wide text-[#75686D] mb-1">Penerima</p>
-                        <p class="text-[#3A3033] font-medium">{{ $order->shipping_recipient_name }}</p>
-                        <p class="text-xs text-[#75686D]">{{ $order->shipping_phone }}</p>
+                        <p class="mb-1 text-xs uppercase tracking-wide text-admin-muted">Penerima</p>
+                        <p class="font-medium text-admin-text">{{ $order->shipping_recipient_name }}</p>
+                        <p class="text-xs text-admin-muted">{{ $order->shipping_phone }}</p>
                     </div>
                     <div class="sm:col-span-2">
-                        <p class="text-xs uppercase tracking-wide text-[#75686D] mb-1">Alamat Kirim</p>
-                        <p class="text-[#3A3033]">{{ $order->shipping_address }}, {{ $order->shipping_city }}, {{ $order->shipping_province }} {{ $order->shipping_postal_code }}</p>
+                        <p class="mb-1 text-xs uppercase tracking-wide text-admin-muted">Alamat kirim</p>
+                        <p class="text-admin-text">{{ $order->shipping_address }}, {{ $order->shipping_city }}, {{ $order->shipping_province }} {{ $order->shipping_postal_code }}</p>
                         @if ($order->customer_note)
-                            <p class="mt-2 text-xs text-[#75686D] italic">Catatan: "{{ $order->customer_note }}"</p>
+                            <p class="mt-2 text-xs italic text-admin-muted">Catatan: "{{ $order->customer_note }}"</p>
                         @endif
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Right column: actions, payment, shipment -->
         <div class="space-y-6">
-            <!-- Status Transition Actions -->
-            <div class="bg-white rounded-2xl border border-[#EBDDE2] p-6 shadow-xs">
-                <h2 class="text-sm font-semibold text-[#3A3033] mb-1">Aksi Status</h2>
-                <p class="text-xs text-[#75686D] mb-4">Perubahan status divalidasi server-side sesuai state machine pesanan.</p>
+            <div class="admin-card p-6">
+                <h2 class="mb-1 text-sm font-semibold text-admin-text">Aksi status</h2>
+                <p class="mb-4 text-xs text-admin-muted">Hanya transisi yang valid menurut state machine yang ditampilkan.</p>
 
                 @if (! empty($allowedNextStatuses))
-                    <form method="POST" action="{{ route('admin.orders.status', $order) }}" class="space-y-3">
+                    <form method="POST" action="{{ route('admin.orders.status', $order) }}" class="space-y-3"
+                        data-confirm="Perbarui status pesanan ini?"
+                        data-confirm-title="Ubah status"
+                        data-confirm-ok="Ya, perbarui">
                         @csrf
                         @method('PATCH')
-                        <select name="status" required
-                            class="w-full px-3 py-2 rounded-xl border border-[#EBDDE2] text-sm text-[#3A3033] focus:outline-none focus:ring-2 focus:ring-[#D98FAF] bg-white">
+                        <label for="next-status" class="admin-label">Status berikutnya</label>
+                        <select id="next-status" name="status" required class="admin-input">
                             <option value="" disabled selected>Pilih status berikutnya…</option>
                             @foreach ($allowedNextStatuses as $next)
                                 <option value="{{ $next }}">
@@ -162,7 +147,7 @@
                                         'processing' => 'Diproses',
                                         'packed' => 'Dikemas',
                                         'shipped' => 'Dikirim',
-                                        'delivered' => 'Tiba di Tujuan',
+                                        'delivered' => 'Tiba di tujuan',
                                         'completed' => 'Selesai',
                                         'cancelled' => 'Dibatalkan',
                                         default => ucfirst($next),
@@ -170,112 +155,90 @@
                                 </option>
                             @endforeach
                         </select>
-                        <input type="text" name="note" maxlength="255" placeholder="Catatan opsional…"
-                            class="w-full px-3 py-2 rounded-xl border border-[#EBDDE2] text-sm focus:outline-none focus:ring-2 focus:ring-[#D98FAF] bg-[#FFF9F5]/40">
-                        <button type="submit"
-                            class="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl font-medium text-white bg-[#D98FAF] hover:bg-[#B97897] shadow-xs transition text-sm cursor-pointer">
-                            Perbarui Status
-                        </button>
+                        <label for="status-note" class="admin-label">Catatan</label>
+                        <input id="status-note" type="text" name="note" maxlength="255" placeholder="Catatan opsional…" class="admin-input">
+                        <button type="submit" class="admin-btn admin-btn-primary w-full">Perbarui status</button>
                     </form>
                 @else
-                    <p class="text-xs text-[#75686D] italic">Pesanan sudah berada pada status akhir ({{ $order->statusLabel() }}). Tidak ada transisi lanjutan.</p>
+                    <p class="text-xs italic text-admin-muted">Pesanan sudah berada pada status akhir ({{ $order->statusLabel() }}). Tidak ada transisi lanjutan.</p>
                 @endif
 
                 @if (in_array($order->status, ['pending', 'confirmed', 'processing', 'packed'], true))
-                    <div class="mt-4 pt-4 border-t border-[#EBDDE2]">
+                    <div class="mt-4 border-t border-admin-border pt-4">
                         <form method="POST" action="{{ route('admin.orders.cancel', $order) }}"
-                            onsubmit="return confirm('Batalkan pesanan ini? Stok produk akan dikembalikan.');">
+                            data-confirm="Batalkan pesanan ini? Stok produk akan dikembalikan."
+                            data-confirm-title="Batalkan pesanan"
+                            data-confirm-ok="Ya, batalkan">
                             @csrf
                             <input type="hidden" name="reason" value="Dibatalkan oleh administrator">
-                            <button type="submit"
-                                class="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl font-medium text-sm text-rose-700 border border-rose-200 bg-rose-50 hover:bg-rose-100 transition cursor-pointer">
-                                Batalkan Pesanan
-                            </button>
+                            <button type="submit" class="admin-btn admin-btn-danger w-full">Batalkan pesanan</button>
                         </form>
                     </div>
                 @endif
             </div>
 
-            <!-- Payment Details -->
-            <div class="bg-white rounded-2xl border border-[#EBDDE2] p-6 shadow-xs">
-                <h2 class="text-sm font-semibold text-[#3A3033] mb-4">Detail Pembayaran</h2>
+            <div class="admin-card p-6">
+                <h2 class="mb-4 text-sm font-semibold text-admin-text">Detail pembayaran</h2>
                 @forelse ($order->payments as $payment)
-                    <div class="mb-3 last:mb-0 p-3 rounded-xl bg-[#FFF9F5] border border-[#EBDDE2] text-xs space-y-1">
-                        <div class="flex items-center justify-between">
-                            <span class="font-semibold text-[#3A3033]">{{ $payment->provider }} · {{ $payment->payment_method }}</span>
-                            <span class="px-2 py-0.5 rounded-full font-semibold border {{ $payment->statusBadgeClass() }}">{{ $payment->statusLabel() }}</span>
+                    <div class="mb-3 space-y-1 rounded-lg border border-admin-border bg-admin-bg p-3 text-xs last:mb-0">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="font-semibold text-admin-text">{{ $payment->provider }} · {{ $payment->payment_method }}</span>
+                            <span class="admin-badge {{ $payment->statusBadgeClass() }}">{{ $payment->statusLabel() }}</span>
                         </div>
-                        <p class="text-[#75686D]">Ref: <span class="font-mono">{{ $payment->transaction_reference ?? '—' }}</span></p>
-                        <p class="text-[#75686D]">Nominal: <span class="text-[#3A3033] font-semibold">{{ $payment->formattedAmount() }}</span></p>
+                        <p class="text-admin-muted">Ref: <span class="font-mono">{{ $payment->transaction_reference ?? '—' }}</span></p>
+                        <p class="text-admin-muted">Nominal: <span class="font-semibold text-admin-text">{{ $payment->formattedAmount() }}</span></p>
                         @if ($payment->paid_at)
-                            <p class="text-[#75686D]">Dibayar: {{ $payment->paid_at->format('d M Y, H:i') }}</p>
+                            <p class="text-admin-muted">Dibayar: {{ $payment->paid_at->format('d M Y, H:i') }}</p>
                         @endif
                     </div>
                 @empty
-                    <p class="text-xs text-[#75686D] italic">Belum ada record pembayaran.</p>
+                    <p class="text-xs italic text-admin-muted">Belum ada record pembayaran.</p>
                 @endforelse
             </div>
 
-            <!-- Shipment Details -->
-            <div class="bg-white rounded-2xl border border-[#EBDDE2] p-6 shadow-xs">
-                <h2 class="text-sm font-semibold text-[#3A3033] mb-4">Detail Pengiriman</h2>
-
-                @if ($order->shipment)
-                                            <form method="POST" action="{{ route('admin.orders.shipment', $order) }}" class="space-y-3">
-                        @csrf
-                        @method('PATCH')
-                        <div class="flex flex-col space-y-2">
-                            <label class="text-sm font-medium text-[#75686D]">Kurir</label>
-                            <input type="text" name="courier" value="{{ old('courier', $order->shipment->courier) }}" class="w-full px-3 py-2 rounded-xl border border-[#EBDDE2] text-sm focus:outline-none focus:ring-2 focus:ring-[#D98FAF] bg-white">
-                        </div>
-                        <div class="flex flex-col space-y-2">
-                            <label class="text-sm font-medium text-[#75686D]">Layanan</label>
-                            <input type="text" name="service" value="{{ old('service', $order->shipment->service) }}" class="w-full px-3 py-2 rounded-xl border border-[#EBDDE2] text-sm focus:outline-none focus:ring-2 focus:ring-[#D98FAF] bg-white">
-                        </div>
-                        <div class="flex flex-col space-y-2">
-                            <label class="text-sm font-medium text-[#75686D]">Nomor Resi</label>
-                            <input type="text" name="tracking_number" value="{{ old('tracking_number', $order->shipment->tracking_number) }}" class="w-full px-3 py-2 rounded-xl border border-[#EBDDE2] text-sm focus:outline-none focus:ring-2 focus:ring-[#D98FAF] bg-white">
-                        </div>
-                        <div class="flex flex-col space-y-2">
-                            <label class="text-sm font-medium text-[#75686D]">Biaya Pengiriman</label>
-                            <input type="number" step="0.01" name="shipping_cost" value="{{ old('shipping_cost', $order->shipment->shipping_cost) }}" class="w-full px-3 py-2 rounded-xl border border-[#EBDDE2] text-sm focus:outline-none focus:ring-2 focus:ring-[#D98FAF] bg-white">
-                        </div>
-                        <div class="flex flex-col space-y-2">
-                            <label class="text-sm font-medium text-[#75686D]">Status</label>
-                            <select name="status" class="w-full px-3 py-2 rounded-xl border border-[#EBDDE2] text-sm focus:outline-none focus:ring-2 focus:ring-[#D98FAF] bg-white">
-                                <option value="">-- Pilih Status --</option>
-                                <option value="pending" {{ $order->shipment->status == 'pending' ? 'selected' : '' }}>Pending</option>
-                                <option value="shipped" {{ $order->shipment->status == 'shipped' ? 'selected' : '' }}>Dikirim</option>
-                                <option value="delivered" {{ $order->shipment->status == 'delivered' ? 'selected' : '' }}>Tiba</option>
-                                <option value="cancelled" {{ $order->shipment->status == 'cancelled' ? 'selected' : '' }}>Dibatalkan</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl font-medium text-white bg-[#D98FAF] hover:bg-[#B97897] shadow-xs transition text-sm cursor-pointer">
-                            Perbarui Pengiriman
-                        </button>
-                    </form>
-                @else
-                    <p class="text-xs text-[#75686D] italic">Data pengiriman belum dibuat.</p>
-                @endif
-            </div>
-{{--
-                <h2 class="text-sm font-semibold text-[#3A3033] mb-4">Detail Pengiriman</h2>
-                @if ($order->shipment)
-                    <div class="text-xs space-y-1.5">
-                        <p class="text-[#75686D]">Kurir: <span class="text-[#3A3033] font-semibold">{{ $order->shipment->courier ?? '—' }} {{ $order->shipment->service ? '('.$order->shipment->service.')' : '' }}</span></p>
-                        <p class="text-[#75686D]">Resi: <span class="font-mono text-[#3A3033]">{{ $order->shipment->tracking_number ?? 'belum tersedia' }}</span></p>
-                        <p class="text-[#75686D]">Biaya: <span class="text-[#3A3033]">Rp {{ number_format($order->shipment->shipping_cost, 0, ',', '.') }}</span></p>
-                        <p class="text-[#75686D]">Status: <span class="px-2 py-0.5 rounded-full font-semibold border bg-stone-50 text-stone-700 border-stone-200">{{ ucfirst($order->shipment->status ?? 'pending') }}</span></p>
-                        @if ($order->shipment->shipped_at)
-                            <p class="text-[#75686D]">Dikirim: {{ $order->shipment->shipped_at->format('d M Y, H:i') }}</p>
-                        @endif
-                        @if ($order->shipment->delivered_at)
-                            <p class="text-[#75686D]">Sampai: {{ $order->shipment->delivered_at->format('d M Y, H:i') }}</p>
-                        @endif
+            <div class="admin-card p-6">
+                <div class="mb-4 flex items-center justify-between">
+                    <h2 class="text-sm font-semibold text-admin-text">Detail pengiriman</h2>
+                    @if ($order->shipment)
+                        <span class="admin-badge {{ $order->shipment->statusBadgeClass() }}">
+                            {{ $order->shipment->statusLabel() }}
+                        </span>
+                    @endif
+                </div>
+                <form method="POST" action="{{ route('admin.orders.shipment', $order) }}" class="space-y-3">
+                    @csrf
+                    @method('PATCH')
+                    <div>
+                        <label for="courier" class="admin-label">Kurir</label>
+                        <input id="courier" type="text" name="courier" value="{{ old('courier', $order->shipment?->courier) }}" class="admin-input" placeholder="Contoh: JNE, J&T, SiCepat">
                     </div>
-                @else
-                    <p class="text-xs text-[#75686D] italic">Data pengiriman belum dibuat.</p>
-                @endif --}}
+                    <div>
+                        <label for="service" class="admin-label">Layanan</label>
+                        <input id="service" type="text" name="service" value="{{ old('service', $order->shipment?->service) }}" class="admin-input" placeholder="Contoh: Reguler, YES, dsb.">
+                    </div>
+                    <div>
+                        <label for="tracking_number" class="admin-label">Nomor resi</label>
+                        <input id="tracking_number" type="text" name="tracking_number" value="{{ old('tracking_number', $order->shipment?->tracking_number) }}" class="admin-input font-mono" placeholder="Masukkan nomor resi...">
+                    </div>
+                    <div>
+                        <label for="shipping_cost" class="admin-label">Biaya pengiriman</label>
+                        <input id="shipping_cost" type="number" step="0.01" name="shipping_cost" value="{{ old('shipping_cost', $order->shipment?->shipping_cost) }}" class="admin-input">
+                    </div>
+                    <div>
+                        <label for="shipment-status" class="admin-label">Status pengiriman</label>
+                        <select id="shipment-status" name="status" class="admin-input">
+                            <option value="">-- Pilih status --</option>
+                            <option value="pending" {{ $order->shipment?->status == 'pending' ? 'selected' : '' }}>Pending (Menunggu)</option>
+                            <option value="picked_up" {{ $order->shipment?->status == 'picked_up' ? 'selected' : '' }}>Diambil Kurir (Picked up)</option>
+                            <option value="in_transit" {{ $order->shipment?->status == 'in_transit' ? 'selected' : '' }}>Dalam Perjalanan (In transit)</option>
+                            <option value="shipped" {{ $order->shipment?->status == 'shipped' ? 'selected' : '' }}>Dikirim (Shipped)</option>
+                            <option value="delivered" {{ $order->shipment?->status == 'delivered' ? 'selected' : '' }}>Tiba di Tujuan (Delivered)</option>
+                            <option value="returned" {{ $order->shipment?->status == 'returned' ? 'selected' : '' }}>Dikembalikan (Returned)</option>
+                            <option value="cancelled" {{ $order->shipment?->status == 'cancelled' ? 'selected' : '' }}>Dibatalkan</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="admin-btn admin-btn-primary w-full">{{ $order->shipment ? 'Perbarui pengiriman' : 'Simpan pengiriman' }}</button>
+                </form>
             </div>
         </div>
     </div>

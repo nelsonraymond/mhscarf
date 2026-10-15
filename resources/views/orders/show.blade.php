@@ -229,8 +229,8 @@
                         </div>
                         <div class="flex justify-between">
                             <span class="text-muted">Status Pengiriman:</span>
-                            <span class="font-medium text-pink-deep uppercase">
-                                {{ $order->shipment?->status ?? 'Menunggu Pengiriman' }}
+                            <span class="font-medium text-pink-deep">
+                                {{ $order->shipment?->statusLabel() ?? 'Menunggu Pengiriman' }}
                             </span>
                         </div>
                     </div>

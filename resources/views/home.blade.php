@@ -424,10 +424,7 @@
     </div>
 </section>
 
-    {{-- =========================================================================
-         12. NEWSLETTER (DESIGN.md v3 §7.12: Typography-led community invitation)
-         ========================================================================= --}}
-    <x-newsletter-section id="newsletter" />
+   
 
 
 

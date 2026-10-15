@@ -96,14 +96,33 @@ class OrderController extends Controller
             'service' => ['nullable', 'string', 'max:255'],
             'tracking_number' => ['nullable', 'string', 'max:255'],
             'shipping_cost' => ['nullable', 'numeric', 'min:0'],
-            'status' => ['nullable', 'string', 'in:pending,shipped,delivered,cancelled'],
+            'status' => ['nullable', 'string', 'in:pending,picked_up,in_transit,shipped,delivered,returned,cancelled'],
         ]);
 
-        // Ensure shipment exists; create if missing
         $shipment = $order->shipment;
+
+        if (array_key_exists('status', $validated) && $validated['status'] === null) {
+            unset($validated['status']);
+        }
+
+        if (($validated['status'] ?? null) === 'shipped' && empty($shipment?->shipped_at)) {
+            $validated['shipped_at'] = now();
+        }
+
+        if (($validated['status'] ?? null) === 'delivered' && empty($shipment?->delivered_at)) {
+            $validated['delivered_at'] = now();
+        }
+
+        // Ensure shipment exists; create if missing
         if ($shipment) {
             $shipment->update($validated);
         } else {
+            if (empty($validated['courier'])) {
+                $validated['courier'] = 'MH Scarf Express Delivery';
+            }
+            if (empty($validated['status'])) {
+                $validated['status'] = 'pending';
+            }
             $order->shipment()->create($validated);
         }
 

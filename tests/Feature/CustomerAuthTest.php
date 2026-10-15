@@ -5,6 +5,10 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Socialite\Contracts\Provider;
+use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\User as SocialiteUser;
+use Mockery;
 use Tests\TestCase;
 
 class CustomerAuthTest extends TestCase
@@ -194,5 +198,58 @@ class CustomerAuthTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Kata Sandi Baru');
+    }
+
+    public function test_google_callback_creates_and_logs_in_new_customer(): void
+    {
+        $abstractUser = Mockery::mock(SocialiteUser::class);
+        $abstractUser->shouldReceive('getId')->andReturn('google-id-12345');
+        $abstractUser->shouldReceive('getName')->andReturn('Google User');
+        $abstractUser->shouldReceive('getEmail')->andReturn('googleuser@example.com');
+        $abstractUser->user = ['email_verified' => true];
+
+        $provider = Mockery::mock(Provider::class);
+        $provider->shouldReceive('user')->andReturn($abstractUser);
+
+        Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+
+        $response = $this->get(route('auth.google.callback'));
+
+        $response->assertRedirect(route('home'));
+
+        $this->assertDatabaseHas('users', [
+            'email' => 'googleuser@example.com',
+            'google_id' => 'google-id-12345',
+            'role' => 'customer',
+        ]);
+
+        $user = User::where('email', 'googleuser@example.com')->first();
+        $this->assertNotNull($user);
+        $this->assertNotNull($user->password);
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_google_callback_rejects_admin_user(): void
+    {
+        User::factory()->admin()->create([
+            'email' => 'admin@example.com',
+        ]);
+
+        $abstractUser = Mockery::mock(SocialiteUser::class);
+        $abstractUser->shouldReceive('getId')->andReturn('google-id-admin');
+        $abstractUser->shouldReceive('getName')->andReturn('Admin User');
+        $abstractUser->shouldReceive('getEmail')->andReturn('admin@example.com');
+        $abstractUser->user = ['email_verified' => true];
+
+        $provider = Mockery::mock(Provider::class);
+        $provider->shouldReceive('user')->andReturn($abstractUser);
+
+        Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+
+        $response = $this->get(route('auth.google.callback'));
+
+        $response->assertRedirect(route('login'));
+        $response->assertSessionHasErrors(['email']);
+        $this->assertGuest();
     }
 }

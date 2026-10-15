@@ -287,4 +287,33 @@ class OrderTest extends TestCase
         $response->assertSee('Tiba di Tujuan');
         $response->assertSee('Selesai');
     }
+
+    public function test_admin_can_update_shipment_details_and_tracking_number(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $order = Order::factory()->create();
+        $shipment = $order->shipment()->create([
+            'courier' => 'JNE',
+            'service' => 'REG',
+            'tracking_number' => null,
+            'shipping_cost' => 15000,
+            'status' => 'pending',
+        ]);
+
+        $response = $this->actingAs($admin)->patch(route('admin.orders.shipment', $order), [
+            'courier' => 'JNE',
+            'service' => 'REG',
+            'tracking_number' => 'JKKA2131928213',
+            'shipping_cost' => 15000,
+            'status' => 'shipped',
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        $shipment->refresh();
+        $this->assertEquals('JKKA2131928213', $shipment->tracking_number);
+        $this->assertEquals('shipped', $shipment->status);
+        $this->assertNotNull($shipment->shipped_at);
+    }
 }

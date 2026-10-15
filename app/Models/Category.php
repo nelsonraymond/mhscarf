@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class Category extends Model
 {
@@ -59,5 +60,22 @@ class Category extends Model
     public function scopeRoot($query)
     {
         return $query->whereNull('parent_id');
+    }
+
+    public function getImageUrlAttribute(): ?string
+    {
+        if (! empty($this->image)) {
+            return Storage::url($this->image);
+        }
+
+        $static = collect(['jpg', 'jpeg', 'png', 'webp'])
+            ->map(fn ($ext) => "images/categories/{$this->slug}.{$ext}")
+            ->first(fn ($p) => file_exists(public_path($p)));
+
+        if ($static) {
+            return asset($static);
+        }
+
+        return null;
     }
 }
