@@ -101,15 +101,11 @@
 
                 {{-- Real reviews summary only when published reviews exist --}}
                 @if ($reviewCount > 0)
-                    <div class="flex items-center gap-2 mt-2.5">
-                        <div class="flex text-gold text-xs" aria-hidden="true">
-                            @for ($i = 1; $i <= 5; $i++)
-                                <span>{{ $i <= round($averageRating) ? '★' : '☆' }}</span>
-                            @endfor
-                        </div>
-                        <span class="text-xs text-muted">{{ number_format($averageRating, 1) }} · {{ $reviewCount }} ulasan</span>
-                    </div>
-                @endif
+    <a href="#ulasan" class="inline-flex items-center gap-2 mt-2.5 group">
+        <x-star-rating :value="$averageRating" class="text-sm" />
+        <span class="text-xs text-muted group-hover:text-pink-deep transition">{{ number_format($averageRating, 1) }} · {{ $reviewCount }} ulasan</span>
+    </a>
+@endif
 
                 {{-- Price (base; final variant price shown live via JS from real additional_price data).
                      id="pd-price" lets the script swap in the selected variant's real finalPrice(). --}}
@@ -348,32 +344,99 @@
                         @endif
                     </dl>
                 @endif
-
-                {{-- Published reviews — real data only; honest empty state otherwise --}}
-                @if ($reviewCount > 0)
-                    <div class="mt-8 pt-6 border-t border-line">
-                        <h2 class="font-display text-lg text-ink mb-4">Ulasan Pelanggan</h2>
-                        <div class="space-y-4">
-                            @foreach ($product->reviews->take(3) as $review)
-                                <article class="bg-white border border-line rounded-xl p-4">
-                                    <div class="flex items-center justify-between gap-2">
-                                        <span class="text-xs font-medium text-ink">{{ $review->user->name ?? 'Pelanggan' }}</span>
-                                        <span class="text-xs text-gold" aria-label="Rating {{ $review->rating }} dari 5">
-                                            {{ str_repeat('★', (int) $review->rating) }}{{ str_repeat('☆', 5 - (int) $review->rating) }}
-                                        </span>
-                                    </div>
-                                    @if ($review->comment)
-                                        <p class="text-xs text-muted mt-2 leading-relaxed">{{ $review->comment }}</p>
-                                    @endif
-                                    <time class="block text-[10px] text-muted/70 mt-2">{{ $review->created_at->translatedFormat('d M Y') }}</time>
-                                </article>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
+               
             </div>
         </div>
+@php
+    $ratingSchema = $reviewCount > 0 ? [
+        '@context' => 'https://schema.org',
+        '@type' => 'Product',
+        'name' => $product->name,
+        'aggregateRating' => [
+            '@type' => 'AggregateRating',
+            'ratingValue' => number_format($averageRating, 1),
+            'reviewCount' => $reviewCount,
+        ],
+    ] : null;
+@endphp
+@if ($ratingSchema)
+    <script type="application/ld+json">@json($ratingSchema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)</script>
+@endif
 
+<section id="ulasan" class="mt-14 md:mt-20 pt-10 border-t border-line scroll-mt-24" aria-labelledby="ulasan-h">
+    <h2 id="ulasan-h" class="font-display text-xl md:text-2xl text-ink mb-6">Ulasan Pelanggan</h2>
+
+    @if ($reviewCount > 0)
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+
+            {{-- Ringkasan --}}
+            <div class="md:col-span-4 bg-white rounded-2xl border border-line p-6 shadow-card">
+                <div class="flex items-end gap-2">
+                    <span class="font-display text-5xl font-bold text-ink leading-none">{{ number_format($averageRating, 1) }}</span>
+                    <span class="text-sm text-muted pb-1">dari 5</span>
+                </div>
+                <x-star-rating :value="$averageRating" class="mt-2 text-lg" />
+                <p class="text-xs text-muted mt-1">{{ $reviewCount }} ulasan</p>
+
+                <div class="mt-5 space-y-1.5">
+                    @foreach ([5, 4, 3, 2, 1] as $star)
+                        @php
+                            $count = (int) ($ratingBreakdown[$star] ?? 0);
+                            $pct = $reviewCount ? round($count / $reviewCount * 100) : 0;
+                        @endphp
+                        <div class="flex items-center gap-2 text-xs text-muted">
+                            <span class="w-2.5">{{ $star }}</span>
+                            <span class="text-gold" aria-hidden="true">★</span>
+                            <div class="flex-1 h-2 rounded-full bg-line/70 overflow-hidden">
+                                <div class="h-full rounded-full bg-gold" style="width: {{ $pct }}%"></div>
+                            </div>
+                            <span class="w-6 text-right">{{ $count }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            {{-- Daftar ulasan --}}
+            <div class="md:col-span-8 space-y-4">
+                @foreach ($reviews as $review)
+                    <article class="bg-white border border-line rounded-2xl p-5">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="text-sm font-semibold text-ink">{{ $review->maskedName() }}</p>
+                                @if ($review->is_verified_purchase)
+                                    <span class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                                        Pembeli Terverifikasi
+                                    </span>
+                                @endif
+                            </div>
+                            <x-star-rating :value="$review->rating" class="text-sm shrink-0" />
+                        </div>
+
+                        @if ($review->comment)
+                            <p class="text-sm text-ink/90 mt-3 leading-relaxed whitespace-pre-line">{{ $review->comment }}</p>
+                        @endif
+
+                        <div class="flex items-center gap-2 text-[11px] text-muted mt-3">
+                            <time datetime="{{ $review->created_at->toDateString() }}">{{ $review->created_at->translatedFormat('d M Y') }}</time>
+                            @if ($review->orderItem?->variant_name)
+                                <span aria-hidden="true">•</span>
+                                <span>Varian: {{ $review->orderItem->variant_name }}</span>
+                            @endif
+                        </div>
+                    </article>
+                @endforeach
+
+                {{ $reviews->links() }}
+            </div>
+        </div>
+    @else
+        <div class="bg-white border border-dashed border-line rounded-2xl p-8 text-center">
+            <p class="text-sm font-medium text-ink">Belum ada ulasan</p>
+            <p class="text-xs text-muted mt-1">Jadilah yang pertama mengulas setelah pesanan Anda tiba.</p>
+        </div>
+    @endif
+</section>
         {{-- ============ Related products — real same-category records only ============ --}}
         @if ($relatedProducts->isNotEmpty())
             <section class="mt-14 md:mt-20 pt-10 border-t border-line">

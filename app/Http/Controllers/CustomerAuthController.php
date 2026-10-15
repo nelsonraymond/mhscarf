@@ -36,8 +36,10 @@ class CustomerAuthController extends Controller
         $credentials = $request->validate([
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
-            'g-recaptcha-response' => ['required', new Recaptcha()],
-        ], [
+            'g-recaptcha-response' => (app()->environment('testing') || ! config('services.recaptcha.enabled'))
+    ? ['nullable']
+    : ['required', new Recaptcha]], 
+    [
            'g-recaptcha-response.required' => 'Silakan centang "Saya bukan robot" terlebih dahulu.',
         ]);
 
@@ -88,7 +90,9 @@ class CustomerAuthController extends Controller
     'email' => ['required', 'string', 'email', 'max:150', 'unique:users,email'],
     'phone' => ['nullable', 'string', 'max:30'],
     'password' => ['required', 'string', 'min:8', 'confirmed'],
-    'g-recaptcha-response' => ['required', new Recaptcha],
+    'g-recaptcha-response' => (app()->environment('testing') || ! config('services.recaptcha.enabled'))
+    ? ['nullable']
+    : ['required', new Recaptcha],
 ], [
     'g-recaptcha-response.required' => 'Silakan centang "Saya bukan robot" terlebih dahulu.',
 ]);

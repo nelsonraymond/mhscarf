@@ -170,8 +170,9 @@
                                 <td class="py-3 px-3.5 text-center">
                                     <!-- Stock adjustment form -->
                                     <form method="POST" action="{{ route('admin.products.variants.stock', [$product, $variant]) }}" class="inline-flex items-center gap-1.5">
-                                        @csrf
-                                        <select name="type" class="text-xs px-2 py-1 rounded-lg border border-[#EBDDE2] bg-white">
+    @csrf
+    <input type="hidden" name="expected_stock" value="{{ $variant->stock_qty }}">
+    <select name="type" class="text-xs px-2 py-1 rounded-lg border border-[#EBDDE2] bg-white">
                                             <option value="in">+ Tambah</option>
                                             <option value="out">- Kurang</option>
                                             <option value="adjustment">= Set Total</option>

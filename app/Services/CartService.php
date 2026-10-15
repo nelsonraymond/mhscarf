@@ -17,10 +17,12 @@ class CartService
     public function getOrCreateCart(?User $user, string $sessionId, ?int $cartId = null): Cart
     {
         if ($user) {
-            return Cart::firstOrCreate(
-                ['user_id' => $user->id]
-            );
-        }
+    try {
+        return Cart::firstOrCreate(['user_id' => $user->id]);
+    } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+        return Cart::where('user_id', $user->id)->firstOrFail();
+    }
+}
 
         if ($cartId) {
             $cart = Cart::where('id', $cartId)->whereNull('user_id')->first();

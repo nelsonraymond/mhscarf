@@ -86,25 +86,33 @@ class ProductVariantController extends Controller
     /**
      * Adjust stock for the specified variant.
      */
-    public function updateStock(Request $request, Product $product, ProductVariant $variant): RedirectResponse
-    {
-        $validated = $request->validate([
-            'quantity' => ['required', 'integer', 'min:0'],
-            'type' => ['required', 'in:in,out,adjustment,return'],
-            'note' => ['nullable', 'string', 'max:255'],
-        ]);
+   public function updateStock(Request $request, Product $product, ProductVariant $variant): RedirectResponse
+{
+    $validated = $request->validate([
+        'quantity' => ['required', 'integer', 'min:0'],
+        'type' => ['required', 'in:in,out,adjustment,return'],
+        'note' => ['nullable', 'string', 'max:255'],
+        'expected_stock' => ['nullable', 'integer', 'min:0'],
+    ]);
 
+    try {
         $this->inventoryService->recordMovement(
             variant: $variant,
             quantity: (int) $validated['quantity'],
             type: $validated['type'],
             userId: Auth::id(),
-            note: $validated['note'] ?? 'Penyesuaian stok manual oleh admin'
+            note: $validated['note'] ?? 'Penyesuaian stok manual oleh admin',
+            expectedStock: $validated['type'] === 'adjustment' && isset($validated['expected_stock'])
+                ? (int) $validated['expected_stock']
+                : null,
         );
-
-        return redirect()->route('admin.products.edit', $product)
-            ->with('success', 'Stok varian berhasil diperbarui.');
+    } catch (\RuntimeException $e) {
+        return redirect()->route('admin.products.edit', $product)->with('error', $e->getMessage());
     }
+
+    return redirect()->route('admin.products.edit', $product)
+        ->with('success', 'Stok varian berhasil diperbarui.');
+}
 
     /**
      * Remove the specified variant.

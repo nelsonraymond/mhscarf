@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 // Batalkan pesanan yang lewat batas bayar + kembalikan stok. Butuh cron: * * * * * php artisan schedule:run
 Schedule::command('orders:release-expired')->everyMinute()->withoutOverlapping();
+Schedule::command('reviews:send-reminders')->hourly()->withoutOverlapping();

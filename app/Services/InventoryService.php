@@ -6,6 +6,7 @@ use App\Models\InventoryMovement;
 use App\Models\ProductVariant;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
+use RuntimeException;
 
 class InventoryService
 {
@@ -14,6 +15,10 @@ class InventoryService
      *
      * @param  int  $quantity  Quantity moved (positive integer)
      * @param  string  $type  'in' | 'out' | 'adjustment' | 'return'
+     * @param  int|null  $expectedStock  Hanya untuk 'adjustment' dari form admin: ditolak jika stok
+     *                                   sekarang sudah berbeda dari yang dilihat admin saat membuka halaman.
+     *
+     * @throws RuntimeException bila stok basi atau stok tidak mencukupi untuk 'out'
      */
     public function recordMovement(
         ProductVariant $variant,
@@ -22,13 +27,23 @@ class InventoryService
         ?int $userId = null,
         ?string $note = null,
         ?string $referenceType = null,
-        ?int $referenceId = null
+        ?int $referenceId = null,
+        ?int $expectedStock = null
     ): InventoryMovement {
         if (! in_array($type, ['in', 'out', 'adjustment', 'return'], true)) {
             throw new InvalidArgumentException("Invalid inventory movement type: {$type}");
         }
 
-        return DB::transaction(function () use ($variant, $quantity, $type, $userId, $note, $referenceType, $referenceId) {
+        return DB::transaction(function () use (
+            $variant,
+            $quantity,
+            $type,
+            $userId,
+            $note,
+            $referenceType,
+            $referenceId,
+            $expectedStock
+        ) {
             // Kunci baris varian dan baca stok terbaru dari database. Tanpa ini, dua proses yang
             // bersamaan (checkout, webhook, sweeper, pembatalan) bisa saling menimpa stok.
             $locked = ProductVariant::query()
@@ -38,9 +53,18 @@ class InventoryService
 
             $currentStock = (int) $locked->stock_qty;
 
+            // Tolak penyesuaian berdasarkan angka basi (admin membuka form sebelum stok berubah)
+            if ($expectedStock !== null && $expectedStock !== $currentStock) {
+                throw new RuntimeException(
+                    "Stok berubah sejak halaman dibuka (sekarang {$currentStock} pcs). Muat ulang halaman lalu coba lagi."
+                );
+            }
+
             $newStock = match ($type) {
                 'in', 'return' => $currentStock + abs($quantity),
-                'out' => max(0, $currentStock - abs($quantity)),
+                'out' => $currentStock >= abs($quantity)
+                    ? $currentStock - abs($quantity)
+                    : throw new RuntimeException("Stok {$locked->name} tidak mencukupi ({$currentStock} pcs)."),
                 'adjustment' => max(0, $quantity),
             };
 

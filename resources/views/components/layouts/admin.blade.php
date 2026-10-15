@@ -59,6 +59,12 @@
                 Pesanan
             </a>
 
+            <a href="{{ route('admin.reviews.index') }}"
+    class="flex items-center px-3.5 py-2.5 text-sm font-medium rounded-xl transition {{ request()->routeIs('admin.reviews.*') ? 'bg-pink-50 text-[#D98FAF] font-semibold' : 'text-[#75686D] hover:bg-[#FFF9F5] hover:text-[#3A3033]' }}">
+    <svg class="w-5 h-5 mr-3 text-current" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11.48 3.5a.56.56 0 011.04 0l2.13 5.11a.56.56 0 00.47.35l5.52.44c.5.04.7.67.32 1l-4.2 3.6a.56.56 0 00-.18.56l1.29 5.38a.56.56 0 01-.84.61l-4.73-2.89a.56.56 0 00-.58 0l-4.73 2.89a.56.56 0 01-.84-.61l1.29-5.38a.56.56 0 00-.18-.56l-4.2-3.6a.56.56 0 01.32-1l5.52-.44a.56.56 0 00.47-.35L11.48 3.5z"/></svg>
+    Ulasan
+</a>
+
             <div class="pt-4 mt-4 border-t border-[#EBDDE2]">
                 <a href="{{ route('shop.index') }}" target="_blank"
                     class="flex items-center px-3.5 py-2.5 text-xs text-[#75686D] hover:text-[#3A3033] hover:bg-[#FFF9F5] rounded-xl transition">
@@ -102,6 +108,10 @@
                     <span>{{ session('success') }}</span>
                 </div>
             @endif
+
+            @if (session('error'))
+    <div class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-sm text-red-800">{{ session('error') }}</div>
+@endif
 
             @if ($errors->any())
                 <div class="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-sm text-red-800">

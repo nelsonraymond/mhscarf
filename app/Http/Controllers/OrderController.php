@@ -39,7 +39,7 @@ class OrderController extends Controller
             abort(403, 'Anda tidak memiliki hak akses untuk melihat pesanan ini.');
         }
 
-        $order->load(['items.variant.product.images', 'shipment', 'payments', 'user']);
+        $order->load(['items.variant.product.images', 'items.review', 'shipment', 'payments', 'user']);
 
         return view('orders.show', compact('order'));
     }

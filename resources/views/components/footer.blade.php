@@ -30,9 +30,7 @@
                 <h3 class="text-[11px] font-semibold uppercase tracking-widest text-muted mb-3">Bantuan</h3>
                 <ul class="space-y-2 text-sm text-ink">
                     <li><a href="{{ route('orders.index') }}" class="hover:text-pink-deep transition">Lacak Pesanan</a></li>
-                    <li><a href="{{ route('home') }}#pengiriman" class="hover:text-pink-deep transition">Pengiriman</a></li>
-                    <li><a href="{{ route('home') }}#pengembalian" class="hover:text-pink-deep transition">Pengembalian</a></li>
-                    <li><a href="{{ route('home') }}#faq" class="hover:text-pink-deep transition">FAQ</a></li>
+                    <li><a href="{{ route('faq') }}" class="hover:text-pink-deep transition">FAQ</a></li>
                     @auth
                         <li><a href="{{ route('wishlist.index') }}" class="hover:text-pink-deep transition">Wishlist Saya</a></li>
                     @endauth

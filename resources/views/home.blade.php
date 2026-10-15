@@ -247,66 +247,67 @@
     @endif
 
 
-    {{-- =========================================================================
-         7. EDITORIAL CAMPAIGN (DESIGN.md v3 §7.7: Asymmetric fashion storytelling)
-         ========================================================================= --}}
-    <section id="tentang-kami" class="bg-gradient-to-r from-cream via-[#FDF8F9] to-cream border-y border-line/70 py-14 sm:py-16 md:py-24">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-12 gap-8 lg:gap-14 items-center">
+    {{-- Editorial campaign / brand story --}}
+<section id="tentang-kami" class="relative overflow-hidden border-y border-line/70 bg-[#fbf7f4] py-16 sm:py-20 lg:py-28">
+    <div class="pointer-events-none absolute -right-32 top-1/2 h-80 w-80 -translate-y-1/2 rounded-full bg-pink-soft/20 blur-3xl"></div>
 
-                {{-- Left Image / Lookbook block --}}
-                <div class="md:col-span-6 lg:col-span-6">
-                    <div class="relative aspect-[4/5] rounded-md overflow-hidden bg-[#FAF6F7] border border-line shadow-xs">
-                        @php
-                            $campaignImg = $featuredProducts->get(1)?->primaryImage() ?? $featuredProducts->first()?->primaryImage();
-                        @endphp
-                        @if ($campaignImg)
-                            <img src="{{ Storage::url($campaignImg->image_path) }}" alt="Editorial MH Scarf"
-                                class="w-full h-full object-cover">
-                        @else
-                            {{-- Tasteful editorial placeholder --}}
-                            <div class="w-full h-full flex flex-col justify-between p-8 sm:p-12 bg-gradient-to-br from-[#FDF9FA] to-[#EFE2E7] text-ink">
-                                <div>
-                                    <p class="text-[10px] tracking-[0.3em] uppercase text-pink-mauve font-semibold">Kampanye Editorial</p>
-                                    <h3 class="font-display italic text-2xl sm:text-3xl font-medium mt-2">A Quiet Kind of Elegance</h3>
-                                </div>
-                                <div class="my-auto py-8">
-                                    <p class="text-xs sm:text-sm text-muted leading-relaxed max-w-sm">
-                                        Setiap lipatan dirancang dengan kesadaran akan keindahan yang bersahaja — tidak berlebihan, namun selalu berkesan.
-                                    </p>
-                                </div>
-                                <div class="pt-4 border-t border-line/60 flex items-center justify-between text-xs text-muted">
-                                    <span>MH Scarf Studio Collection</span>
-                                    <span class="text-pink-mauve font-medium">Modest & Modern</span>
-                                </div>
-                            </div>
-                        @endif
-                    </div>
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="grid items-center gap-10 lg:grid-cols-[0.92fr_1.08fr] lg:gap-20">
+            {{-- Lookbook image --}}
+            <div class="relative mx-auto w-full max-w-xl lg:mx-0">
+                <div class="relative aspect-[4/5] overflow-hidden rounded-[1.5rem] bg-[#f4e9eb] shadow-card ring-1 ring-line/60">
+                    @php
+                        $campaignImageUrl = Storage::url('products/mh-scarf-campaign.webp');
+                    @endphp
+
+                    <img
+        src="{{ $campaignImageUrl }}"
+        alt="Koleksi scarf MH Scarf"
+        class="h-full w-full object-cover transition duration-700 hover:scale-[1.02]"
+    >
+
+                    <div class="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-ink/25 to-transparent"></div>
+                    <p class="absolute bottom-5 left-6 text-[10px] font-medium uppercase tracking-[0.2em] text-white sm:left-8">The everyday edit</p>
                 </div>
 
-                {{-- Right Editorial Narrative --}}
-                <div class="md:col-span-6 lg:col-span-6 space-y-5 text-center md:text-left">
-                    <p class="text-[11px] tracking-[0.25em] uppercase text-pink-mauve font-semibold">Filosofi Desain</p>
-                    <h2 class="font-display text-2xl sm:text-3xl lg:text-4xl font-semibold text-ink leading-tight">
-                        Keanggunan yang Tenang untuk Momen Sehari-Hari
-                    </h2>
-                    <p class="text-sm sm:text-base text-muted leading-relaxed">
-                        Di MH Scarf Store, kami percaya bahwa hijab bukan sekadar penutup kepala, melainkan perpanjangan dari karakter dan kenyamanan perempuan muslimah modern.
-                    </p>
-                    <p class="text-sm text-muted leading-relaxed">
-                        Kami mengutamakan kurasi bahan bernapas lega, drape kain yang jatuh rapi tanpa perlu usaha ekstra, serta pilihan warna lembut yang melengkapi ragam rona kulit Indonesia.
-                    </p>
+                {{-- Small caption card creates a more personal lookbook feel --}}
+                <div class="absolute -bottom-5 right-4 w-[min(72%,15rem)] rounded-xl border border-line/80 bg-white/95 p-4 shadow-card backdrop-blur sm:-right-5 sm:p-5">
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-pink-mauve">Catatan kecil</p>
+                    <p class="mt-2 font-display text-base italic leading-snug text-ink">“Pilih yang membuatmu merasa nyaman menjadi diri sendiri.”</p>
+                </div>
+            </div>
 
-                    <div class="pt-3">
-                        <x-primary-button :href="route('shop.index')" class="inline-flex">
-                            Jelajahi Koleksi MH Scarf
-                        </x-primary-button>
-                    </div>
+            {{-- Brand narrative --}}
+            <div class="pt-5 text-center lg:pt-0 lg:text-left">
+                <div class="mb-6 flex items-center justify-center gap-3 lg:justify-start">
+                    <span class="h-px w-8 bg-pink-mauve"></span>
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-pink-mauve">Tentang MH Scarf</p>
                 </div>
 
+                <h2 class="mx-auto max-w-xl font-display text-3xl font-semibold leading-[1.15] text-ink sm:text-4xl lg:mx-0 lg:text-[2.8rem]">
+                    Scarf yang mengikuti harimu, bukan sebaliknya.
+                </h2>
+
+                <div class="mx-auto mt-6 max-w-lg space-y-4 text-sm leading-7 text-muted lg:mx-0 sm:text-base">
+                    <p>
+                        Kami memilih scarf yang enak dipakai, mudah dibentuk, dan tetap terlihat rapi setelah menemani banyak kegiatan.
+                    </p>
+                    <p>
+                        Mulai dari warna netral untuk hari yang sibuk hingga aksen lembut untuk momen spesial—semuanya dikurasi supaya mudah masuk ke lemari pakaimu.
+                    </p>
+                </div>
+
+                <div class="mt-8 flex flex-col items-center gap-4 sm:flex-row lg:justify-start">
+                    <x-primary-button :href="route('shop.index')" class="inline-flex min-h-[46px] items-center">
+                        Lihat koleksi pilihan
+                        <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-6-6 6 6-6 6"/></svg>
+                    </x-primary-button>
+                    <span class="text-xs text-muted">Dikurasi untuk pemakaian sehari-hari</span>
+                </div>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
     {{-- =========================================================================
          8. MATERIAL EDUCATION (DESIGN.md v3 §7.8: Fabric craftsmanship guide)

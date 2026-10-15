@@ -77,6 +77,13 @@
                     {{ $product->name }}
                 </a>
             </h3>
+
+            @if ($product->rating_count > 0)
+        <div class="flex items-center gap-1.5 pt-0.5">
+        <x-star-rating :value="$product->rating_avg" class="text-[11px]" />
+        <span class="text-[11px] text-muted">{{ number_format($product->rating_avg, 1) }} ({{ $product->rating_count }})</span>
+    </div>
+@endif
         </div>
 
         <div class="space-y-2 pt-2 border-t border-line/60">

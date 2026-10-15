@@ -24,7 +24,7 @@ class CustomerAuthTest extends TestCase
         $response = $this->get(route('register'));
 
         $response->assertStatus(200);
-        $response->assertSee('Daftar Akun Baru');
+        $response->assertSee('Buat akun Anda');
     }
 
     public function test_customer_registration_succeeds(): void
@@ -144,7 +144,7 @@ class CustomerAuthTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Siti Aminah');
         $response->assertSee('siti@example.com');
-        $response->assertSee('customer');
+        $response->assertSee('Edit Profil');
         $response->assertSee(route('orders.index'));
         $response->assertSee(route('addresses.index'));
         $response->assertSee(route('wishlist.index'));

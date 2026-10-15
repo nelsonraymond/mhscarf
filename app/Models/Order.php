@@ -36,6 +36,8 @@ class Order extends Model
         'shipping_postal_code',
         'customer_note',
         'placed_at',
+        'delivered_at' => 'datetime',
+        'review_reminded_at' => 'datetime',
     ];
 
     /**
@@ -50,6 +52,8 @@ class Order extends Model
             'grand_total' => 'decimal:2',
             'voucher_discount' => 'decimal:2',
             'placed_at' => 'datetime',
+            'delivered_at' => 'datetime',
+            'review_reminded_at' => 'datetime',
         ];
     }
 
@@ -159,6 +163,11 @@ class Order extends Model
     {
         return in_array($this->status, ['pending', 'confirmed', 'processing', 'packed'], true);
     }
+
+    public function isReviewable(): bool
+{
+    return in_array($this->status, ['delivered', 'completed'], true);
+}
 
     /**
      * Get tracking timeline steps for visual rendering.

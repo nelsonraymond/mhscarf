@@ -119,11 +119,7 @@ class CheckoutController extends Controller
         ]);
 
         try {
-            // Store order in DB transaction (no external API calls)
-            $order = null;
-            DB::transaction(function () use ($user, $validated, &$order) {
-                $order = $this->checkoutService->placeOrder($user, $validated);
-            });
+            $order = $this->checkoutService->placeOrder($user, $validated);
 
             // Initialize payment after order is persisted (may throw RuntimeException)
             $payment = $this->paymentService->initializePayment($order);

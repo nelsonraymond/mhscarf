@@ -43,6 +43,8 @@ class Product extends Model
             'is_featured' => 'boolean',
             'is_best_seller' => 'boolean',
             'is_active' => 'boolean',
+            'rating_avg' => 'float',
+            'rating_count' => 'integer',
         ];
     }
 

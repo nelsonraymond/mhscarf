@@ -54,4 +54,24 @@ class Review extends Model
     {
         return $this->belongsTo(OrderItem::class);
     }
+
+    public const EDIT_WINDOW_DAYS = 14;
+
+/** "Nelson Raymond" -> "Nelson R." */
+public function maskedName(): string
+{
+    $parts = preg_split('/\s+/', trim($this->user?->name ?? ''), -1, PREG_SPLIT_NO_EMPTY);
+    if (! $parts) {
+        return 'Pelanggan';
+    }
+
+    return count($parts) === 1
+        ? $parts[0]
+        : $parts[0].' '.mb_strtoupper(mb_substr($parts[1], 0, 1)).'.';
+}
+
+public function isEditable(): bool
+{
+    return $this->created_at && $this->created_at->gt(now()->subDays(self::EDIT_WINDOW_DAYS));
+}
 }

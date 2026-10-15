@@ -96,13 +96,21 @@ class CatalogController extends Controller
             'images' => function ($q) {
                 $q->orderByDesc('is_primary')->orderBy('sort_order');
             },
-            'reviews' => function ($q) {
-                $q->where('is_published', true)->with('user')->latest();
-            },
         ]);
 
-        $averageRating = (float) ($product->reviews->avg('rating') ?? 0);
-        $reviewCount = $product->reviews->count();
+        $averageRating = (float) $product->rating_avg;
+        $reviewCount = (int) $product->rating_count;
+        $ratingBreakdown = $product->reviews()
+            ->where('is_published', true)
+            ->selectRaw('rating, COUNT(*) as total')
+            ->groupBy('rating')
+            ->pluck('total', 'rating');
+        $reviews = $product->reviews()
+            ->where('is_published', true)
+            ->with(['user', 'orderItem'])
+            ->latest()
+            ->paginate(5, ['*'], 'ulasan')
+            ->fragment('ulasan');
         $totalStock = (int) $product->variants->sum('stock_qty');
 
         // Related products — real records only: active products in the same category, excluding this one.
@@ -129,7 +137,8 @@ class CatalogController extends Controller
             : [];
 
         return view('catalog.show', compact(
-            'product', 'averageRating', 'reviewCount', 'totalStock', 'relatedProducts', 'wishlistedIds'
+            'product', 'averageRating', 'reviewCount', 'ratingBreakdown', 'reviews',
+            'totalStock', 'relatedProducts', 'wishlistedIds'
         ));
     }
 }

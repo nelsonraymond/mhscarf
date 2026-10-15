@@ -105,6 +105,17 @@
             </div>
         </div>
 
+        @php $unreviewed = $order->items->filter(fn ($i) => $i->review === null)->count(); @endphp
+@if ($order->isReviewable() && $unreviewed > 0)
+    <div class="mb-6 p-4 sm:p-5 rounded-2xl border border-pink-deep/30 bg-pink-soft/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+            <p class="text-sm font-semibold text-ink">Pesanan Anda sudah tiba. Bagaimana produknya?</p>
+            <p class="text-xs text-muted mt-0.5">Ulasan Anda membantu pembeli lain memilih. Beri bintang pada {{ $unreviewed }} produk di bawah.</p>
+        </div>
+        <span class="text-gold text-lg tracking-widest" aria-hidden="true">★★★★★</span>
+    </div>
+@endif
+
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {{-- Left: Order Items & Delivery Info --}}
             <div class="lg:col-span-8 space-y-6">
@@ -138,6 +149,21 @@
                                         <p class="text-xs text-muted mt-0.5">
                                             {{ $item->quantity }} x {{ $item->formattedUnitPrice() }}
                                         </p>
+                                        @if ($order->isReviewable())
+    <div class="mt-2 flex items-center gap-3 flex-wrap">
+        @if ($item->review)
+            <x-star-rating :value="$item->review->rating" class="text-xs" />
+            @if ($item->review->isEditable())
+                <a href="{{ route('reviews.edit', $item->review) }}" class="text-[11px] text-pink-deep hover:text-pink-mauve font-medium transition">Edit ulasan</a>
+            @endif
+        @else
+            <a href="{{ route('reviews.create', $item) }}"
+                class="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-pink-deep text-pink-deep hover:bg-pink-soft/30 text-xs font-medium transition">
+                <span aria-hidden="true">★</span> Beri Ulasan
+            </a>
+        @endif
+    </div>
+@endif
                                     </div>
                                 </div>
                                 <div class="text-right shrink-0">

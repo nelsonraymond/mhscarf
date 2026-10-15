@@ -46,24 +46,37 @@ class OrderService
      * @throws InvalidOrderStateTransitionException
      */
     public function transitionStatus(Order $order, string $newStatus, ?string $reason = null, ?User $actor = null): Order
-    {
-        if ($order->status === $newStatus) {
-            return $order;
+{
+    $result = DB::transaction(function () use ($order, $newStatus, $reason, $actor) {
+        // Baca ulang status terbaru dengan kunci, supaya tidak memakai instance yang basi
+        $locked = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+
+        if ($locked->status === $newStatus) {
+            return $locked;
         }
 
-        if (! $this->canTransition($order->status, $newStatus)) {
-            throw new InvalidOrderStateTransitionException($order->status, $newStatus);
+        if (! $this->canTransition($locked->status, $newStatus)) {
+            throw new InvalidOrderStateTransitionException($locked->status, $newStatus);
         }
 
         if ($newStatus === 'cancelled') {
-            return $this->cancelOrder($order, $reason, $actor);
+            return $this->cancelOrder($locked, $reason, $actor);
         }
 
-        $order->update(['status' => $newStatus]);
+        $attributes = ['status' => $newStatus];
+        if ($newStatus === 'delivered') {
+            $attributes['delivered_at'] = now();
+        }
+        $locked->update($attributes);
 
-        return $order->fresh();
-    }
+        return $locked->fresh();
+    });
 
+    // Sinkronkan instance milik pemanggil
+    $order->forceFill($result->getAttributes())->syncOriginal();
+
+    return $result;
+}
     /**
      * Cancel an order and restore inventory atomically and idempotently.
      *
