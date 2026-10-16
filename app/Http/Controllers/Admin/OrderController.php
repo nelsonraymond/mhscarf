@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
@@ -31,6 +32,10 @@ class OrderController extends Controller
         if ($request->filled('payment_status')) {
             $query->where('payment_status', $request->payment_status);
         }
+
+        if ($request->boolean('needs_refund')) {
+    $query->whereHas('payments', fn ($q) => $q->where('metadata->needs_refund', true));
+}
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -148,4 +153,41 @@ class OrderController extends Controller
             return back()->with('error', $e->getMessage());
         }
     }
+
+    /**
+ * Tandai bahwa refund sudah dilakukan manual (di dashboard Midtrans / transfer langsung).
+ */
+public function markRefunded(Order $order): RedirectResponse
+{
+    $marked = DB::transaction(function () use ($order) {
+        $locked = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+        $count = 0;
+
+        $payments = $locked->payments()->where('metadata->needs_refund', true)->lockForUpdate()->get();
+
+        foreach ($payments as $payment) {
+            $payment->update([
+                'status' => 'refunded',
+                'metadata' => array_merge($payment->metadata ?? [], [
+                    'needs_refund' => false,
+                    'refunded_marked_at' => now()->toIso8601String(),
+                    'refunded_marked_by' => Auth::id(),
+                ]),
+            ]);
+            $count++;
+        }
+
+        if ($count > 0) {
+            $locked->update(['payment_status' => 'refunded']);
+        }
+
+        return $count;
+    });
+
+    if ($marked === 0) {
+        return back()->with('error', 'Tidak ada pembayaran yang perlu direfund pada pesanan ini.');
+    }
+
+    return back()->with('success', "Pesanan #{$order->order_number} ditandai sudah direfund.");
+}
 }

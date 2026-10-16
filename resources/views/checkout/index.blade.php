@@ -38,6 +38,8 @@
 
         <form id="checkout-form" method="POST" action="{{ route('checkout.store') }}">
             @csrf
+            <input type="hidden" name="checkout_token" value="{{ $checkoutToken }}">
+            <input type="hidden" name="voucher_code" id="voucher-code-field" value="">
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
 
@@ -223,6 +225,10 @@
                             <div class="flex justify-between text-muted">
                                 <span>Biaya Pengiriman</span>
                                 <span id="summary-shipping" class="font-medium text-ink">Rp{{ number_format($shippingCost, 0, ',', '.') }}</span>
+                                <div id="summary-discount-row" class="hidden justify-between text-emerald-700">
+    <span>Diskon Voucher</span>
+    <span id="summary-discount" class="font-medium">- Rp0</span>
+</div>
                             </div>
 
                             <div class="pt-3 border-t border-line flex justify-between items-baseline">
@@ -235,6 +241,26 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div>
+    <label for="voucher-input" class="block text-xs font-semibold uppercase tracking-wide text-muted">Kode Voucher</label>
+
+    <div id="voucher-form-row" class="flex gap-2 mt-1.5">
+        <input id="voucher-input" type="text" maxlength="50" autocomplete="off" placeholder="Masukkan kode"
+            class="flex-1 min-w-0 h-11 px-3.5 rounded-xl border border-line bg-cream/40 text-sm text-ink uppercase placeholder:normal-case placeholder:text-muted/70 focus:outline-none focus:border-pink-deep focus-visible:ring-2 focus-visible:ring-pink-deep transition">
+        <button type="button" id="voucher-apply"
+            class="shrink-0 px-4 h-11 rounded-xl border border-pink-deep text-pink-deep hover:bg-pink-soft/30 text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-deep">
+            Pakai
+        </button>
+    </div>
+
+    <div id="voucher-applied" class="hidden mt-1.5 items-center justify-between gap-3 px-3.5 h-11 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-800">
+        <span>Voucher <strong id="voucher-applied-code"></strong> terpasang</span>
+        <button type="button" id="voucher-remove" class="text-xs font-medium text-emerald-700 hover:text-emerald-900 underline">Hapus</button>
+    </div>
+
+    <p id="voucher-msg" class="hidden text-xs mt-1.5" role="status" aria-live="polite"></p>
+</div>
 
                         <!-- Confirmation Button -->
                         <div class="pt-1">
@@ -377,47 +403,145 @@
     </div>
 
     <script>
-        // Visual-only preview when switching shipping method. Server remains the source of
-        // truth: CheckoutController recomputes cost from ShippingService on store().
-        document.addEventListener('DOMContentLoaded', function () {
-            var subtotal = {{ (int) $subtotal }};
-            var radios = document.querySelectorAll('.shipping-method-radio');
-            var elShipping = document.getElementById('summary-shipping');
-            var elTotal = document.getElementById('summary-grand-total');
-            var elBar = document.getElementById('bar-grand-total');
+    // Pratinjau saja. Server menghitung ulang ongkir dan diskon saat pesanan dibuat.
+    document.addEventListener('DOMContentLoaded', function () {
+        var subtotal = {{ (int) $subtotal }};
+        var state = { cost: {{ (int) $shippingCost }}, discount: 0, code: '' };
 
-            function formatRupiah(num) {
-                return 'Rp' + Number(num).toLocaleString('id-ID');
+        var radios = document.querySelectorAll('.shipping-method-radio');
+        var elShipping = document.getElementById('summary-shipping');
+        var elTotal = document.getElementById('summary-grand-total');
+        var elBar = document.getElementById('bar-grand-total');
+        var elDiscountRow = document.getElementById('summary-discount-row');
+        var elDiscount = document.getElementById('summary-discount');
+
+        var field = document.getElementById('voucher-code-field');
+        var input = document.getElementById('voucher-input');
+        var applyBtn = document.getElementById('voucher-apply');
+        var removeBtn = document.getElementById('voucher-remove');
+        var formRow = document.getElementById('voucher-form-row');
+        var applied = document.getElementById('voucher-applied');
+        var appliedCode = document.getElementById('voucher-applied-code');
+        var msg = document.getElementById('voucher-msg');
+
+        var csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        var endpoint = @json(route('checkout.voucher'));
+
+        function rupiah(n) { return 'Rp' + Number(n).toLocaleString('id-ID'); }
+
+        function render() {
+            if (elShipping) elShipping.textContent = rupiah(state.cost);
+            var total = subtotal + state.cost - state.discount;
+            if (elTotal) elTotal.textContent = rupiah(total);
+            if (elBar) elBar.textContent = rupiah(total);
+
+            if (elDiscountRow) {
+                var show = state.discount > 0;
+                elDiscountRow.classList.toggle('hidden', !show);
+                elDiscountRow.classList.toggle('flex', show);
+                if (elDiscount) elDiscount.textContent = '- ' + rupiah(state.discount);
             }
+        }
 
-            function refresh(cost) {
-                if (elShipping) elShipping.textContent = formatRupiah(cost);
-                var t = formatRupiah(subtotal + cost);
-                if (elTotal) elTotal.textContent = t;
-                if (elBar) elBar.textContent = t;
+        function setMessage(text, ok) {
+            if (!msg) return;
+            msg.textContent = text || '';
+            msg.classList.toggle('hidden', !text);
+            msg.classList.toggle('text-emerald-700', !!ok);
+            msg.classList.toggle('text-rose-600', !ok);
+        }
+
+        function clearVoucher() {
+            state.code = '';
+            state.discount = 0;
+            field.value = '';
+            formRow.classList.remove('hidden');
+            applied.classList.add('hidden');
+            applied.classList.remove('flex');
+            render();
+        }
+
+        function firstError(data) {
+            if (data && data.errors) {
+                var first = Object.values(data.errors)[0];
+                return Array.isArray(first) ? first[0] : first;
             }
+            return (data && data.message) || 'Voucher tidak dapat digunakan.';
+        }
 
-            radios.forEach(function (radio) {
-                radio.addEventListener('change', function () {
-                    if (this.checked) refresh(parseFloat(this.dataset.cost || 0));
+        async function applyVoucher(code) {
+            var radio = document.querySelector('.shipping-method-radio:checked');
+            applyBtn.disabled = true;
+
+            try {
+                var res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ voucher_code: code, shipping_method: radio ? radio.value : 'regular' }),
+                    credentials: 'same-origin'
                 });
-            });
+                var data = await res.json().catch(function () { return {}; });
+                if (!res.ok) throw data;
 
-            // Also toggle selected-card styling on change (pure CSS handles hover/focus).
-            radios.forEach(function (radio) {
-                radio.addEventListener('change', function () {
-                    document.querySelectorAll('label:has(.shipping-method-radio)').forEach(function (label) {
-                        var input = label.querySelector('.shipping-method-radio');
-                        if (!input) return;
-                        label.classList.toggle('border-pink-deep', input.checked);
-                        label.classList.toggle('bg-cream/60', input.checked);
-                        label.classList.toggle('ring-1', input.checked);
-                        label.classList.toggle('ring-pink-deep/30', input.checked);
-                        label.classList.toggle('border-line', !input.checked);
-                        label.classList.toggle('bg-white', !input.checked);
-                    });
+                state.code = data.code;
+                state.discount = Number(data.discount) || 0;
+                field.value = data.code;
+                appliedCode.textContent = data.code;
+                formRow.classList.add('hidden');
+                applied.classList.remove('hidden');
+                applied.classList.add('flex');
+                input.value = '';
+                setMessage('Hemat ' + rupiah(state.discount) + ' dengan voucher ini.', true);
+                render();
+            } catch (err) {
+                clearVoucher();
+                setMessage(firstError(err), false);
+            } finally {
+                applyBtn.disabled = false;
+            }
+        }
+
+        applyBtn.addEventListener('click', function () {
+            var code = input.value.trim();
+            if (!code) { setMessage('Masukkan kode voucher terlebih dahulu.', false); return; }
+            applyVoucher(code);
+        });
+
+        // Enter di kolom voucher tidak boleh mengirim form checkout
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); applyBtn.click(); }
+        });
+
+        removeBtn.addEventListener('click', function () {
+            clearVoucher();
+            setMessage('', true);
+        });
+
+        radios.forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                if (!this.checked) return;
+                state.cost = parseFloat(this.dataset.cost || 0);
+
+                // Voucher gratis ongkir bergantung pada metode pengiriman, jadi hitung ulang
+                if (state.code) { applyVoucher(state.code); } else { render(); }
+
+                document.querySelectorAll('label:has(.shipping-method-radio)').forEach(function (label) {
+                    var r = label.querySelector('.shipping-method-radio');
+                    if (!r) return;
+                    label.classList.toggle('border-pink-deep', r.checked);
+                    label.classList.toggle('bg-cream/60', r.checked);
+                    label.classList.toggle('ring-1', r.checked);
+                    label.classList.toggle('ring-pink-deep/30', r.checked);
+                    label.classList.toggle('border-line', !r.checked);
+                    label.classList.toggle('bg-white', !r.checked);
                 });
             });
         });
-    </script>
+    });
+</script>
 </x-layouts.app>

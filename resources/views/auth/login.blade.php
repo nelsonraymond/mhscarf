@@ -49,6 +49,13 @@
                     <p class="text-sm text-muted mt-1.5">Lanjutkan belanja hijab pilihan Anda.</p>
                 </div>
 
+                @if (session('success'))
+    <div class="mb-5 flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-xs text-emerald-800" role="status">
+        <svg class="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+        <span>{{ session('success') }}</span>
+    </div>
+@endif
+
                 <x-google-button />
 
                 <div class="my-6 flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.14em] text-muted">

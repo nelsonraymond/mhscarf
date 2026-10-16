@@ -21,10 +21,10 @@ class OrderController extends Controller
     public function index(Request $request): View
     {
         $orders = $request->user()->orders()
-            ->with(['items.variant.product.images', 'shipment', 'payments'])
-            ->latest('placed_at')
-            ->latest('id')
-            ->paginate(10);
+    ->with(['items.variant.product.images', 'items.review', 'shipment', 'payments'])
+    ->latest('placed_at')
+    ->latest('id')
+    ->paginate(10);
 
         return view('orders.index', compact('orders'));
     }

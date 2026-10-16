@@ -21,9 +21,6 @@
             <h1 class="font-display text-2xl sm:text-3xl font-bold text-ink">Daftar Keinginan (Wishlist)</h1>
             <p class="text-sm text-muted mt-1.5">
                 Simpan produk hijab yang Anda sukai untuk dibeli nanti
-                @if ($wishlists->total() > 0)
-                    — {{ $wishlists->total() }} produk tersimpan
-                @endif
             </p>
         </div>
 

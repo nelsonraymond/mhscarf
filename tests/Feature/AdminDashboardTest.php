@@ -41,9 +41,10 @@ class AdminDashboardTest extends TestCase
         $response->assertOk();
         $response->assertSee('Admin Dashboard');
         $response->assertSee('Ringkasan operasional MH Scarf Store');
-        $response->assertSee('150.000');
-        $response->assertDontSee('200.000');
-        $response->assertDontSee('99.000');
+        $response->assertSeeInOrder(['Pendapatan lunas', 'Rp 150.000']);
+$response->assertDontSee('Rp 350.000');
+$response->assertDontSee('Rp 249.000');
+$response->assertDontSee('Rp 449.000');
         $response->assertSee('Perlu ditindaklanjuti');
     }
 }

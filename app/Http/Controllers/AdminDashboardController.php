@@ -87,6 +87,17 @@ class AdminDashboardController extends Controller
             ->groupBy('payment_status')
             ->pluck('total', 'payment_status');
 
+        $refundOrders = Order::query()
+    ->with('user:id,name,email')
+    ->whereHas('payments', fn ($q) => $q->where('metadata->needs_refund', true))
+    ->latest('id')
+    ->limit(5)
+    ->get();
+
+$refundCount = Order::query()
+    ->whereHas('payments', fn ($q) => $q->where('metadata->needs_refund', true))
+    ->count();
+
         return view('admin.dashboard', [
             'admin' => $request->user(),
             'totalOrders' => $totalOrders,
@@ -102,6 +113,8 @@ class AdminDashboardController extends Controller
             'topProducts' => $topProducts,
             'lowStockVariants' => $lowStockVariants,
             'paymentBreakdown' => $paymentBreakdown,
+            'refundOrders' => $refundOrders,
+'refundCount' => $refundCount,
         ]);
     }
 }

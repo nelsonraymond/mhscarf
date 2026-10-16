@@ -1,6 +1,6 @@
 @php
     $announcements = [
-        'Gratis ongkir ke seluruh Indonesia, belanja mulai Rp75.000',
+        'Pakai kode HEMAT10, diskon 10% untuk belanja mulai Rp75.000',
         'Koleksi Voal Pastel baru hadir',
         'Pengiriman setiap hari kerja, Senin sampai Sabtu',
         'Silk Satin Evening Edition sudah rilis',

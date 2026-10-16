@@ -72,7 +72,7 @@ class CustomerOrderCancellationTest extends TestCase
 
         $response->assertOk()
             ->assertSee('Batalkan Pesanan')
-            ->assertSee('Yakin ingin membatalkan pesanan ini?', false)
+            ->assertSee('data-confirm-title="Batalkan pesanan ini?"', false)
             ->assertSee('Pembatalan hanya tersedia sebelum pesanan dikirim.');
     }
 

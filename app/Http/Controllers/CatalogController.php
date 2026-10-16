@@ -55,13 +55,25 @@ class CatalogController extends Controller
         }
 
         // Sorting
-        $sort = $request->input('sort', 'newest');
-        match ($sort) {
-            'price_asc' => $query->orderBy('base_price', 'asc'),
-            'price_desc' => $query->orderBy('base_price', 'desc'),
-            'best_seller' => $query->orderByDesc('is_best_seller')->latest(),
-            default => $query->latest(),
-        };
+       // Sale: hanya produk yang punya harga coret lebih tinggi dari harga jual
+$onSale = $request->boolean('sale');
+if ($onSale) {
+    $query->whereNotNull('compare_at_price')
+        ->whereColumn('compare_at_price', '>', 'base_price');
+}
+
+// Sorting. 'best' adalah alias dari 'best_seller' (dipakai link navbar).
+$sort = $request->input('sort', 'newest');
+if ($sort === 'best') {
+    $sort = 'best_seller';
+}
+
+match ($sort) {
+    'price_asc' => $query->orderBy('base_price', 'asc'),
+    'price_desc' => $query->orderBy('base_price', 'desc'),
+    'best_seller' => $query->orderByDesc('is_best_seller')->latest(),
+    default => $query->latest(),
+};
 
         $products = $query->paginate(12)->withQueryString();
 
@@ -140,5 +152,7 @@ class CatalogController extends Controller
             'product', 'averageRating', 'reviewCount', 'ratingBreakdown', 'reviews',
             'totalStock', 'relatedProducts', 'wishlistedIds'
         ));
+
+        return view('catalog.index', compact('products', 'categories', 'selectedCategory', 'sort', 'onSale'));
     }
 }

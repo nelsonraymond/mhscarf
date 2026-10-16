@@ -6,6 +6,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
+use App\Rules\Recaptcha;
 use Illuminate\View\View;
 
 class PasswordResetController extends Controller
@@ -26,8 +27,15 @@ class PasswordResetController extends Controller
     public function sendResetLinkEmail(Request $request): RedirectResponse
     {
         $request->validate([
-            'email' => ['required', 'email'],
-        ]);
+    'email' => ['required', 'email'],
+    'g-recaptcha-response' => (app()->environment('testing') || ! config('services.recaptcha.enabled'))
+        ? ['nullable']
+        : ['required', new Recaptcha],
+], [
+    'email.required' => 'Email wajib diisi.',
+    'email.email' => 'Format email tidak valid.',
+    'g-recaptcha-response.required' => 'Silakan centang "Saya bukan robot" terlebih dahulu.',
+]);
 
         // Broker generates token and triggers CanResetPassword::sendPasswordResetNotification()
         $status = Password::broker()->sendResetLink(

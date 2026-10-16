@@ -17,11 +17,12 @@ use Illuminate\Validation\ValidationException;
 class CheckoutService
 {
     public function __construct(
-        protected CartService $cartService,
-        protected InventoryService $inventoryService,
-        protected ShippingService $shippingService,
-        protected StockReservationService $stockReservationService,
-    ) {}
+    protected CartService $cartService,
+    protected InventoryService $inventoryService,
+    protected ShippingService $shippingService,
+    protected StockReservationService $stockReservationService,
+    protected VoucherService $voucherService,
+) {}
 
     /**
      * Prepare cart items and recalculate server-side totals.
@@ -81,6 +82,21 @@ class CheckoutService
             'itemCount' => $itemCount,
         ];
     }
+
+    /**
+ * Subtotal pesanan saat ini (Beli Sekarang atau keranjang), dihitung ulang di server.
+ */
+public function currentSubtotal(User $user): float
+{
+    if (session()->has('buy_now')) {
+        $buyNow = session()->get('buy_now');
+        $variant = ProductVariant::with('product')->findOrFail($buyNow['product_variant_id']);
+
+        return (float) ($variant->finalPrice() * (int) $buyNow['quantity']);
+    }
+
+    return (float) $this->getValidatedCartData($user)['subtotal'];
+}
 
     /**
      * Create an order from current customer's cart (or Buy Now session).
@@ -161,29 +177,45 @@ class CheckoutService
             );
 
             $orderSubtotal = array_sum(array_column($orderItemsData, 'subtotal'));
-            $grandTotal = $orderSubtotal + $shippingCost;
 
-            // Create Order
-            $order = Order::create([
-                'order_number' => $this->generateUniqueOrderNumber(),
-                'user_id' => $user->id,
-                'status' => 'pending',
-                'payment_status' => 'pending',
-                'subtotal' => $orderSubtotal,
-                'discount_amount' => 0,
-                'shipping_cost' => $shippingCost,
-                'grand_total' => $grandTotal,
-                'voucher_code' => null,
-                'voucher_discount' => 0,
-                'shipping_recipient_name' => $address->recipient_name,
-                'shipping_phone' => $address->phone,
-                'shipping_address' => $address->fullAddress(),
-                'shipping_city' => $address->city,
-                'shipping_province' => $address->province,
-                'shipping_postal_code' => $address->postal_code,
-                'customer_note' => $data['customer_note'] ?? null,
-                'placed_at' => now(),
-            ]);
+// Voucher: dikunci dan divalidasi ulang di dalam transaksi ini
+$voucherResult = null;
+if (! empty($data['voucher_code'])) {
+    $voucherResult = $this->voucherService->lockAndEvaluate(
+        $data['voucher_code'],
+        $user,
+        (float) $orderSubtotal,
+        (float) $shippingCost
+    );
+}
+$discount = $voucherResult['discount'] ?? 0.0;
+$grandTotal = $orderSubtotal + $shippingCost - $discount;
+
+// Create Order
+$order = Order::create([
+    'order_number' => $this->generateUniqueOrderNumber(),
+    'user_id' => $user->id,
+    'status' => 'pending',
+    'payment_status' => 'pending',
+    'subtotal' => $orderSubtotal,
+    'discount_amount' => $discount,
+    'shipping_cost' => $shippingCost,
+    'grand_total' => $grandTotal,
+    'voucher_code' => $voucherResult['voucher']->code ?? null,
+    'voucher_discount' => $discount,
+    'shipping_recipient_name' => $address->recipient_name,
+    'shipping_phone' => $address->phone,
+    'shipping_address' => $address->fullAddress(),
+    'shipping_city' => $address->city,
+    'shipping_province' => $address->province,
+    'shipping_postal_code' => $address->postal_code,
+    'customer_note' => $data['customer_note'] ?? null,
+    'placed_at' => now(),
+]);
+
+if ($voucherResult) {
+    $this->voucherService->recordUsage($voucherResult['voucher'], $user, $order, $discount);
+}
 
             // Create immutable OrderItem snapshots and link each stock reservation to its item.
             // Tanpa tautan order_item_id, konfirmasi bayar, pembatalan, dan sweeper tidak menemukan reservasinya.

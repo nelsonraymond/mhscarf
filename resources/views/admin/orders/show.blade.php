@@ -6,6 +6,33 @@
         <a href="{{ route('admin.orders.index') }}" class="text-sm text-admin-muted hover:text-admin-text">← Kembali ke daftar pesanan</a>
     </div>
 
+    @php
+    $refundPayments = $order->payments->filter(fn ($p) => ($p->metadata['needs_refund'] ?? false) === true);
+@endphp
+@if ($refundPayments->isNotEmpty())
+    <div class="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-5" role="alert">
+        <h2 class="text-sm font-semibold text-amber-900">Pesanan ini perlu direfund</h2>
+        <ul class="mt-2 space-y-1 text-xs text-amber-800">
+            @foreach ($refundPayments as $rp)
+                <li>
+                    {{ $rp->metadata['needs_refund_reason'] ?? 'Pembayaran perlu dikembalikan.' }}
+                    Nominal: <strong>{{ $rp->formattedAmount() }}</strong>
+                    · Ref: <span class="font-mono">{{ $rp->transaction_reference ?? '—' }}</span>
+                </li>
+            @endforeach
+        </ul>
+        <p class="mt-2 text-xs text-amber-800">Lakukan refund di dashboard Midtrans terlebih dahulu, baru tandai di sini.</p>
+
+        <form method="POST" action="{{ route('admin.orders.refunded', $order) }}" class="mt-3"
+            data-confirm="Pastikan dana sudah benar-benar dikembalikan ke pelanggan. Tindakan ini mencatat refund sebagai selesai."
+            data-confirm-title="Tandai sudah direfund?"
+            data-confirm-ok="Ya, sudah direfund">
+            @csrf
+            <button type="submit" class="admin-btn admin-btn-primary">Tandai sudah direfund</button>
+        </form>
+    </div>
+@endif
+
     <div class="admin-card mb-6 p-6">
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>

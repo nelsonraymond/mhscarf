@@ -9,6 +9,8 @@ use App\Models\StockReservation;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
+use App\Models\Voucher;
+use App\Models\VoucherUsage;
 
 class OrderService
 {
@@ -139,6 +141,23 @@ class OrderService
                 ->whereIn('order_item_id', $locked->items->pluck('id'))
                 ->whereIn('status', [StockReservation::STATUS_PENDING, StockReservation::STATUS_RESERVED])
                 ->update(['status' => StockReservation::STATUS_RELEASED]);
+            
+            // Kembalikan kuota voucher supaya pesanan yang batal/kedaluwarsa tidak menghanguskan kuotanya
+$usage = VoucherUsage::where('order_id', $locked->id)->first();
+if ($usage) {
+    Voucher::whereKey($usage->voucher_id)->where('used_count', '>', 0)->decrement('used_count');
+    $usage->delete();
+}
+
+// Pesanan yang sudah dibayar lalu dibatalkan: uangnya harus dikembalikan manual
+if ($locked->payment_status === 'paid') {
+    foreach ($locked->payments()->where('status', 'paid')->get() as $payment) {
+        $payment->update(['metadata' => array_merge($payment->metadata ?? [], [
+            'needs_refund' => true,
+            'needs_refund_reason' => 'Pesanan dibatalkan setelah pembayaran diterima.',
+        ])]);
+    }
+}
 
             $locked->update([
                 'status' => 'cancelled',

@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\ProductImageController;
 use App\Http\Controllers\Admin\ProductVariantController;
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\Admin\VoucherController as AdminVoucherController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\CheckoutController;
@@ -22,6 +23,7 @@ use App\Models\Product;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\JournalController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 
 
@@ -35,6 +37,10 @@ Route::get('/product/{product:slug}', fn (Product $product) => redirect()->route
     ->name('shop.product.legacy');
 // FAQ    
 Route::view('/faq', 'faq')->name('faq');
+
+// Journal Routes
+Route::get('/journal/{slug}', [JournalController::class, 'show'])->name('journal.show');
+
 // Customer Guest Routes
 Route::middleware('guest')->group(function () {
     Route::get('/login', [CustomerAuthController::class, 'create'])->name('login');
@@ -44,7 +50,9 @@ Route::middleware('guest')->group(function () {
 
     // Forgot Password & Reset Password
     Route::get('/forgot-password', [PasswordResetController::class, 'showLinkRequestForm'])->name('password.request');
-    Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLinkEmail'])->name('password.email');
+    Route::post('/forgot-password', [PasswordResetController::class, 'sendResetLinkEmail'])
+    ->name('password.email')
+    ->middleware('throttle:5,1');
     Route::get('/reset-password/{token}', [PasswordResetController::class, 'showResetForm'])->name('password.reset');
     Route::post('/reset-password', [PasswordResetController::class, 'reset'])->name('password.update');
     Route::get('/auth/google', [GoogleAuthController::class, 'redirect'])->name('auth.google');
@@ -71,6 +79,8 @@ Route::middleware('auth')->group(function () {
     // Checkout Routes
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+    // Voucher Preview (AJAX)
+    Route::post('/checkout/voucher', [CheckoutController::class, 'voucher'])->name('checkout.voucher')->middleware('throttle:20,1');
 
     // Customer Order History & Detail
     Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
@@ -121,6 +131,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.status');
         Route::post('/orders/{order}/cancel', [AdminOrderController::class, 'cancel'])->name('orders.cancel');
         Route::patch('/orders/{order}/shipment', [AdminOrderController::class, 'updateShipment'])->name('orders.shipment');
+        Route::post('/orders/{order}/refunded', [AdminOrderController::class, 'markRefunded'])->name('orders.refunded');
 
         // Category Management
         Route::resource('categories', CategoryController::class)->except(['show']);
@@ -141,5 +152,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::get('/reviews', [AdminReviewController::class, 'index'])->name('reviews.index');
 Route::patch('/reviews/{review}/visibility', [AdminReviewController::class, 'toggle'])->name('reviews.toggle');
+
+Route::patch('/vouchers/{voucher}/toggle', [AdminVoucherController::class, 'toggle'])->name('vouchers.toggle');
+Route::resource('vouchers', AdminVoucherController::class)->except(['show']);
     });
 });

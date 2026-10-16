@@ -22,6 +22,7 @@
                     ['route' => 'admin.dashboard', 'pattern' => 'admin.dashboard', 'label' => 'Dashboard', 'icon' => 'dashboard'],
                     ['route' => 'admin.orders.index', 'pattern' => 'admin.orders.*', 'label' => 'Pesanan', 'icon' => 'orders'],
                     ['route' => 'admin.reviews.index', 'pattern' => 'admin.reviews.*', 'label' => 'Ulasan', 'icon' => 'reviews'],
+                    ['route' => 'admin.vouchers.index', 'pattern' => 'admin.vouchers.*', 'label' => 'Voucher', 'icon' => 'vouchers'],
                 ],
             ],
             [
@@ -39,6 +40,7 @@
             'reviews' => 'M11.48 3.5a.56.56 0 011.04 0l2.13 5.11a.56.56 0 00.47.35l5.52.44c.5.04.7.67.32 1l-4.2 3.6a.56.56 0 00-.18.56l1.29 5.38a.56.56 0 01-.84.61l-4.73-2.89a.56.56 0 00-.58 0l-4.73 2.89a.56.56 0 01-.84-.61l1.29-5.38a.56.56 0 00-.18-.56l-4.2-3.6a.56.56 0 01.32-1l5.52-.44a.56.56 0 00.47-.35L11.48 3.5z',
             'products' => 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z',
             'categories' => 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10',
+            'vouchers' => 'M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z',
         ];
     @endphp
 

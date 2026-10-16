@@ -133,4 +133,35 @@ class PublicCatalogTest extends TestCase
 
         $response->assertStatus(404);
     }
+
+    public function test_sale_filter_only_shows_discounted_products(): void
+{
+    $category = Category::factory()->create(['is_active' => true]);
+
+    $discounted = Product::factory()->create([
+        'category_id' => $category->id, 'is_active' => true,
+        'base_price' => 80000, 'compare_at_price' => 100000,
+    ]);
+    $regular = Product::factory()->create([
+        'category_id' => $category->id, 'is_active' => true,
+        'base_price' => 90000, 'compare_at_price' => null,
+    ]);
+
+    $this->get(route('shop.index', ['sale' => 1]))
+        ->assertOk()
+        ->assertSee($discounted->name)
+        ->assertDontSee($regular->name);
+}
+
+public function test_best_alias_sorts_like_best_seller(): void
+{
+    $category = Category::factory()->create(['is_active' => true]);
+
+    Product::factory()->create(['category_id' => $category->id, 'is_active' => true, 'is_best_seller' => false, 'name' => 'Produk Biasa']);
+    Product::factory()->create(['category_id' => $category->id, 'is_active' => true, 'is_best_seller' => true, 'name' => 'Produk Andalan']);
+
+    $this->get(route('shop.index', ['sort' => 'best']))
+        ->assertOk()
+        ->assertSeeInOrder(['Produk Andalan', 'Produk Biasa']);
+}
 }

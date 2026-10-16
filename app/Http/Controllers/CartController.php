@@ -8,6 +8,7 @@ use App\Services\CartService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Str;
 
 class CartController extends Controller
 {
@@ -130,9 +131,10 @@ class CartController extends Controller
 
         // Store buy‑now context in session (separate from regular cart)
         $request->session()->put('buy_now', [
-            'product_variant_id' => $validated['product_variant_id'],
-            'quantity' => $validated['quantity'],
-        ]);
+    'product_variant_id' => $validated['product_variant_id'],
+    'quantity' => $validated['quantity'],
+    'token' => (string) Str::uuid(),
+]);
 
         // Redirect directly to checkout page
         return redirect()->route('checkout.index')

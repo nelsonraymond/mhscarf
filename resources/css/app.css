@@ -32,8 +32,8 @@
     --color-muted: #75686d;
     --color-line: #ebdde2;
 
-    --font-display: "Playfair Display", ui-serif, Georgia, serif;
-    --font-body: "Poppins", ui-sans-serif, system-ui, sans-serif;
+    --font-display: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+--font-body: "DM Sans", ui-sans-serif, system-ui, sans-serif;
 
     /* Soft shadows per DESIGN.md §10 (no strong black shadows) */
     --shadow-card: 0 8px 30px rgba(58, 48, 51, 0.06);

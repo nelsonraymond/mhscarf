@@ -7,6 +7,34 @@
         description="Ringkasan operasional MH Scarf Store. Angka pendapatan hanya dari pesanan berstatus pembayaran lunas dan tidak dibatalkan."
     />
 
+    @if ($refundCount > 0)
+    <section class="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-5" aria-labelledby="refund-heading" role="alert">
+        <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h2 id="refund-heading" class="text-sm font-semibold text-amber-900">
+                    {{ $refundCount }} pesanan perlu direfund
+                </h2>
+                <p class="mt-0.5 text-xs text-amber-800">Pembayaran sudah diterima, tetapi pesanannya dibatalkan. Kembalikan dana di dashboard Midtrans, lalu tandai di sini.</p>
+            </div>
+            <a href="{{ route('admin.orders.index', ['needs_refund' => 1]) }}" class="text-xs font-medium text-amber-900 underline hover:no-underline">Lihat semua</a>
+        </div>
+
+        <ul class="mt-3 divide-y divide-amber-200 rounded-lg border border-amber-200 bg-white/70">
+            @foreach ($refundOrders as $refundOrder)
+                <li>
+                    <a href="{{ route('admin.orders.show', $refundOrder) }}" class="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-white">
+                        <div class="min-w-0">
+                            <p class="truncate font-mono text-xs font-semibold text-admin-accent">{{ $refundOrder->order_number }}</p>
+                            <p class="truncate text-xs text-admin-muted">{{ $refundOrder->shipping_recipient_name }}</p>
+                        </div>
+                        <span class="shrink-0 text-sm font-semibold tabular-nums text-admin-text">{{ $refundOrder->formattedGrandTotal() }}</span>
+                    </a>
+                </li>
+            @endforeach
+        </ul>
+    </section>
+@endif
+
     <div class="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <a href="{{ route('admin.orders.index') }}" class="admin-card p-5 transition hover:border-admin-accent/40">
             <p class="text-xs font-medium uppercase tracking-wide text-admin-muted">Total pesanan</p>

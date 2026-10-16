@@ -8,6 +8,8 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
+use App\Models\Order;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -140,5 +142,67 @@ class CheckoutTest extends TestCase
         ]);
 
         $response->assertSessionHasErrors('cart');
+    }
+
+        public function test_duplicate_checkout_token_returns_same_order(): void
+    {
+        $customer = User::factory()->customer()->create();
+        $variant = $this->createVariant(stock: 10);
+        $address = Address::factory()->create(['user_id' => $customer->id, 'is_default' => true]);
+
+        $cart = Cart::create(['user_id' => $customer->id]);
+        $cart->items()->create([
+            'product_variant_id' => $variant->id,
+            'quantity' => 1,
+            'unit_price' => 60000,
+        ]);
+
+        $payload = [
+            'address_id' => $address->id,
+            'shipping_method' => 'regular',
+            'checkout_token' => 'token-test-123',
+        ];
+
+        $first = $this->actingAs($customer)->postJson(route('checkout.store'), $payload)->assertOk();
+        $second = $this->actingAs($customer)->postJson(route('checkout.store'), $payload)->assertOk();
+
+        // Token yang sama mengembalikan pesanan yang sama, bukan membuat pesanan baru
+        $this->assertSame($first->json('order_id'), $second->json('order_id'));
+        $this->assertSame(1, Order::where('user_id', $customer->id)->count());
+
+        // Stok hanya terpotong sekali
+        $this->assertEquals(9, $variant->fresh()->stock_qty);
+    }
+
+    public function test_failed_checkout_releases_token_so_user_can_retry(): void
+    {
+        $customer = User::factory()->customer()->create();
+        $variant = $this->createVariant(stock: 2);
+        $address = Address::factory()->create(['user_id' => $customer->id, 'is_default' => true]);
+
+        $cart = Cart::create(['user_id' => $customer->id]);
+        $item = $cart->items()->create([
+            'product_variant_id' => $variant->id,
+            'quantity' => 5, // melebihi stok 2
+            'unit_price' => 60000,
+        ]);
+
+        $payload = [
+            'address_id' => $address->id,
+            'shipping_method' => 'regular',
+            'checkout_token' => 'token-retry-456',
+        ];
+
+        $this->actingAs($customer)->postJson(route('checkout.store'), $payload)->assertStatus(422);
+
+        // Pesanan gagal dibuat, jadi token harus dilepas
+        $this->assertFalse(Cache::has('checkout-idem:'.$customer->id.':token-retry-456'));
+        $this->assertSame(0, Order::where('user_id', $customer->id)->count());
+
+        // Setelah keranjang diperbaiki, token yang sama bisa dipakai lagi
+        $item->update(['quantity' => 1]);
+
+        $this->actingAs($customer)->postJson(route('checkout.store'), $payload)->assertOk();
+        $this->assertSame(1, Order::where('user_id', $customer->id)->count());
     }
 }

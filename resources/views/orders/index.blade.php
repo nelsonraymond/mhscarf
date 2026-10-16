@@ -98,6 +98,19 @@
                             @endif
                         </div>
 
+                        {{-- Ajakan ulasan: hanya untuk pesanan yang sudah tiba dan masih punya produk belum diulas --}}
+@php $unreviewed = $order->items->filter(fn ($i) => $i->review === null)->count(); @endphp
+@if ($order->isReviewable() && $unreviewed > 0)
+    <a href="{{ route('orders.show', $order) }}"
+        class="mb-4 flex items-center justify-between gap-3 rounded-xl border border-pink-deep/30 bg-pink-soft/30 px-4 py-3 transition hover:bg-pink-soft/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-deep">
+        <span class="text-xs text-ink">
+            <strong class="font-semibold">Pesanan sudah tiba.</strong>
+            Beri ulasan untuk {{ $unreviewed }} produk.
+        </span>
+        <span class="shrink-0 text-gold tracking-widest" aria-hidden="true">★★★★★</span>
+    </a>
+@endif
+
                         {{-- Footer Row --}}
                         <div class="pt-4 border-t border-line flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div class="text-xs text-muted">

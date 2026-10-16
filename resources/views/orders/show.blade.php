@@ -253,11 +253,16 @@
                     </div>
 
                     @if($order->discount_amount > 0)
-                        <div class="flex justify-between text-emerald-600">
-                            <span>Diskon Voucher</span>
-                            <span class="font-medium">- Rp {{ number_format($order->discount_amount, 0, ',', '.') }}</span>
-                        </div>
-                    @endif
+    <div class="flex justify-between gap-3 text-emerald-600">
+        <span>
+            Diskon Voucher
+            @if($order->voucher_code)
+                <span class="ml-1 rounded bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-emerald-700">{{ $order->voucher_code }}</span>
+            @endif
+        </span>
+        <span class="font-medium shrink-0">- Rp {{ number_format($order->discount_amount, 0, ',', '.') }}</span>
+    </div>
+@endif
 
                     <div class="pt-3 border-t border-line flex justify-between items-baseline text-sm">
                         <span class="font-bold text-ink">Total Akhir</span>
@@ -290,7 +295,9 @@
                         </p>
 
                         <form action="{{ route('orders.cancel', $order) }}" method="POST"
-                            onsubmit="return confirm('Yakin ingin membatalkan pesanan ini?');">
+    data-confirm="Stok produk akan dikembalikan{{ $order->voucher_code ? ' dan voucher '.$order->voucher_code.' bisa dipakai lagi' : '' }}. Tindakan ini tidak dapat dibatalkan."
+    data-confirm-title="Batalkan pesanan ini?"
+    data-confirm-ok="Ya, Batalkan">
                             @csrf
                             <button type="submit"
                                 class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 text-sm font-semibold hover:bg-rose-100 hover:border-rose-300 active:bg-rose-200 transition min-h-[44px]">
@@ -314,4 +321,5 @@
             </div>
         </div>
     </div>
+    <x-confirm-dialog />
 </x-layouts.app>
