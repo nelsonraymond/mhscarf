@@ -1,4 +1,4 @@
-# DESIGN.md — MH Scarf STOREFRONT DESIGN SYSTEM v2
+# DESIGN.md — MH ScarfFRONT DESIGN SYSTEM v2
 
 > **Purpose:** Visual source of truth for the MH Scarf hijab e-commerce storefront.
 >

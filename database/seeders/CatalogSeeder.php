@@ -264,7 +264,7 @@ class CatalogSeeder extends Seeder
                 'compare_at_price' => 299000,
                 'is_featured' => true,
                 'is_best_seller' => true,
-                'description' => 'Karya istimewa MH Scarf Store menggunakan 100% serat sutra murbei alami berhias signature botanical rose charm.',
+                'description' => 'Karya istimewa MH Scarf menggunakan 100% serat sutra murbei alami berhias signature botanical rose charm.',
                 'variant_count' => 3,
             ],
             [

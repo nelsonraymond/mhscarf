@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title ?? 'Admin Panel' }} - MH Scarf Store</title>
+    <title>{{ $title ?? 'Admin Panel' }} - MH Scarf</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -90,7 +90,7 @@
         <header class="bg-white border-b border-[#EBDDE2] px-6 py-3.5 flex items-center justify-between">
             <h2 class="text-sm font-medium text-[#75686D]">{{ $header ?? 'Manajemen Toko' }}</h2>
             <div class="text-xs text-[#75686D]">
-                MH Scarf Store &copy; {{ date('Y') }}
+                MH Scarf &copy; {{ date('Y') }}
             </div>
         </header>
 

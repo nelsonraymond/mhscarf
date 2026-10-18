@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', 'MH Scarf Store — Modern Indonesian Modest Fashion')
+    @section('title', 'MH Scarf — Modern Indonesian Modest Fashion')
 
     {{-- =========================================================================
          1. ANNOUNCEMENT BAR  ──▶ Rendered via <x-announcement-bar /> in app layout

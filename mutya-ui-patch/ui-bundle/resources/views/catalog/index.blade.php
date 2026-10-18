@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', ($selectedCategory ? $selectedCategory->name . ' — ' : 'Semua Koleksi — ') . 'MH Scarf Store')
+    @section('title', ($selectedCategory ? $selectedCategory->name . ' — ' : 'Semua Koleksi — ') . 'MH Scarf')
 
     {{-- ================= SHOP PAGE — DESIGN.md v3: product-first, editorial-minimal =================
          Reuses shared components (layout navbar/footer, ProductCard) and the proven CatalogController

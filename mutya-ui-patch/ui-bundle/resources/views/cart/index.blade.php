@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', 'Keranjang Belanja — MH Scarf Store')
+    @section('title', 'Keranjang Belanja — MH Scarf')
 
     {{-- Tahap 4: migrated to shared app layout (navbar/footer/flash), design tokens,
          stepper qty consistent with product detail, server-side max/min enforced,

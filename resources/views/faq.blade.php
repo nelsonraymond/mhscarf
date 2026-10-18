@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', 'FAQ — MH Scarf Store')
+    @section('title', 'FAQ — MH Scarf')
 
     @php
         $waNumber = '6281234567890'; // samakan dengan nomor WhatsApp di footer

@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', 'Checkout Pesanan — MH Scarf Store')
+    @section('title', 'Checkout Pesanan — MH Scarf')
 
     {{-- Tahap 4: migrated to shared app layout; per-field errors surfaced; shipping card gets
          selected state + keyboard focus ring; fake "Diskon Voucher - Rp 0" row removed (checkout

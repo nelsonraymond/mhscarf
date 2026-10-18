@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Daftar Alamat Pengiriman - MH Scarf Store</title>
+    <title>Daftar Alamat Pengiriman - MH Scarf</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -90,7 +90,7 @@
                 </div>
                 <h2 class="font-serif-display text-xl font-bold text-[#3A3033] mb-2">Belum Ada Alamat Tersimpan</h2>
                 <p class="text-sm text-[#75686D] max-w-md mx-auto mb-6">
-                    Tambahkan alamat pengiriman utama Anda untuk mempercepat proses pemesanan hijab favorit Anda di MH Scarf Store.
+                    Tambahkan alamat pengiriman utama Anda untuk mempercepat proses pemesanan hijab favorit Anda di MH Scarf.
                 </p>
                 <a href="{{ route('addresses.create') }}"
                     class="inline-flex items-center px-5 py-2.5 bg-[#D98FAF] hover:bg-[#c97e9e] text-white text-sm font-medium rounded-xl transition">
@@ -169,7 +169,7 @@
     </main>
 
     <footer class="mt-auto bg-white border-t border-[#EBDDE2] py-6 text-center text-xs text-[#75686D]">
-        <p>&copy; {{ date('Y') }} MH Scarf Store. Soft Luxury Hijab Boutique.</p>
+        <p>&copy; {{ date('Y') }} MH Scarf. Soft Luxury Hijab Boutique.</p>
     </footer>
 </body>
 </html>

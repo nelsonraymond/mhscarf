@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\ReviewReminderMail;
 use App\Models\Address;
 use App\Models\Cart;
 use App\Models\Category;
@@ -11,7 +12,9 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
+use App\Services\OrderService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class OrderTest extends TestCase

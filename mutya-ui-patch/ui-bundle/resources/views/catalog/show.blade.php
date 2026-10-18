@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', $product->name . ' — MH Scarf Store')
+    @section('title', $product->name . ' — MH Scarf')
 
     {{-- ============ PRODUCT DETAIL — DESIGN.md v3: product-first, editorial-minimal.
          Reuses: layouts.app (navbar/footer/flash), wishlist-button, price-display, primary/secondary buttons,

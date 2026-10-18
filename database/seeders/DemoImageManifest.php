@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 /**
- * MH Scarf STORE — curated demo-image manifest (development / academic use only).
+ * MH Scarf — curated demo-image manifest (development / academic use only).
  *
  * Deterministic mapping: category slug -> one verified Pexels photograph that
  * genuinely depicts a hijab / modest-fashion subject. An image is NEVER mapped

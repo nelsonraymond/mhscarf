@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', 'Detail Pesanan #' . $order->order_number . ' — MH Scarf Store')
+    @section('title', 'Detail Pesanan #' . $order->order_number . ' — MH Scarf')
 
     {{-- Stage 6: migrated to shared app layout + design tokens.
          Backend contract unchanged: orders.show (GET) / orders.cancel (POST). --}}

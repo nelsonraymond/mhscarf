@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', 'Riwayat Pesanan — MH Scarf Store')
+    @section('title', 'Riwayat Pesanan — MH Scarf')
 
     {{-- Stage 6: migrated to shared app layout + design tokens.
          Backend contract unchanged: orders.index (GET) / orders.show (GET). --}}
@@ -34,7 +34,7 @@
                 </div>
                 <h2 class="font-display text-xl font-bold text-ink mb-2">Belum Ada Riwayat Pesanan</h2>
                 <p class="text-sm text-muted max-w-md mx-auto mb-6">
-                    Anda belum pernah membuat pesanan di MH Scarf Store. Jelajahi katalog hijab anggun kami dan mulai berbelanja hari ini!
+                    Anda belum pernah membuat pesanan di MH Scarf. Jelajahi katalog hijab anggun kami dan mulai berbelanja hari ini!
                 </p>
                 <a href="{{ route('shop.index') }}"
                     class="inline-flex items-center px-6 py-2.5 bg-pink-deep hover:bg-pink-mauve text-white text-sm font-medium rounded-xl transition shadow-card hover:shadow-card-hover">

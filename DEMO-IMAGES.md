@@ -1,4 +1,4 @@
-# MH Scarf STORE — Demo Image Sources & License Notes
+# MH Scarf — Demo Image Sources & License Notes
 
 > **Purpose:** development / academic demonstration only. The storefront needs
 > imagery for products that have no uploaded photography yet. Every demo image
@@ -45,11 +45,11 @@ so Unsplash assets will need to be fetched from a normal workstation/browser.
   finalizing credits.
 - Images previously seeded from **Lorem Picsum** (generic photos, now replaced
   in the tooling) can be removed cleanly:
-    ```sql
-    DELETE FROM product_images WHERE image_path LIKE 'products/demo-%';
-    ```
-    then delete matching files in `storage/app/public/products/` and re-run the
-    seeder. Admin-uploaded images are never touched by these tools.
+  ```sql
+  DELETE FROM product_images WHERE image_path LIKE 'products/demo-%';
+  ```
+  then delete matching files in `storage/app/public/products/` and re-run the
+  seeder. Admin-uploaded images are never touched by these tools.
 
 ## How to populate
 

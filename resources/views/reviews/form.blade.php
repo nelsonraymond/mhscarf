@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', ($review ? 'Edit Ulasan' : 'Beri Ulasan') . ' — MH Scarf Store')
+    @section('title', ($review ? 'Edit Ulasan' : 'Beri Ulasan') . ' — MH Scarf')
 
     <style>
         .star-input input:checked ~ label,

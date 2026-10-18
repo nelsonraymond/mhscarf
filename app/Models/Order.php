@@ -36,8 +36,8 @@ class Order extends Model
         'shipping_postal_code',
         'customer_note',
         'placed_at',
-        'delivered_at' => 'datetime',
-        'review_reminded_at' => 'datetime',
+        'delivered_at',
+        'review_reminded_at',
     ];
 
     /**

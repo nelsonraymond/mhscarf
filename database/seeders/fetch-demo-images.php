@@ -3,7 +3,7 @@
 use Database\Seeders\DemoImageManifest;
 
 /**
- * MH Scarf STORE — Demo product-image fetcher (development / academic use only).
+ * MH Scarf — Demo product-image fetcher (development / academic use only).
  *
  * Standalone script (no composer/Laravel required) that downloads one
  * royalty-free placeholder photograph per product that has NO images yet,
@@ -116,7 +116,7 @@ foreach ($pending as $p) {
     $relPath = 'products/'.$filename;
     file_put_contents($productsDir.'/'.$filename, $body);
 
-    $alt = addslashes($p['name'].' — '.($p['material'] ?? 'MH Scarf Store').' (demo image)');
+    $alt = addslashes($p['name'].' — '.($p['material'] ?? 'MH Scarf').' (demo image)');
     $path = addslashes($relPath);
     $sqlLines[] = "-- Pexels #{$entry['pexels_id']} (".DemoImageManifest::sourcePageUrl($entry['pexels_id']).") — Pexels License\n".
         "INSERT INTO product_images (product_id, variant_id, image_path, alt_text, sort_order, is_primary, created_at, updated_at)\n".

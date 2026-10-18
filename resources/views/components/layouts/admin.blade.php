@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ $title ?? 'Admin Panel' }} - MH Scarf Store</title>
+    <title>{{ $title ?? 'Admin Panel' }} - MH Scarf</title>
 
     @vite(['resources/css/app.css'])
 </head>

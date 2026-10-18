@@ -1,5 +1,5 @@
 <x-layouts.auth>
-    <x-slot:title>Admin Login - MH Scarf Store</x-slot:title>
+    <x-slot:title>Admin Login - MH Scarf</x-slot:title>
 
     <div class="flex min-h-screen items-center justify-center bg-admin-bg px-4 py-10">
         <div class="w-full max-w-md">
@@ -8,7 +8,7 @@
                     MH
                 </div>
                 <h1 class="text-2xl font-semibold tracking-tight text-admin-text">Portal Administrator</h1>
-                <p class="mt-1 text-sm text-admin-muted">Masuk untuk mengelola katalog, pesanan, dan ulasan MH Scarf Store.</p>
+                <p class="mt-1 text-sm text-admin-muted">Masuk untuk mengelola katalog, pesanan, dan ulasan MH Scarf.</p>
             </div>
 
             <div class="admin-card p-6 sm:p-8">

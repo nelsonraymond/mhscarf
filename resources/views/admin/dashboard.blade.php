@@ -4,7 +4,7 @@
 
     <x-admin.page-header
         title="Admin Dashboard"
-        description="Ringkasan operasional MH Scarf Store. Angka pendapatan hanya dari pesanan berstatus pembayaran lunas dan tidak dibatalkan."
+        description="Ringkasan operasional MH Scarf. Angka pendapatan hanya dari pesanan berstatus pembayaran lunas dan tidak dibatalkan."
     />
 
     @if ($refundCount > 0)

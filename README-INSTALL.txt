@@ -1,5 +1,5 @@
 ==============================================================================
-MH Scarf STORE — DEMO IMAGE PACKAGE (development / academic use only)
+MH Scarf — DEMO IMAGE PACKAGE (development / academic use only)
 ==============================================================================
 
 WHAT THIS PACKAGE ADDS (merge-safe, additive only):

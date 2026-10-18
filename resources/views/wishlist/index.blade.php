@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', 'Wishlist Saya — MH Scarf Store')
+    @section('title', 'Wishlist Saya — MH Scarf')
 
     {{-- Tahap 5: migrated to shared app layout (navbar/footer/flash) + design tokens.
          Backend contract unchanged: wishlist.destroy (DELETE) / wishlist.toggle (POST). --}}

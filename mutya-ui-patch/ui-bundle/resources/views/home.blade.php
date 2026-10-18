@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', 'MH Scarf Store — Modern Indonesian Modest Fashion')
+    @section('title', 'MH Scarf — Modern Indonesian Modest Fashion')
 
     {{-- =========================================================================
          1. ANNOUNCEMENT BAR  ──▶ Rendered via <x-announcement-bar /> in app layout
@@ -209,7 +209,7 @@
                         Keanggunan yang Tenang untuk Momen Sehari-Hari
                     </h2>
                     <p class="text-sm sm:text-base text-muted leading-relaxed">
-                        Di MH Scarf Store, kami percaya bahwa hijab bukan sekadar penutup kepala, melainkan perpanjangan dari karakter dan kenyamanan perempuan muslimah modern.
+                        Di MH Scarf, kami percaya bahwa hijab bukan sekadar penutup kepala, melainkan perpanjangan dari karakter dan kenyamanan perempuan muslimah modern.
                     </p>
                     <p class="text-sm text-muted leading-relaxed">
                         Kami mengutamakan kurasi bahan bernapas lega, drape kain yang jatuh rapi tanpa perlu usaha ekstra, serta pilihan warna lembut yang melengkapi ragam rona kulit Indonesia.

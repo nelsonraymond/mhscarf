@@ -1,4 +1,4 @@
-# MH Scarf Store — UI Tahap 1-4 Patch Bundle
+# MH Scarf — UI Tahap 1-4 Patch Bundle
 
 Basis patch : commit main `da4c16e` ("fix wishlist button")
 HEAD sumber : commit `18a2072` (branch kerja workspace Qwen)
