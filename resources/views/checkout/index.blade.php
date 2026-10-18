@@ -307,7 +307,8 @@
         </form>
 
     {{-- Midtrans Snap JS (Sandbox) --}}
-<script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
+<script src="{{ config('midtrans.is_production') ? 'https://app.midtrans.com/snap/snap.js' : 'https://app.sandbox.midtrans.com/snap/snap.js' }}"
+    data-client-key="{{ config('midtrans.client_key') }}"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         var form = document.getElementById('checkout-form');

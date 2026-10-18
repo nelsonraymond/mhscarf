@@ -1,5 +1,5 @@
 <x-layouts.auth>
-    <x-slot:title>Masuk - MH Scarf Store</x-slot:title>
+    <x-slot:title>Masuk - MH Scarf</x-slot:title>
 
     @php
         $input = 'h-11 w-full rounded-full border bg-cream/50 text-sm text-ink outline-none transition placeholder:text-muted/60 focus:border-pink-deep focus-visible:ring-2 focus-visible:ring-pink-deep/40';
