@@ -41,6 +41,11 @@ class CheckoutController extends Controller
         $defaultShipping = 'regular';
         $shippingCost = $shippingMethods[$defaultShipping]['cost'];
 
+        \Log::info('Checkout quantity debug', [
+    'buy_now' => $request->session()->get('buy_now'),
+    'checkout_source' => $request->session()->get('checkout_source'),
+]);
+
         // Buy‑Now flow
         if ($request->session()->has('buy_now')) {
             $buyNow = $request->session()->get('buy_now');

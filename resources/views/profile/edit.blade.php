@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', 'Edit Profil — MH Scarf Store')
+    @section('title', 'Edit Profil — MH Scarf')
 
     @php
         $inputClass = 'mt-1.5 block w-full h-11 px-3.5 rounded-xl border border-line bg-cream/40 text-sm text-ink placeholder:text-muted/70 focus:outline-none focus:border-pink-deep focus-visible:ring-2 focus-visible:ring-pink-deep transition';

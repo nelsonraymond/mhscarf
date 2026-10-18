@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', 'Riwayat Pesanan — MH Scarf Store')
+    @section('title', 'Riwayat Pesanan — MH Scarf')
 
     {{-- Stage 6: migrated to shared app layout + design tokens.
          Backend contract unchanged: orders.index (GET) / orders.show (GET). --}}

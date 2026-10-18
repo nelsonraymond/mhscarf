@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', 'MH Scarf Store — Modern Indonesian Modest Fashion')
+    @section('title', 'MH Scarf— Modern Hijab Fashion')
 
     {{-- =========================================================================
          1. ANNOUNCEMENT BAR  ──▶ Rendered via <x-announcement-bar /> in app layout
@@ -11,13 +11,22 @@
     $heroSlides = [
         [
             'file'    => 'images/hero/hero-2.webp',
+            'mobile'  => 'images/hero/mobile/hero-2.webp',
         ],
         [
             'file'    => 'images/hero/hero-1.webp',
+            'mobile'  => 'images/hero/mobile/hero-1.webp',
         ],
 
     ];
 @endphp
+
+
+   <x-promo-popup image="{{ asset('images/promo-okt.webp') }}"
+               :link="route('shop.index')"
+               alt="Promo Oktober"
+               key="promo-oktober-2026"
+               :delay="1000" />
 
 <style>
     /* Hero mobile-first: satu media wrapper, tanpa wrapper/overlay ganda */
@@ -304,62 +313,67 @@
     {{-- =========================================================================
          8. MATERIAL EDUCATION (DESIGN.md v3 §7.8: Fabric craftsmanship guide)
          ========================================================================= --}}
-  @php
+@php
     $material = [
-        'img'     => 'images/material/material-banner.jpg',
-        'mobile'  => 'images/material/material-banner-mobile.jpg', // opsional
-        'label'   => 'Voal Premium',
-        'tagline' => 'Rapi dari Pagi',
-        'tone'    => 'dark', // 'dark' = teks gelap, 'light' = teks putih
-        'url'     => route('shop.index'),
+        'img'    => 'images/material/material-banner.webp',
+        'mobile' => 'images/material/material-banner-mobile.webp',
+        'url'    => route('shop.index'),
     ];
 @endphp
 
 <style>
-    .mat-banner { position: relative; display: block; width: 100%; overflow: hidden; background: #F3EAEE; aspect-ratio: 4 / 5; }
-    .mat-banner img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .7s ease-out; }
-    .mat-banner:hover img { transform: scale(1.03); }
-    .mat-copy {
-        position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
-        display: flex; flex-direction: column; align-items: center; gap: .9rem;
-        padding: 0 1.25rem 2rem;
+    .mat-banner {
+        display: block;
+        width: 100%;
+        overflow: hidden;
+        line-height: 0;
     }
-    .mat-pill {
-        display: inline-flex; align-items: center; justify-content: center;
-        padding: .75rem 2rem; border: 2px solid currentColor; border-radius: 9999px;
-        font-size: 1.05rem; font-weight: 600; transition: background-color .2s ease, color .2s ease;
-    }
-    .mat-tagline { font-size: 1.5rem; font-weight: 700; line-height: 1.1; }
-    .mat-banner[data-tone="dark"]  { color: #3a3033; }
-    .mat-banner[data-tone="light"] { color: #ffffff; }
-    .mat-banner[data-tone="dark"]:hover .mat-pill  { background: #3a3033; color: #fff; }
-    .mat-banner[data-tone="light"]:hover .mat-pill { background: #fff; color: #3a3033; }
 
+    .mat-banner picture {
+        display: block;
+        width: 100%;
+    }
+
+    .mat-banner img {
+        display: block;
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+    }
+
+    /* Tampilan desktop */
     @media (min-width: 1024px) {
-        .mat-banner { aspect-ratio: 16 / 7; max-height: 52rem; }
-        .mat-copy {
-            top: 0; flex-direction: row; align-items: center; justify-content: space-between;
-            padding: 0 6%; gap: 2rem;
+        .mat-banner img {
+            width: 100%;
+            height: auto;
         }
-        .mat-pill { font-size: 1.5rem; padding: 1.1rem 3rem; }
-        .mat-tagline { font-size: 2.5rem; }
+    }
+
+    /* Tampilan mobile */
+    @media (max-width: 1023px) {
+        .mat-banner img {
+            width: 100%;
+            height: auto;
+        }
     }
 </style>
 
-<section id="material-education" aria-label="Karakteristik material">
-    <a href="{{ $material['url'] }}" class="mat-banner" data-tone="{{ $material['tone'] }}">
-        @if (file_exists(public_path($material['img'])))
-            <picture>
-                @if (file_exists(public_path($material['mobile'])))
-                    <source media="(max-width: 1023px)" srcset="{{ asset($material['mobile']) }}">
-                @endif
-                <img src="{{ asset($material['img']) }}" alt="{{ $material['label'] }}" loading="lazy">
-            </picture>
-        @endif
-        <div class="mat-copy">
-            <span class="mat-pill">{{ $material['label'] }}</span>
-            <span class="mat-tagline font-display">{{ $material['tagline'] }}</span>
-        </div>
+<section id="material-education" aria-label="Banner material">
+    <a href="{{ $material['url'] }}" class="mat-banner">
+        <picture>
+            @if (file_exists(public_path($material['mobile'])))
+                <source
+                    media="(max-width: 1023px)"
+                    srcset="{{ asset($material['mobile']) }}"
+                >
+            @endif
+
+            <img
+                src="{{ asset($material['img']) }}"
+                alt="Koleksi material hijab MH Scarf"
+                loading="lazy"
+            >
+        </picture>
     </a>
 </section>
 

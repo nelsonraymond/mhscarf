@@ -1,5 +1,5 @@
 <x-layouts.app>
-    @section('title', 'Profil Saya — MH Scarf Store')
+    @section('title', 'Profil Saya — MH Scarf')
 
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 md:pt-12 pb-[calc(2.5rem+env(safe-area-inset-bottom))]">
 

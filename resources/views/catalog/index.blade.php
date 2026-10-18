@@ -1,13 +1,7 @@
 <x-layouts.app>
     @section('title', ($selectedCategory ? $selectedCategory->name . ' — ' : 'Semua Koleksi — ') . 'MH Scarf Store')
 
-    {{-- ================= SHOP PAGE — DESIGN.md v3: product-first, editorial-minimal =================
-         Reuses shared components (layout navbar/footer, ProductCard) and the proven CatalogController
-         query logic (category filter, search q, sort, paginate(12)->withQueryString()). No fake controls.
-
-         Tahap 2 additions: active-filter chips + reset, sticky mobile filter/sort sheet (DESIGN.md §28/§38),
-         desktop inline search, branded pagination component. All controls map to real backend params only
-         (q / category / sort) — no decorative price/color/material filters. --}}
+   
         @php
             // Active filter state shared by chips + mobile sheet (real query params supported by CatalogController)
             $shopQ = request('q');

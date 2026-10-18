@@ -111,6 +111,7 @@ $navIdle = 'text-muted';
                 <svg class="w-[22px] h-[22px]" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 20s-7-4.6-9.2-9A5.2 5.2 0 0112 6.5 5.2 5.2 0 0121.2 11C19 15.4 12 20 12 20z"/>
                 </svg>
+                <x-wishlist-badge-count />
             </a>
 
             {{-- Akun: guest → langsung ke login; user login → dropdown kecil --}}

@@ -1,10 +1,8 @@
 @php
     $announcements = [
         'Pakai kode HEMAT10, diskon 10% untuk belanja mulai Rp75.000',
-        'Koleksi Voal Pastel baru hadir',
         'Pengiriman setiap hari kerja, Senin sampai Sabtu',
         'Silk Satin Evening Edition sudah rilis',
-        'Retur mudah dalam 7 hari setelah barang diterima',
     ];
 @endphp
 
@@ -24,20 +22,23 @@
     .ann-group { display: flex; flex-shrink: 0; align-items: center; }
 
     .ann-item {
-        display: inline-flex; align-items: center; white-space: nowrap;
-        padding: .6rem 0;
-        font-size: 10.5px; font-weight: 600;
-        letter-spacing: .2em; text-transform: uppercase;
-    }
-    .ann-item::after {
-        content: "|"; margin: 0 1.25rem; font-weight: 400; opacity: .8;
-    }
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
 
-    .ann-bar::before, .ann-bar::after {
-        content: ""; position: absolute; top: 0; bottom: 0; width: 2rem; z-index: 2; pointer-events: none;
-    }
-    .ann-bar::before { left: 0; background: linear-gradient(to right, rgb(var(--ann-fade)), rgba(var(--ann-fade), 0)); }
-    .ann-bar::after { right: 0; background: linear-gradient(to left, rgb(var(--ann-fade)), rgba(var(--ann-fade), 0)); }
+    padding: .7rem 0;
+    font-size: 14px;
+    font-weight: 300;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.ann-item::after {
+    content: "|";
+    margin: 0 .85rem;
+    font-weight: 400;
+    opacity: .8;
+}
 
     @keyframes ann-scroll {
         from { transform: translateX(0); }
@@ -45,10 +46,20 @@
     }
 
     @media (min-width: 640px) {
-        .ann-item { font-size: 11px; letter-spacing: .22em; padding: .7rem 0; }
-        .ann-item::after { margin: 0 1.75rem; }
-        .ann-track { animation-duration: 55s; }
+    .ann-item {
+        font-size: 15px;
+        letter-spacing: .1em;
+        padding: .8rem 0;
     }
+
+    .ann-item::after {
+        margin: 0 1rem;
+    }
+
+    .ann-track {
+        animation-duration: 55s;
+    }
+}
 
     @media (prefers-reduced-motion: reduce) {
         .ann-bar::before, .ann-bar::after { display: none; }

@@ -119,7 +119,6 @@
                         @php $discountPct = round((1 - $product->base_price / $product->compare_at_price) * 100); @endphp
                         <span class="ml-2 text-[11px] font-semibold text-pink-deep align-middle">Hemat {{ $discountPct }}%</span>
                     @endif
-                    <p class="text-[11px] text-muted mt-1" id="pd-variant-price-note">Harga dapat berbeda per varian.</p>
                 </div>
 
                 {{-- Stock availability — updates per selected variant via JS (data-stock is real DB data) --}}

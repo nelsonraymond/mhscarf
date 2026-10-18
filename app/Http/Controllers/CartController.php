@@ -21,6 +21,8 @@ class CartController extends Controller
      */
     public function index(Request $request): View
     {
+        $request->session()->forget(['buy_now', 'checkout_source']);
+        
         $cart = $this->cartService->getCart(
             $request->user(),
             $request->session()->getId(),
@@ -130,12 +132,16 @@ class CartController extends Controller
         ]);
 
         // Store buy‑now context in session (separate from regular cart)
-        $request->session()->put('buy_now', [
+        $request->session()->put('checkout_source', 'buy_now');
+
+$request->session()->put('buy_now', [
     'product_variant_id' => $validated['product_variant_id'],
-    'quantity' => $validated['quantity'],
+    'quantity' => (int) $validated['quantity'],
     'token' => (string) Str::uuid(),
 ]);
 
+return redirect()->route('checkout.index')
+    ->with('success', 'Produk siap checkout via Beli Sekarang.');
         // Redirect directly to checkout page
         return redirect()->route('checkout.index')
             ->with('success', 'Produk siap checkout via Beli Sekarang.');
