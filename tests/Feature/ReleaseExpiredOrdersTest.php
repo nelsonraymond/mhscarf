@@ -59,6 +59,10 @@ class ReleaseExpiredOrdersTest extends TestCase
 
     public function test_overdue_unpaid_order_is_cancelled_and_stock_is_restored(): void
     {
+        config([
+    'midtrans.expiry_minutes' => 15,
+    'midtrans.expiry_grace_minutes' => 3,
+]);
         [$order, $variant] = $this->placeOrder(stock: 10, quantity: 2);
         $this->assertSame(8, $variant->fresh()->stock_qty);
 
@@ -82,6 +86,10 @@ class ReleaseExpiredOrdersTest extends TestCase
 
     public function test_running_the_command_twice_restores_stock_only_once(): void
     {
+        config([
+    'midtrans.expiry_minutes' => 15,
+    'midtrans.expiry_grace_minutes' => 3,
+]);
         [$order, $variant] = $this->placeOrder(stock: 10, quantity: 2);
 
         $this->mockGateway(fn (MockInterface $m) => $m->shouldReceive('fetchStatus')->andReturn(null));
@@ -95,6 +103,10 @@ class ReleaseExpiredOrdersTest extends TestCase
 
     public function test_order_inside_the_grace_period_is_left_alone(): void
     {
+        config([
+    'midtrans.expiry_minutes' => 15,
+    'midtrans.expiry_grace_minutes' => 3,
+]);
         [$order, $variant] = $this->placeOrder(stock: 10, quantity: 2);
 
         $this->mockGateway(fn (MockInterface $m) => $m->shouldNotReceive('fetchStatus'));
@@ -109,6 +121,10 @@ class ReleaseExpiredOrdersTest extends TestCase
 
     public function test_order_paid_at_the_gateway_is_confirmed_instead_of_expired(): void
     {
+        config([
+    'midtrans.expiry_minutes' => 15,
+    'midtrans.expiry_grace_minutes' => 3,
+]);
         [$order, $variant] = $this->placeOrder(stock: 10, quantity: 2);
 
         $this->mockGateway(fn (MockInterface $m) => $m->shouldReceive('fetchStatus')->once()->andReturn([
@@ -136,6 +152,10 @@ class ReleaseExpiredOrdersTest extends TestCase
 
     public function test_order_still_pending_at_the_gateway_is_skipped(): void
     {
+        config([
+    'midtrans.expiry_minutes' => 15,
+    'midtrans.expiry_grace_minutes' => 3,
+]);
         [$order, $variant] = $this->placeOrder(stock: 10, quantity: 2);
 
         $this->mockGateway(fn (MockInterface $m) => $m->shouldReceive('fetchStatus')->once()->andReturn([
@@ -157,6 +177,10 @@ class ReleaseExpiredOrdersTest extends TestCase
 
     public function test_gateway_error_does_not_expire_the_order(): void
     {
+        config([
+    'midtrans.expiry_minutes' => 15,
+    'midtrans.expiry_grace_minutes' => 3,
+]);
         [$order, $variant] = $this->placeOrder(stock: 10, quantity: 2);
 
         $this->mockGateway(fn (MockInterface $m) => $m->shouldReceive('fetchStatus')

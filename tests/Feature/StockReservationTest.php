@@ -96,32 +96,50 @@ class StockReservationTest extends TestCase
     /**
      * Test that expires_at is set approximately 15 minutes from now.
      */
-    public function test_reservation_expires_at_is_set_correctly(): void
-    {
-        Carbon::setTestNow(Carbon::now());
-        $variant = ProductVariant::factory()->create(['stock_qty' => 5]);
-        $user = $this->createCustomer();
+    
+public function test_reservation_expires_at_is_set_correctly(): void
+{
+    Carbon::setTestNow(Carbon::now());
 
-        $cartService = $this->app->make(CartService::class);
-        $cart = $cartService->getOrCreateCart($user, session()->getId());
-        $cart->items()->create([
-            'product_variant_id' => $variant->id,
-            'quantity' => 2,
-            'unit_price' => $variant->finalPrice(),
-        ]);
+    // Masa berlaku khusus untuk test ini: 24 jam
+    config(['midtrans.expiry_minutes' => 1440]);
 
-        $checkout = $this->app->make(CheckoutService::class);
-        $order = $checkout->placeOrder($user, [
-            'address_id' => $user->addresses()->first()->id,
-            'shipping_method' => 'regular',
-        ]);
+    $variant = ProductVariant::factory()->create(['stock_qty' => 5]);
+    $user = $this->createCustomer();
 
-        $reservation = StockReservation::where('product_variant_id', $variant->id)->first();
-        $this->assertNotNull($reservation);
-        $expected = Carbon::now()->addMinutes(15);
-        $diff = $expected->diffInSeconds($reservation->expires_at);
-        $this->assertTrue($diff <= 60, 'Expires_at should be within 1 minute of 15 minutes');
-    }
+    $cartService = $this->app->make(CartService::class);
+    $cart = $cartService->getOrCreateCart($user, session()->getId());
+
+    $cart->items()->create([
+        'product_variant_id' => $variant->id,
+        'quantity' => 2,
+        'unit_price' => $variant->finalPrice(),
+    ]);
+
+    $checkout = $this->app->make(CheckoutService::class);
+    $order = $checkout->placeOrder($user, [
+        'address_id' => $user->addresses()->first()->id,
+        'shipping_method' => 'regular',
+    ]);
+
+    // Ambil reservasi yang dibuat untuk item pesanan ini
+    $reservation = StockReservation::whereIn(
+        'order_item_id',
+        $order->items()->select('id')
+    )->first();
+
+    $this->assertNotNull($reservation);
+
+    $expected = Carbon::now()->addMinutes(1440);
+    $diff = abs($expected->diffInSeconds($reservation->expires_at));
+
+    $this->assertLessThanOrEqual(
+        60,
+        $diff,
+        'Expires_at should be within 1 minute of 24 hours'
+    );
+}
+
 
     /**
      * Test that insufficient stock rolls back the entire reservation and does not change stock.

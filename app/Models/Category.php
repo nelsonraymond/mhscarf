@@ -24,7 +24,6 @@ class Category extends Model
         'slug',
         'description',
         'image',
-        'cloudinary_public_id',
         'is_active',
     ];
 
@@ -63,7 +62,8 @@ class Category extends Model
         return $query->whereNull('parent_id');
     }
 
-    public function getImageUrlAttribute(): ?string
+    
+public function getImageUrlAttribute(): ?string
 {
     if (empty($this->image)) {
         $static = collect(['jpg', 'jpeg', 'png', 'webp'])
@@ -73,12 +73,20 @@ class Category extends Model
         return $static ? asset($static) : null;
     }
 
-    // Cloudinary URL: return directly.
-    if (str_starts_with($this->image, 'https://')) {
+    // URL gambar lama dari Cloudinary atau layanan eksternal.
+    if (preg_match('#^https?://#i', $this->image)) {
         return $this->image;
     }
 
-    // Legacy local storage path.
+    // Gambar baru yang disimpan di Supabase Storage.
+    $publicUrl = config('filesystems.disks.supabase.url');
+
+    if (! empty($publicUrl)) {
+        return rtrim($publicUrl, '/') . '/' . ltrim($this->image, '/');
+    }
+
+    // Kompatibilitas untuk gambar lama di local public storage.
     return Storage::disk('public')->url($this->image);
 }
+
 }

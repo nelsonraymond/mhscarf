@@ -21,7 +21,6 @@ class ProductImage extends Model
         'image_path',
         'alt_text',
         'sort_order',
-        'cloudinary_public_id',
         'is_primary',
     ];
 
@@ -46,18 +45,29 @@ class ProductImage extends Model
         return $this->belongsTo(ProductVariant::class, 'variant_id');
     }
 
-    public function getImageUrlAttribute(): ?string
+   
+public function getImageUrlAttribute(): ?string
 {
     if (empty($this->image_path)) {
         return null;
     }
 
-    if (str_starts_with($this->image_path, 'http://')
-        || str_starts_with($this->image_path, 'https://')) {
+    // Pertahankan URL eksternal yang sudah tersimpan.
+    if (preg_match('#^https?://#i', $this->image_path)) {
         return $this->image_path;
     }
 
+    // Path gambar baru di Supabase Storage.
+    $publicUrl = config('filesystems.disks.supabase.url');
+
+    if (! empty($publicUrl)) {
+        return rtrim($publicUrl, '/') . '/'
+            . ltrim($this->image_path, '/');
+    }
+
+    // Fallback untuk konfigurasi lama.
     return \Illuminate\Support\Facades\Storage::disk('public')
         ->url($this->image_path);
 }
+
 }

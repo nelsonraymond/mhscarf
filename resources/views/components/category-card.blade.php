@@ -1,21 +1,34 @@
 @props(['category'])
 
-@php
-    // Prioritas: gambar terupload kategori -> file statis public/images/categories/{slug}.jpg -> foto produk pertama
-    $src = null;
 
-    if (! empty($category->image)) {
-        $src = Storage::url($category->image);
-    } elseif ($static = collect(['jpg', 'jpeg', 'png', 'webp'])
-        ->map(fn ($ext) => "images/categories/{$category->slug}.{$ext}")
-        ->first(fn ($p) => file_exists(public_path($p)))) {
-        $src = asset($static);
-    } else {
+@php
+    // Prioritas 1: gambar kategori dari Supabase atau URL eksternal.
+    $src = $category->image_url;
+
+    // Prioritas 2: gambar statis berdasarkan slug.
+    if (empty($src)) {
+        $static = collect(['jpg', 'jpeg', 'png', 'webp'])
+            ->map(fn ($ext) => "images/categories/{$category->slug}.{$ext}")
+            ->first(fn ($path) => file_exists(public_path($path)));
+
+        if ($static) {
+            $src = asset($static);
+        }
+    }
+
+    // Prioritas 3: gambar produk pertama sebagai fallback.
+    if (empty($src)) {
         $path = data_get($category, 'image_path')
             ?? $category->products?->first()?->primaryImage()?->image_path;
-        $src = $path ? Storage::url($path) : null;
+
+        if ($path) {
+            $src = preg_match('#^https?://#i', $path)
+                ? $path
+                : Storage::url($path);
+        }
     }
 @endphp
+
 
 <a href="{{ route('shop.category', $category->slug) }}" class="group block">
     <div class="relative aspect-[4/5] overflow-hidden bg-[#F6EEF1]">

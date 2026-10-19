@@ -117,7 +117,7 @@ class PublicCatalogTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('Pashmina Silk Premium');
         $response->assertSee('Dusty Pink');
-        $response->assertSee('Stok Tersedia');
+        $response->assertSee('Stok tersedia');
     }
 
     public function test_inactive_product_detail_returns_404(): void

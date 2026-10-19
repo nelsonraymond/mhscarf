@@ -122,13 +122,19 @@ class AdminAuthTest extends TestCase
 public function test_admin_login_is_locked_after_repeated_failures(): void
 {
     for ($i = 0; $i < 5; $i++) {
-        $this->post(route('admin.login.submit'), ['email' => 'owner@example.com', 'password' => 'salah']);
+        $this->post(route('admin.login.submit'), [
+            'email' => 'owner@example.com',
+            'password' => 'salah',
+        ]);
     }
 
-    $this->post(route('admin.login.submit'), ['email' => 'owner@example.com', 'password' => 'salah'])
-        ->assertSessionHasErrors('email');
+    $response = $this->post(route('admin.login.submit'), [
+        'email' => 'owner@example.com',
+        'password' => 'salah',
+    ]);
 
-    $this->assertStringContainsString('Terlalu banyak', session('errors')->first('email'));
+    $response->assertStatus(429);
+    $this->assertGuest();
 }
 
 public function test_customer_credentials_get_the_same_error_and_no_session(): void

@@ -10,7 +10,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
-use App\Services\CloudinaryService;
 
 class CategoryController extends Controller
 {
@@ -32,7 +31,9 @@ class CategoryController extends Controller
             $query->where('is_active', $isActive);
         }
 
-        $categories = $query->latest()->paginate(15)->withQueryString();
+        $categories = $query->latest()
+            ->paginate(15)
+            ->withQueryString();
 
         return view('admin.categories.index', compact('categories'));
     }
@@ -58,15 +59,26 @@ class CategoryController extends Controller
         $data = $request->validated();
         $data['is_active'] = $request->boolean('is_active', true);
 
+        $uploadedPath = null;
+
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('categories', 'public');
-        } else {
-            unset($data['image']);
+    $uploadedPath = $request->file('image')
+        ->store('categories', 'supabase');
+
+    $data['image'] = $uploadedPath;
+}
+        try {
+            Category::create($data);
+        } catch (\Throwable $exception) {
+            if ($uploadedPath) {
+                Storage::disk('supabase')->delete($uploadedPath);
+            }
+
+            throw $exception;
         }
 
-        Category::create($data);
-
-        return redirect()->route('admin.categories.index')
+        return redirect()
+            ->route('admin.categories.index')
             ->with('success', 'Kategori berhasil ditambahkan.');
     }
 
@@ -80,68 +92,70 @@ class CategoryController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('admin.categories.edit', compact('category', 'parentCategories'));
+        return view(
+            'admin.categories.edit',
+            compact('category', 'parentCategories')
+        );
     }
 
     /**
      * Update the specified category.
      */
     public function update(
-    UpdateCategoryRequest $request,
-    Category $category,
-    CloudinaryService $cloudinary
-): RedirectResponse {
-    $data = $request->validated();
-    $data['is_active'] = $request->boolean('is_active');
+        UpdateCategoryRequest $request,
+        Category $category
+    ): RedirectResponse {
+        $data = $request->validated();
+        $data['is_active'] = $request->boolean('is_active');
 
-    $oldImage = $category->image;
-    $oldPublicId = $category->cloudinary_public_id;
-    $newUpload = null;
+        $oldImage = $category->image;
+        $newPath = null;
+        $removeImage = $request->boolean('remove_image');
 
-    if ($request->boolean('remove_image')) {
-        $data['image'] = null;
-        $data['cloudinary_public_id'] = null;
-    } elseif ($request->hasFile('image')) {
-        $newUpload = $cloudinary->upload(
-            $request->file('image'),
-            'mh-scarf/categories'
-        );
+       if ($removeImage) {
+    $data['image'] = null;
+} elseif ($request->hasFile('image')) {
+    $newPath = $request->file('image')
+        ->store('categories', 'supabase');
 
-        $data['image'] = $newUpload['url'];
-        $data['cloudinary_public_id'] = $newUpload['public_id'];
-    } else {
-        unset($data['image'], $data['cloudinary_public_id']);
-    }
-
-    try {
-        $category->update($data);
-    } catch (\Throwable $exception) {
-        // Bersihkan upload baru jika penyimpanan database gagal.
-        if ($newUpload) {
-            $cloudinary->delete($newUpload['public_id']);
-        }
-
-        throw $exception;
-    }
-
-    // Hapus gambar lama hanya setelah perubahan database berhasil.
-    if (
-        ($request->boolean('remove_image') || $newUpload)
-        && $oldImage
-    ) {
-        if ($oldPublicId) {
-            $cloudinary->delete($oldPublicId);
-        } elseif (! str_starts_with($oldImage, 'http://')
-            && ! str_starts_with($oldImage, 'https://')) {
-            // Kompatibilitas untuk gambar lama yang masih tersimpan lokal.
-            Storage::disk('public')->delete($oldImage);
-        }
-    }
-
-    return redirect()
-        ->route('admin.categories.index')
-        ->with('success', 'Kategori berhasil diperbarui.');
+    $data['image'] = $newPath;
+} else {
+    unset($data['image']);
 }
+
+        try {
+            $category->update($data);
+        } catch (\Throwable $exception) {
+            // Hapus file baru jika update database gagal.
+            if ($newPath) {
+                Storage::disk('supabase')->delete($newPath);
+            }
+
+            throw $exception;
+        }
+
+        
+        // Hapus gambar lama hanya setelah update database berhasil.
+        if (($removeImage || $newPath) && $oldImage) {
+            // Jangan menghapus aset eksternal berdasarkan URL.
+            if (
+                ! str_starts_with($oldImage, 'http://')
+                && ! str_starts_with($oldImage, 'https://')
+            ) {
+                // Gambar kategori baru disimpan di disk Supabase.
+                Storage::disk('supabase')->delete($oldImage);
+
+                // Bersihkan juga file lokal lama jika memang ada
+                // dari penyimpanan versi sebelumnya.
+                Storage::disk('public')->delete($oldImage);
+            }
+        }
+
+
+        return redirect()
+            ->route('admin.categories.index')
+            ->with('success', 'Kategori berhasil diperbarui.');
+    }
 
     /**
      * Remove the specified category.
@@ -150,7 +164,8 @@ class CategoryController extends Controller
     {
         $category->delete();
 
-        return redirect()->route('admin.categories.index')
+        return redirect()
+            ->route('admin.categories.index')
             ->with('success', 'Kategori berhasil dihapus.');
     }
 }

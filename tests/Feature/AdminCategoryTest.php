@@ -54,7 +54,7 @@ class AdminCategoryTest extends TestCase
 
     public function test_admin_can_create_category_with_image(): void
     {
-        Storage::fake('public');
+        Storage::fake('supabase');
         $admin = User::factory()->admin()->create();
         $file = $this->createFakeImage('pashmina.png');
 
@@ -69,7 +69,7 @@ class AdminCategoryTest extends TestCase
 
         $category = Category::where('slug', 'pashmina-silk')->firstOrFail();
         $this->assertNotNull($category->image);
-        Storage::disk('public')->assertExists($category->image);
+        Storage::disk('supabase')->assertExists($category->image);
     }
 
     public function test_admin_can_update_category(): void
@@ -98,18 +98,18 @@ class AdminCategoryTest extends TestCase
 
     public function test_admin_can_update_category_with_new_image(): void
     {
-        Storage::fake('public');
+        Storage::fake('supabase');
         $admin = User::factory()->admin()->create();
 
         $oldFile = $this->createFakeImage('old-category.png');
-        $oldPath = $oldFile->store('categories', 'public');
+        $oldPath = $oldFile->store('categories', 'supabase');
         $category = Category::factory()->create([
             'name' => 'Segi Empat',
             'slug' => 'segi-empat',
             'image' => $oldPath,
         ]);
 
-        Storage::disk('public')->assertExists($oldPath);
+        Storage::disk('supabase')->assertExists($oldPath);
 
         $newFile = $this->createFakeImage('new-category.png');
         $response = $this->actingAs($admin)->put(route('admin.categories.update', $category), [
@@ -123,24 +123,24 @@ class AdminCategoryTest extends TestCase
 
         $category->refresh();
         $this->assertNotEquals($oldPath, $category->image);
-        Storage::disk('public')->assertMissing($oldPath);
-        Storage::disk('public')->assertExists($category->image);
+        Storage::disk('supabase')->assertMissing($oldPath);
+        Storage::disk('supabase')->assertExists($category->image);
     }
 
     public function test_admin_can_remove_category_image(): void
     {
-        Storage::fake('public');
+        Storage::fake('supabase');
         $admin = User::factory()->admin()->create();
 
         $oldFile = $this->createFakeImage('old-category.png');
-        $oldPath = $oldFile->store('categories', 'public');
+        $oldPath = $oldFile->store('categories', 'supabase');
         $category = Category::factory()->create([
             'name' => 'Bergo',
             'slug' => 'bergo',
             'image' => $oldPath,
         ]);
 
-        Storage::disk('public')->assertExists($oldPath);
+        Storage::disk('supabase')->assertExists($oldPath);
 
         $response = $this->actingAs($admin)->put(route('admin.categories.update', $category), [
             'name' => 'Bergo Maryam',
@@ -153,12 +153,12 @@ class AdminCategoryTest extends TestCase
 
         $category->refresh();
         $this->assertNull($category->image);
-        Storage::disk('public')->assertMissing($oldPath);
+        Storage::disk('supabase')->assertMissing($oldPath);
     }
 
     public function test_admin_cannot_upload_invalid_category_image(): void
     {
-        Storage::fake('public');
+        Storage::fake('supabase');
         $admin = User::factory()->admin()->create();
         $file = UploadedFile::fake()->create('document.pdf', 100);
 

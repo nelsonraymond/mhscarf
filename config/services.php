@@ -42,10 +42,6 @@ return [
         'merchant_id' => env('MIDTRANS_MERCHANT_ID', 'G123456789'),
     ],
 
-    'cloudinary' => [
-    'url' => env('CLOUDINARY_URL'),
-],
-
     'google' => [
     'client_id' => env('GOOGLE_CLIENT_ID'),
     'client_secret' => env('GOOGLE_CLIENT_SECRET'),

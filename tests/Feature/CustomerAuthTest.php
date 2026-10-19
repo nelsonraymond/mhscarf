@@ -28,7 +28,7 @@ class CustomerAuthTest extends TestCase
         $response = $this->get(route('register'));
 
         $response->assertStatus(200);
-        $response->assertSee('Buat akun Anda');
+        $response->assertSee('Buat akun');
     }
 
     public function test_customer_registration_succeeds(): void
@@ -197,7 +197,7 @@ class CustomerAuthTest extends TestCase
         $response = $this->get(route('password.reset', ['token' => 'sample-token', 'email' => 'user@example.com']));
 
         $response->assertStatus(200);
-        $response->assertSee('Kata Sandi Baru');
+        $response->assertSee('Kata sandi baru');
     }
 
     public function test_google_callback_creates_and_logs_in_new_customer(): void

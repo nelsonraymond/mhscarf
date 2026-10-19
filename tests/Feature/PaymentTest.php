@@ -189,18 +189,20 @@ class PaymentTest extends TestCase
     }
 
     public function test_payment_page_is_blocked_after_the_payment_deadline(): void
-    {
-        $customer = User::factory()->customer()->create();
-        $order = $this->createOrderWithItems($customer);
+{
+    config(['midtrans.expiry_minutes' => 15]);
 
-        $this->travel(20)->minutes();
+    $customer = User::factory()->customer()->create();
+    $order = $this->createOrderWithItems($customer);
 
-        $this->actingAs($customer)->get(route('payments.show', $order))
-            ->assertRedirect(route('orders.show', $order))
-            ->assertSessionHas('error');
+    $this->travel(20)->minutes();
 
-        $this->assertSame(0, $order->payments()->count());
-    }
+    $this->actingAs($customer)->get(route('payments.show', $order))
+        ->assertRedirect(route('orders.show', $order))
+        ->assertSessionHas('error');
+
+    $this->assertSame(0, $order->payments()->count());
+}
 
     public function test_cancelled_order_payment_page_redirects_instead_of_failing(): void
     {

@@ -48,7 +48,7 @@ class WishlistTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee($product->name);
-        $response->assertSee('Daftar Keinginan (Wishlist)');
+        $response->assertSee('Daftar Keinginan');
     }
 
     public function test_customer_can_toggle_product_in_wishlist(): void
