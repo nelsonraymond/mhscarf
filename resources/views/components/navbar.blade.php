@@ -200,7 +200,6 @@ $navIdle = 'text-muted';
 
             <a href="{{ route('shop.index', ['sale' => 1]) }}" class="py-3.5 text-[13px] uppercase tracking-[0.08em] text-red-600 border-b border-line/60">Sale</a>
             <a href="{{ route('home') }}#style-journal" class="py-3.5 text-[13px] uppercase tracking-[0.08em] text-ink border-b border-line/60">Journal</a>
-            <a href="{{ route('home') }}#tentang-kami" class="py-3.5 text-[13px] uppercase tracking-[0.08em] text-ink border-b border-line/60">About</a>
         </nav>
 
         {{-- Akun & wishlist (ikon ini disembunyikan di layar kecil, jadi pindah ke sini) --}}

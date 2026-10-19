@@ -118,7 +118,9 @@ Route::post('buy/now', [CartController::class, 'buyNow'])->name('buy.now');
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware('guest')->group(function () {
         Route::get('/login', [AdminAuthController::class, 'create'])->name('login');
-        Route::post('/login', [AdminAuthController::class, 'store'])->name('login.submit');
+        Route::post('/login', [AdminAuthController::class, 'store'])
+    ->name('login.submit')
+    ->middleware('throttle:admin-login');
     });
 
     Route::middleware(['auth', 'admin'])->group(function () {

@@ -18,7 +18,7 @@
         {{-- Page header --}}
         <div class="mb-8">
             <p class="text-[11px] uppercase tracking-[0.2em] text-pink-mauve font-semibold mb-1">Akun Saya</p>
-            <h1 class="font-display text-2xl sm:text-3xl font-bold text-ink">Daftar Keinginan (Wishlist)</h1>
+            <h1 class="font-display text-2xl sm:text-3xl font-bold text-ink">Daftar Keinginan</h1>
             <p class="text-sm text-muted mt-1.5">
                 Simpan produk hijab yang Anda sukai untuk dibeli nanti
             </p>

@@ -13,6 +13,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+         $middleware->trustProxies(at: '*');
+
+    $middleware->trustHosts(at: fn () => [parse_url((string) config('app.url'), PHP_URL_HOST)]);
+
+    $middleware->redirectGuestsTo(function (Request $request): string {
+        return $request->is('admin*') ? route('admin.login') : route('login');
+    });
         $middleware->redirectGuestsTo(function (Request $request): string {
             return $request->is('admin*') ? route('admin.login') : route('login');
         });

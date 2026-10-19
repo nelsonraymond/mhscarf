@@ -108,4 +108,37 @@ class AdminAuthTest extends TestCase
         $response->assertRedirect(route('admin.login'));
         $this->assertGuest();
     }
+
+    public function test_admin_login_is_rate_limited(): void
+{
+    for ($i = 0; $i < 5; $i++) {
+        $this->post(route('admin.login.submit'), ['email' => 'owner@example.com', 'password' => 'salah']);
+    }
+
+    $this->post(route('admin.login.submit'), ['email' => 'owner@example.com', 'password' => 'salah'])
+        ->assertStatus(429);
+}
+
+public function test_admin_login_is_locked_after_repeated_failures(): void
+{
+    for ($i = 0; $i < 5; $i++) {
+        $this->post(route('admin.login.submit'), ['email' => 'owner@example.com', 'password' => 'salah']);
+    }
+
+    $this->post(route('admin.login.submit'), ['email' => 'owner@example.com', 'password' => 'salah'])
+        ->assertSessionHasErrors('email');
+
+    $this->assertStringContainsString('Terlalu banyak', session('errors')->first('email'));
+}
+
+public function test_customer_credentials_get_the_same_error_and_no_session(): void
+{
+    $customer = User::factory()->customer()->create(['password' => 'password']);
+
+    $this->post(route('admin.login.submit'), ['email' => $customer->email, 'password' => 'password'])
+        ->assertSessionHasErrors('email');
+
+    $this->assertGuest();
+    $this->assertSame(__('auth.failed'), session('errors')->first('email'));
+}
 }
