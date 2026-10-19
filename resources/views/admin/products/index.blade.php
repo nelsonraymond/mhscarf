@@ -73,7 +73,7 @@
                                 <td>
                                     <div class="flex items-center gap-3">
                                         @if ($primaryImg)
-                                            <img src="{{ Storage::url($primaryImg->image_path) }}" alt="{{ $prod->name }}" class="h-12 w-10 shrink-0 rounded-md border border-admin-border object-cover">
+                                            <img src="{{ Storage::url($primaryImg->image_url) }}" alt="{{ $prod->name }}" class="h-12 w-10 shrink-0 rounded-md border border-admin-border object-cover">
                                         @else
                                             <div class="flex h-12 w-10 shrink-0 items-center justify-center rounded-md border border-admin-border bg-admin-bg text-[10px] text-admin-muted">No img</div>
                                         @endif

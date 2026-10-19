@@ -60,7 +60,7 @@
                                 <td class="font-medium text-admin-text">
                                     <div class="flex items-center gap-3">
                                         @if ($cat->image)
-                                            <img src="{{ Storage::url($cat->image) }}" alt="{{ $cat->name }}" class="h-10 w-10 shrink-0 rounded-lg border border-admin-border object-cover">
+                                            <img src="{{ $cat->image_url }}" alt="{{ $cat->name }}" class="h-10 w-10 shrink-0 rounded-lg border border-admin-border object-cover">
                                         @else
                                             <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-dashed border-admin-border bg-admin-bg text-admin-muted">
                                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>

@@ -45,4 +45,19 @@ class ProductImage extends Model
     {
         return $this->belongsTo(ProductVariant::class, 'variant_id');
     }
+
+    public function getImageUrlAttribute(): ?string
+{
+    if (empty($this->image_path)) {
+        return null;
+    }
+
+    if (str_starts_with($this->image_path, 'http://')
+        || str_starts_with($this->image_path, 'https://')) {
+        return $this->image_path;
+    }
+
+    return \Illuminate\Support\Facades\Storage::disk('public')
+        ->url($this->image_path);
+}
 }

@@ -55,7 +55,7 @@
                                 <a href="{{ route('shop.product', $product->slug) }}" class="block w-full h-full" aria-label="{{ $product->name }}">
                                     @php $primaryImg = $product->primaryImage(); @endphp
                                     @if ($primaryImg)
-                                        <img src="{{ Storage::url($primaryImg->image_path) }}"
+                                        <img src="{{ $primaryImg->image_url }}"
                                             alt="{{ $primaryImg->alt_text ?? $product->name }}"
                                             class="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]" loading="lazy">
                                     @else

@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use App\Services\CloudinaryService;
 
 class CategoryController extends Controller
 {
@@ -85,30 +86,62 @@ class CategoryController extends Controller
     /**
      * Update the specified category.
      */
-    public function update(UpdateCategoryRequest $request, Category $category): RedirectResponse
-    {
-        $data = $request->validated();
-        $data['is_active'] = $request->boolean('is_active');
+    public function update(
+    UpdateCategoryRequest $request,
+    Category $category,
+    CloudinaryService $cloudinary
+): RedirectResponse {
+    $data = $request->validated();
+    $data['is_active'] = $request->boolean('is_active');
 
-        if ($request->boolean('remove_image')) {
-            if ($category->image && Storage::disk('public')->exists($category->image)) {
-                Storage::disk('public')->delete($category->image);
-            }
-            $data['image'] = null;
-        } elseif ($request->hasFile('image')) {
-            if ($category->image && Storage::disk('public')->exists($category->image)) {
-                Storage::disk('public')->delete($category->image);
-            }
-            $data['image'] = $request->file('image')->store('categories', 'public');
-        } else {
-            unset($data['image']);
+    $oldImage = $category->image;
+    $oldPublicId = $category->cloudinary_public_id;
+    $newUpload = null;
+
+    if ($request->boolean('remove_image')) {
+        $data['image'] = null;
+        $data['cloudinary_public_id'] = null;
+    } elseif ($request->hasFile('image')) {
+        $newUpload = $cloudinary->upload(
+            $request->file('image'),
+            'mh-scarf/categories'
+        );
+
+        $data['image'] = $newUpload['url'];
+        $data['cloudinary_public_id'] = $newUpload['public_id'];
+    } else {
+        unset($data['image'], $data['cloudinary_public_id']);
+    }
+
+    try {
+        $category->update($data);
+    } catch (\Throwable $exception) {
+        // Bersihkan upload baru jika penyimpanan database gagal.
+        if ($newUpload) {
+            $cloudinary->delete($newUpload['public_id']);
         }
 
-        $category->update($data);
-
-        return redirect()->route('admin.categories.index')
-            ->with('success', 'Kategori berhasil diperbarui.');
+        throw $exception;
     }
+
+    // Hapus gambar lama hanya setelah perubahan database berhasil.
+    if (
+        ($request->boolean('remove_image') || $newUpload)
+        && $oldImage
+    ) {
+        if ($oldPublicId) {
+            $cloudinary->delete($oldPublicId);
+        } elseif (! str_starts_with($oldImage, 'http://')
+            && ! str_starts_with($oldImage, 'https://')) {
+            // Kompatibilitas untuk gambar lama yang masih tersimpan lokal.
+            Storage::disk('public')->delete($oldImage);
+        }
+    }
+
+    return redirect()
+        ->route('admin.categories.index')
+        ->with('success', 'Kategori berhasil diperbarui.');
+}
 
     /**
      * Remove the specified category.

@@ -44,7 +44,7 @@
             <div class="flex items-center gap-3.5 pb-5 border-b border-line">
                 <div class="w-14 h-14 rounded-xl bg-cream border border-line overflow-hidden shrink-0 flex items-center justify-center">
                     @if ($img)
-                        <img src="{{ Storage::url($img->image_path) }}" alt="{{ $orderItem->product_name }}" class="w-full h-full object-cover">
+                        <img src="{{ $img->image_url }}" alt="{{ $orderItem->product_name }}" class="w-full h-full object-cover">
                     @else
                         <span class="text-[10px] tracking-widest text-pink-deep uppercase" aria-hidden="true">MH</span>
                     @endif

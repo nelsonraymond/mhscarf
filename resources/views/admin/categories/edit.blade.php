@@ -51,7 +51,7 @@
                     <div class="mt-1 space-y-3">
                         @if ($category->image)
                             <div id="current-image-box" class="flex items-center gap-4 rounded-lg border border-admin-border bg-admin-bg/50 p-3">
-                                <img src="{{ Storage::url($category->image) }}" alt="{{ $category->name }}" class="h-16 w-16 shrink-0 rounded-md border border-admin-border object-cover">
+                                <img src="{{ $category->image_url }}" alt="{{ $category->name }}" class="h-16 w-16 shrink-0 rounded-md border border-admin-border object-cover">
                                 <div class="flex-1 text-xs">
                                     <p class="font-medium text-admin-text">Gambar saat ini</p>
                                     <p class="text-admin-muted">Unggah file baru di bawah untuk mengganti gambar ini.</p>

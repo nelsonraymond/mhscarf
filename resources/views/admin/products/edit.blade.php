@@ -217,7 +217,7 @@
             <div class="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4 md:grid-cols-6">
                 @forelse ($product->images as $img)
                     <div class="overflow-hidden rounded-lg border border-admin-border bg-white">
-                        <img src="{{ Storage::url($img->image_path) }}" alt="{{ $img->alt_text }}" class="h-36 w-full object-cover">
+                        <img src="{{ $img->image_url }}" alt="{{ $img->alt_text }}" class="h-36 w-full object-cover">
                         @if ($img->is_primary)
                             <span class="absolute sr-only">Gambar utama</span>
                         @endif

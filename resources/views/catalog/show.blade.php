@@ -79,7 +79,7 @@
                 @if ($primaryImg)
                     <div class="relative aspect-[4/5] w-full overflow-hidden rounded-lg bg-cream sm:rounded-xl">
                         <img
-                            src="{{ Storage::url($primaryImg->image_path) }}"
+                            src="{{ Storage::url($primaryImg->image_url) }}"
                             alt="{{ $primaryImg->alt_text ?? $product->name }}"
                             class="h-full w-full object-cover object-center"
                             id="pd-main-image"
@@ -91,7 +91,7 @@
                         <div class="grid grid-cols-4 gap-2 sm:gap-3">
                             @foreach ($galleryImages as $img)
                                 @php
-                                    $isActive = $img->image_path === $primaryImg->image_path;
+                                    $isActive = $img->image_url === $primaryImg->image_url;
                                 @endphp
 
                                 <button

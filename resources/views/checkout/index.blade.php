@@ -182,7 +182,7 @@
                                     <div class="flex items-center gap-3 min-w-0">
                                         <div class="w-14 h-14 rounded-xl bg-cream border border-line overflow-hidden shrink-0 flex items-center justify-center">
                                             @if ($primaryImage)
-                                                <img src="{{ Storage::url($primaryImage->image_path) }}" alt="{{ $product->name }}"
+                                                <img src="{{ $primaryImage->image_url }}" alt="{{ $product->name }}"
                                                     loading="lazy" class="w-full h-full object-cover">
                                             @else
                                                 <span class="text-[10px] tracking-widest text-pink-deep uppercase" aria-hidden="true">MH Scarf</span>

@@ -14,10 +14,10 @@
     <div class="relative aspect-square w-full overflow-hidden bg-cream">
         <a href="{{ route('shop.product', $product->slug) }}" class="block w-full h-full" aria-label="{{ $product->name }}">
             @if ($primaryImg)
-                <img src="{{ Storage::url($primaryImg->image_path) }}" alt="{{ $primaryImg->alt_text ?? $product->name }}"
+                <img src="{{ $primaryImg->image_url }}" alt="{{ $primaryImg->alt_text ?? $product->name }}"
                     class="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]" loading="lazy">
                 @if ($secondaryImg)
-                    <img src="{{ Storage::url($secondaryImg->image_path) }}" alt="{{ $secondaryImg->alt_text ?? $product->name }}"
+                    <img src="{{ $secondaryImg->image_url }}" alt="{{ $secondaryImg->alt_text ?? $product->name }}"
                         class="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-out" loading="lazy">
                 @endif
             @else

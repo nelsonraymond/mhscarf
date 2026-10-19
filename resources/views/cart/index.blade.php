@@ -83,7 +83,7 @@
                                     {{-- Product meta --}}
                                     <div class="flex items-start sm:items-center gap-3.5 min-w-0">
                                         @if ($img)
-                                            <img src="{{ Storage::url($img->image_path) }}" alt="{{ $product->name }}"
+                                            <img src="{{ $img->image_url }}" alt="{{ $product->name }}"
                                                 loading="lazy"
                                                 class="w-16 h-20 object-cover rounded-xl border border-line bg-cream shrink-0">
                                         @else
