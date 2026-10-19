@@ -24,6 +24,7 @@ class Category extends Model
         'slug',
         'description',
         'image',
+        'cloudinary_public_id',
         'is_active',
     ];
 
@@ -63,19 +64,21 @@ class Category extends Model
     }
 
     public function getImageUrlAttribute(): ?string
-    {
-        if (! empty($this->image)) {
-            return Storage::url($this->image);
-        }
-
+{
+    if (empty($this->image)) {
         $static = collect(['jpg', 'jpeg', 'png', 'webp'])
             ->map(fn ($ext) => "images/categories/{$this->slug}.{$ext}")
-            ->first(fn ($p) => file_exists(public_path($p)));
+            ->first(fn ($path) => file_exists(public_path($path)));
 
-        if ($static) {
-            return asset($static);
-        }
-
-        return null;
+        return $static ? asset($static) : null;
     }
+
+    // Cloudinary URL: return directly.
+    if (str_starts_with($this->image, 'https://')) {
+        return $this->image;
+    }
+
+    // Legacy local storage path.
+    return Storage::disk('public')->url($this->image);
+}
 }

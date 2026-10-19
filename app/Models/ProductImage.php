@@ -21,6 +21,7 @@ class ProductImage extends Model
         'image_path',
         'alt_text',
         'sort_order',
+        'cloudinary_public_id',
         'is_primary',
     ];
 
