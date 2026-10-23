@@ -111,7 +111,7 @@
                     </svg>
                 </div>
                 <div class="flex-1 min-w-0 sm:mt-4">
-                    <span class="block text-sm font-semibold text-ink">Buku Alamat</span>
+                    <span class="block text-sm font-semibold text-ink">Alamat</span>
                     <span class="text-xs text-muted mt-0.5 block">Kelola alamat pengiriman pesanan</span>
                     <span class="hidden sm:inline-flex text-xs text-pink-deep font-medium mt-4 items-center gap-1">
                         Kelola Alamat <span aria-hidden="true" class="transition-transform group-hover:translate-x-1">→</span>

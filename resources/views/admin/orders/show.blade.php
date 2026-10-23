@@ -232,6 +232,14 @@
                         </span>
                     @endif
                 </div>
+                @if ($order->shipment && $order->shipment->destination_id)
+                    <dl class="mb-4 grid grid-cols-2 gap-3 rounded-lg border border-admin-border bg-admin-bg/60 p-3 text-xs">
+                        <div><dt class="text-admin-muted">ID tujuan RajaOngkir</dt><dd class="font-medium text-admin-text">{{ $order->shipment->destination_id }}</dd></div>
+                        <div><dt class="text-admin-muted">Kode kurir</dt><dd class="font-medium uppercase text-admin-text">{{ $order->shipment->courier_code }}</dd></div>
+                        <div><dt class="text-admin-muted">Berat paket</dt><dd class="font-medium text-admin-text">{{ number_format($order->shipment->weight_gram, 0, ',', '.') }} gram</dd></div>
+                        <div><dt class="text-admin-muted">Estimasi API</dt><dd class="font-medium text-admin-text">{{ $order->shipment->estimated_delivery ?: 'Tidak tersedia' }}</dd></div>
+                    </dl>
+                @endif
                 <form method="POST" action="{{ route('admin.orders.shipment', $order) }}" class="space-y-3">
                     @csrf
                     @method('PATCH')

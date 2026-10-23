@@ -18,3 +18,5 @@ Thumbs.db
 "/public/build" 
 .vercel
 .env*
+/node_modules
+/public/storage

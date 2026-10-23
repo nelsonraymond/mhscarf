@@ -12,10 +12,12 @@ use App\Services\CheckoutService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery\MockInterface;
 use Tests\TestCase;
+use Tests\Concerns\InteractsWithShippingQuotes;
 
 class ReleaseExpiredOrdersTest extends TestCase
 {
     use RefreshDatabase;
+    use InteractsWithShippingQuotes;
 
     /**
      * @return array{0: Order, 1: ProductVariant}
@@ -43,7 +45,7 @@ class ReleaseExpiredOrdersTest extends TestCase
 
         $order = $this->app->make(CheckoutService::class)->placeOrder($user, [
             'address_id' => $user->addresses()->first()->id,
-            'shipping_method' => 'regular',
+            'shipping_quote' => $this->internalShippingQuote(weight: (int) $variant->weight_gram * $quantity),
         ]);
 
         return [$order, $variant];

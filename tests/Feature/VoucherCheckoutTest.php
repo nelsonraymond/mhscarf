@@ -12,10 +12,12 @@ use App\Models\User;
 use App\Models\Voucher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Tests\Concerns\InteractsWithShippingQuotes;
 
 class VoucherCheckoutTest extends TestCase
 {
     use RefreshDatabase;
+    use InteractsWithShippingQuotes;
 
     /** Satu pembeli, satu varian Rp100.000 (stok 10), keranjang berisi 1 item. */
     private function setUpCheckout(int $stock = 10): array
@@ -54,24 +56,26 @@ class VoucherCheckoutTest extends TestCase
 
     private function checkout(User $customer, Address $address, ?string $code, string $shipping = 'regular')
     {
+        $quoteToken = $this->fakeShippingQuote(cost: 16000);
         return $this->actingAs($customer)->postJson(route('checkout.store'), array_filter([
             'address_id' => $address->id,
-            'shipping_method' => $shipping,
+            'shipping_quote_token' => $quoteToken,
             'voucher_code' => $code,
         ]));
     }
 
     public function test_preview_returns_discount_and_new_total(): void
     {
-        [$customer] = $this->setUpCheckout();
+        [$customer, , $address] = $this->setUpCheckout();
         $this->makeVoucher();
+        $quoteToken = $this->fakeShippingQuote();
 
         $this->actingAs($customer)
-            ->postJson(route('checkout.voucher'), ['voucher_code' => 'hemat10', 'shipping_method' => 'regular'])
+            ->postJson(route('checkout.voucher'), ['voucher_code' => 'hemat10', 'address_id' => $address->id, 'shipping_quote_token' => $quoteToken])
             ->assertOk()
             ->assertJsonPath('code', 'HEMAT10')
             ->assertJsonPath('discount', 10000)
-            ->assertJsonPath('total', 105000); // 100.000 + 15.000 ongkir - 10.000
+            ->assertJsonPath('total', 106000); // 100.000 + 16.000 ongkir - 10.000
     }
 
     public function test_checkout_applies_voucher_and_records_usage(): void
@@ -85,7 +89,7 @@ class VoucherCheckoutTest extends TestCase
         $this->assertSame('HEMAT10', $order->voucher_code);
         $this->assertEquals(10000, $order->discount_amount);
         $this->assertEquals(10000, $order->voucher_discount);
-        $this->assertEquals(105000, $order->grand_total);
+        $this->assertEquals(106000, $order->grand_total);
 
         $this->assertDatabaseHas('voucher_usages', [
             'voucher_id' => $voucher->id,
@@ -103,8 +107,8 @@ class VoucherCheckoutTest extends TestCase
         $this->checkout($customer, $address, 'ONGKIR', 'express')->assertOk();
 
         $order = Order::where('user_id', $customer->id)->firstOrFail();
-        $this->assertEquals(30000, $order->discount_amount);
-        $this->assertEquals(100000, $order->grand_total); // 100.000 + 30.000 - 30.000
+        $this->assertEquals(16000, $order->discount_amount);
+        $this->assertEquals(100000, $order->grand_total); // 100.000 + 16.000 - 16.000
     }
 
     public function test_voucher_below_minimum_order_is_rejected_without_side_effects(): void
@@ -113,7 +117,7 @@ class VoucherCheckoutTest extends TestCase
         $voucher = $this->makeVoucher(['min_order_amount' => 200000]);
 
         $this->actingAs($customer)
-            ->postJson(route('checkout.voucher'), ['voucher_code' => 'HEMAT10', 'shipping_method' => 'regular'])
+            ->postJson(route('checkout.voucher'), ['voucher_code' => 'HEMAT10', 'address_id' => $address->id, 'shipping_quote_token' => $this->fakeShippingQuote()])
             ->assertStatus(422)
             ->assertJsonValidationErrors('voucher_code');
 
@@ -194,6 +198,6 @@ class VoucherCheckoutTest extends TestCase
         $order = Order::where('user_id', $customer->id)->firstOrFail();
         $this->assertNull($order->voucher_code);
         $this->assertEquals(0, $order->discount_amount);
-        $this->assertEquals(115000, $order->grand_total);
+        $this->assertEquals(116000, $order->grand_total);
     }
 }

@@ -19,7 +19,6 @@
 
         {{-- Page header --}}
         <div class="mb-8">
-            <p class="text-[11px] uppercase tracking-[0.2em] text-pink-mauve font-semibold mb-1">Riwayat Belanja</p>
             <h1 class="font-display text-2xl sm:text-3xl font-bold text-ink">Pesanan Saya</h1>
             <p class="text-sm text-muted mt-1.5">Lacak dan pantau status pemesanan hijab dan aksesori Anda.</p>
         </div>

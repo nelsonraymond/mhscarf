@@ -12,10 +12,12 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
+use Tests\Concerns\InteractsWithShippingQuotes;
 
 class StockReservationTest extends TestCase
 {
     use RefreshDatabase;
+    use InteractsWithShippingQuotes;
 
     /**
      * Helper to create a customer user with an address.
@@ -55,7 +57,7 @@ class StockReservationTest extends TestCase
         $checkout = $this->app->make(CheckoutService::class);
         $order = $checkout->placeOrder($user, [
             'address_id' => $user->addresses()->first()->id,
-            'shipping_method' => 'regular',
+            'shipping_quote' => $this->internalShippingQuote(weight: (int) $variant->weight_gram * 3),
         ]);
 
         $this->assertDatabaseHas('orders', ['id' => $order->id]);
@@ -80,7 +82,7 @@ class StockReservationTest extends TestCase
         $checkout = $this->app->make(CheckoutService::class);
         $order = $checkout->placeOrder($user, [
             'address_id' => $user->addresses()->first()->id,
-            'shipping_method' => 'regular',
+            'shipping_quote' => $this->internalShippingQuote(weight: (int) $variant->weight_gram * 2),
         ]);
 
         $this->assertDatabaseHas('orders', ['id' => $order->id]);
@@ -119,7 +121,7 @@ public function test_reservation_expires_at_is_set_correctly(): void
     $checkout = $this->app->make(CheckoutService::class);
     $order = $checkout->placeOrder($user, [
         'address_id' => $user->addresses()->first()->id,
-        'shipping_method' => 'regular',
+        'shipping_quote' => $this->internalShippingQuote(weight: (int) $variant->weight_gram * 2),
     ]);
 
     // Ambil reservasi yang dibuat untuk item pesanan ini
@@ -162,7 +164,7 @@ public function test_reservation_expires_at_is_set_correctly(): void
         $checkout = $this->app->make(CheckoutService::class);
         $checkout->placeOrder($user, [
             'address_id' => $user->addresses()->first()->id,
-            'shipping_method' => 'regular',
+            'shipping_quote' => $this->internalShippingQuote(weight: (int) $variant->weight_gram * 3),
         ]);
     }
 

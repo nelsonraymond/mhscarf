@@ -16,10 +16,12 @@ use App\Services\OrderService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
+use Tests\Concerns\InteractsWithShippingQuotes;
 
 class OrderTest extends TestCase
 {
     use RefreshDatabase;
+    use InteractsWithShippingQuotes;
 
     protected function createVariant(string $productName = 'Pashmina Silk', string $variantName = 'Mocca', int $stock = 10, float $basePrice = 75000): ProductVariant
     {
@@ -65,7 +67,7 @@ class OrderTest extends TestCase
 
         $response = $this->actingAs($customer)->post(route('checkout.store'), [
             'address_id' => $address->id,
-            'shipping_method' => 'regular', // 15000
+            'shipping_quote_token' => $this->fakeShippingQuote(weight: (int) $variant->weight_gram * 2),
             'customer_note' => 'Mohon dipacking rapi untuk hadiah.',
         ]);
 
@@ -74,10 +76,10 @@ class OrderTest extends TestCase
 
         $response->assertRedirect(route('payments.show', $order));
 
-        // Subtotal = 2 * 45000 = 90000. Shipping = 15000. Grand total = 105000
+        // Subtotal = 2 * 45000 = 90000. Quote shipping = 16000. Grand total = 106000
         $this->assertEquals(90000.0, (float) $order->subtotal);
-        $this->assertEquals(15000.0, (float) $order->shipping_cost);
-        $this->assertEquals(105000.0, (float) $order->grand_total);
+        $this->assertEquals(16000.0, (float) $order->shipping_cost);
+        $this->assertEquals(106000.0, (float) $order->grand_total);
         $this->assertEquals('pending', $order->status);
         $this->assertEquals('pending', $order->payment_status);
         $this->assertEquals('Aisyah Putri', $order->shipping_recipient_name);
@@ -105,7 +107,7 @@ class OrderTest extends TestCase
 
         $this->actingAs($customer)->post(route('checkout.store'), [
             'address_id' => $address->id,
-            'shipping_method' => 'express', // 30000
+            'shipping_quote_token' => $this->fakeShippingQuote(weight: (int) $variant->weight_gram * 2),
         ]);
 
         $order = Order::where('user_id', $customer->id)->first();
@@ -144,7 +146,7 @@ class OrderTest extends TestCase
 
         $this->actingAs($customer)->post(route('checkout.store'), [
             'address_id' => $address->id,
-            'shipping_method' => 'regular',
+            'shipping_quote_token' => $this->fakeShippingQuote(weight: (int) $variant->weight_gram * 3),
         ]);
 
         // Stock must be reduced from 10 to 7
@@ -174,7 +176,7 @@ class OrderTest extends TestCase
 
         $this->actingAs($customer)->post(route('checkout.store'), [
             'address_id' => $address->id,
-            'shipping_method' => 'regular',
+            'shipping_quote_token' => $this->fakeShippingQuote(),
         ]);
 
         $order1 = Order::latest('id')->first();
@@ -189,7 +191,7 @@ class OrderTest extends TestCase
 
         $this->actingAs($customer)->post(route('checkout.store'), [
             'address_id' => $address->id,
-            'shipping_method' => 'regular',
+            'shipping_quote_token' => $this->fakeShippingQuote(),
         ]);
 
         $order2 = Order::latest('id')->first();
@@ -255,7 +257,7 @@ class OrderTest extends TestCase
 
         $response = $this->actingAs($customer)->post(route('checkout.store'), [
             'address_id' => $address->id,
-            'shipping_method' => 'regular',
+            'shipping_quote_token' => $this->fakeShippingQuote(weight: (int) $variant1->weight_gram * 2 + (int) $variant2->weight_gram * 3),
         ]);
 
         $response->assertSessionHasErrors('cart');

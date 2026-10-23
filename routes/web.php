@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\VoucherController as AdminVoucherController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\CheckoutShippingController;
 use App\Http\Controllers\CustomerAuthController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderController;
@@ -79,6 +80,12 @@ Route::middleware('auth')->group(function () {
     // Checkout Routes
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+    Route::post('/checkout/shipping/destinations', [CheckoutShippingController::class, 'destinations'])
+        ->name('checkout.shipping.destinations')
+        ->middleware('throttle:30,1');
+    Route::post('/checkout/shipping/quotes', [CheckoutShippingController::class, 'quotes'])
+        ->name('checkout.shipping.quotes')
+        ->middleware('throttle:20,1');
     // Voucher Preview (AJAX)
     Route::post('/checkout/voucher', [CheckoutController::class, 'voucher'])->name('checkout.voucher')->middleware('throttle:20,1');
 
@@ -144,6 +151,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Product Variants
         Route::post('/products/{product}/variants', [ProductVariantController::class, 'store'])->name('products.variants.store');
         Route::put('/products/{product}/variants/{variant}', [ProductVariantController::class, 'update'])->name('products.variants.update');
+        Route::patch('/products/{product}/variants/{variant}/weight', [ProductVariantController::class, 'updateWeight'])->name('products.variants.weight');
         Route::delete('/products/{product}/variants/{variant}', [ProductVariantController::class, 'destroy'])->name('products.variants.destroy');
         Route::post('/products/{product}/variants/{variant}/stock', [ProductVariantController::class, 'updateStock'])->name('products.variants.stock');
 

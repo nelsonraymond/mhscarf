@@ -38,7 +38,7 @@ class GoogleAuthController extends Controller
         }
 
         $email = $google->getEmail();
-        $emailVerified = (bool) ($google->user['email_verified'] ?? false);
+        $emailVerified = (bool) ($google->user['email_verified'] ?? $google->user['verified_email'] ?? false);
 
         if (! $email || ! $emailVerified) {
             return $this->fail('Email Google Anda belum terverifikasi.');

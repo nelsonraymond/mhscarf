@@ -14,10 +14,12 @@ use App\Services\CheckoutService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
+use Tests\Concerns\InteractsWithShippingQuotes;
 
 class PaymentTest extends TestCase
 {
     use RefreshDatabase;
+    use InteractsWithShippingQuotes;
 
     protected function setUp(): void
     {
@@ -128,7 +130,7 @@ class PaymentTest extends TestCase
 
         $order = $this->app->make(CheckoutService::class)->placeOrder($user, [
             'address_id' => $user->addresses()->first()->id,
-            'shipping_method' => 'regular',
+            'shipping_quote' => $this->internalShippingQuote(weight: (int) $variant->weight_gram * $quantity),
         ]);
 
         return [$order, $variant, $user];

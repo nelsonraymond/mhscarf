@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Services\CartService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Tests\Concerns\InteractsWithShippingQuotes;
 
 /**
  * Integration test to verify that a cart created by a guest is correctly
@@ -21,6 +22,7 @@ use Tests\TestCase;
 class CartCheckoutIntegrationTest extends TestCase
 {
     use RefreshDatabase;
+    use InteractsWithShippingQuotes;
 
     /**
      * Helper to create an active product variant with given stock and price.
@@ -84,7 +86,7 @@ class CartCheckoutIntegrationTest extends TestCase
         // 5. Perform checkout via JSON request to receive the API payload.
         $checkoutResponse = $this->postJson(route('checkout.store'), [
             'address_id' => $address->id,
-            'shipping_method' => 'regular',
+            'shipping_quote_token' => $this->fakeShippingQuote(weight: 300),
         ]);
         $checkoutResponse->assertOk();
         $checkoutResponse->assertJsonStructure([
@@ -126,10 +128,10 @@ class CartCheckoutIntegrationTest extends TestCase
 
         $response = $this->postJson(route('checkout.store'), [
             'address_id' => $address->id,
-            'shipping_method' => 'regular',
+            'shipping_quote_token' => $this->fakeShippingQuote(),
         ]);
         $response->assertStatus(422);
-        $response->assertJsonFragment(['errors' => ['cart' => ['Keranjang belanja Anda kosong.']]]);
+        $response->assertJsonFragment(['errors' => ['cart' => ['Keranjang belanja Anda masih kosong.']]]);
     }
 
     /** @test */
@@ -148,7 +150,7 @@ class CartCheckoutIntegrationTest extends TestCase
         $addressA = Address::factory()->create(['user_id' => $customerA->id]);
         $orderResponse = $this->postJson(route('checkout.store'), [
             'address_id' => $addressA->id,
-            'shipping_method' => 'regular',
+            'shipping_quote_token' => $this->fakeShippingQuote(),
         ]);
         $orderResponse->assertOk();
         $orderA = Order::first();

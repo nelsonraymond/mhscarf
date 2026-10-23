@@ -26,6 +26,7 @@ class PaymentService
         protected PaymentGatewayInterface $gateway,
         protected OrderService $orderService,
         protected StockReservationService $stockReservationService,
+        protected TransactionalEmailService $transactionalEmailService,
     ) {}
 
     /**
@@ -277,7 +278,7 @@ class PaymentService
             throw new HttpException(422, 'Jumlah nominal pembayaran tidak sesuai dengan total tagihan pesanan.');
         }
 
-        return DB::transaction(function () use ($order, $parsed) {
+        $result = DB::transaction(function () use ($order, $parsed) {
             // Kunci order lalu payment: webhook ganda / sweeper / halaman bayar diproses satu per satu
             $order = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
 
@@ -350,6 +351,14 @@ class PaymentService
 
             return $this->result('success', $payment->fresh(), $order->fresh());
         });
+
+        // Only a verified transition into paid reaches this branch. Replayed webhooks
+        // return already_processed above, so they cannot send a duplicate confirmation.
+        if ($parsed['status'] === 'paid' && $result['status'] === 'success') {
+            $this->transactionalEmailService->paymentReceived($result['order'], $result['payment']);
+        }
+
+        return $result;
     }
 
     /**

@@ -18,9 +18,13 @@ class Shipment extends Model
     protected $fillable = [
         'order_id',
         'courier',
+        'courier_code',
         'service',
         'tracking_number',
         'shipping_cost',
+        'destination_id',
+        'weight_gram',
+        'estimated_delivery',
         'status',
         'shipped_at',
         'delivered_at',
@@ -33,6 +37,8 @@ class Shipment extends Model
     {
         return [
             'shipping_cost' => 'decimal:2',
+            'destination_id' => 'integer',
+            'weight_gram' => 'integer',
             'shipped_at' => 'datetime',
             'delivered_at' => 'datetime',
         ];

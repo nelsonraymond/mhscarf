@@ -111,6 +111,10 @@ class AdminAuthTest extends TestCase
 
     public function test_admin_login_is_rate_limited(): void
 {
+    $route = app('router')->getRoutes()->getByName('admin.login.submit');
+    $this->assertNotNull($route);
+    $this->assertContains('throttle:admin-login', $route->gatherMiddleware());
+
     for ($i = 0; $i < 5; $i++) {
         $this->post(route('admin.login.submit'), ['email' => 'owner@example.com', 'password' => 'salah']);
     }

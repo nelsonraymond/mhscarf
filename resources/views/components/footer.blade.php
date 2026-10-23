@@ -61,8 +61,6 @@
                 <h3 class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted mb-4 sm:mb-5">About Us</h3>
                 <ul class="space-y-3 text-sm text-muted">
                     <li><a href="{{ route('faq') }}" class="transition hover:text-pink-deep">Contact Us</a></li>
-                    <li><a href="{{ route('shop.index') }}" class="transition hover:text-pink-deep">Our Store</a></li>
-                    <li><a href="{{ route('faq') }}" class="transition hover:text-pink-deep">Stories</a></li>
                     <li><a href="{{ route('orders.index') }}" class="transition hover:text-pink-deep">Track Order</a></li>
                 </ul>
             </div>

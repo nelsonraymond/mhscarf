@@ -6,6 +6,7 @@ use App\Exceptions\InvalidOrderStateTransitionException;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\OrderService;
+use App\Services\TransactionalEmailService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +17,7 @@ class OrderController extends Controller
 {
     public function __construct(
         protected OrderService $orderService,
+        protected TransactionalEmailService $transactionalEmailService,
     ) {}
 
     /**
@@ -78,12 +80,21 @@ class OrderController extends Controller
         ]);
 
         try {
-            $this->orderService->transitionStatus(
+            $previousStatus = $order->status;
+            $updatedOrder = $this->orderService->transitionStatus(
                 order: $order,
                 newStatus: $validated['status'],
                 reason: $validated['note'] ?? 'Diperbarui oleh admin',
                 actor: Auth::user()
             );
+
+            if ($previousStatus !== 'shipped' && $updatedOrder->status === 'shipped') {
+                $shipment = $updatedOrder->shipment()->first();
+
+                if ($shipment?->status === 'shipped') {
+                    $this->transactionalEmailService->shipmentDispatched($updatedOrder->fresh(['items', 'shipment']), $shipment);
+                }
+            }
 
             return back()->with('success', "Status pesanan #{$order->order_number} berhasil diperbarui.");
         } catch (InvalidOrderStateTransitionException $e) {
@@ -105,6 +116,7 @@ class OrderController extends Controller
         ]);
 
         $shipment = $order->shipment;
+        $wasShipped = $shipment?->status === 'shipped';
 
         if (array_key_exists('status', $validated) && $validated['status'] === null) {
             unset($validated['status']);
@@ -121,6 +133,7 @@ class OrderController extends Controller
         // Ensure shipment exists; create if missing
         if ($shipment) {
             $shipment->update($validated);
+            $shipment = $shipment->fresh();
         } else {
             if (empty($validated['courier'])) {
                 $validated['courier'] = 'MH Scarf Express Delivery';
@@ -128,7 +141,11 @@ class OrderController extends Controller
             if (empty($validated['status'])) {
                 $validated['status'] = 'pending';
             }
-            $order->shipment()->create($validated);
+            $shipment = $order->shipment()->create($validated);
+        }
+
+        if (! $wasShipped && $shipment->status === 'shipped' && $order->fresh()->status === 'shipped') {
+            $this->transactionalEmailService->shipmentDispatched($order->fresh(['items', 'shipment']), $shipment);
         }
 
         return back()->with('success', "Detail pengiriman untuk pesanan #{$order->order_number} berhasil diperbarui.");
