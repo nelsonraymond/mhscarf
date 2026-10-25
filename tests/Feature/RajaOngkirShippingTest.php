@@ -205,6 +205,7 @@ class RajaOngkirShippingTest extends TestCase
         $forgedQuote['cost'] = 0;
         $this->actingAs($user)->postJson(route('checkout.store'), [
             'address_id' => $address->id,
+            'checkout_token' => (string) \Illuminate\Support\Str::uuid(),
             'shipping_quote_token' => Crypt::encryptString(json_encode($forgedQuote, JSON_THROW_ON_ERROR)),
         ])->assertStatus(422)->assertJsonValidationErrors('shipping_quote_token');
         $this->assertSame(0, Order::count());
@@ -215,12 +216,14 @@ class RajaOngkirShippingTest extends TestCase
         $expiredQuote['expires_at'] = $expiredQuote['issued_at'] + 15 * 60;
         $this->postJson(route('checkout.store'), [
             'address_id' => $address->id,
+            'checkout_token' => (string) \Illuminate\Support\Str::uuid(),
             'shipping_quote_token' => Crypt::encryptString(json_encode($expiredQuote, JSON_THROW_ON_ERROR)),
         ])->assertStatus(422)->assertJsonValidationErrors('shipping_quote_token');
         $this->assertSame(0, Order::count());
 
         $response = $this->actingAs($user)->postJson(route('checkout.store'), [
             'address_id' => $address->id,
+            'checkout_token' => (string) \Illuminate\Support\Str::uuid(),
             'shipping_quote_token' => $quote['quote_token'],
             'shipping_cost' => 1,
         ])->assertOk();
@@ -266,6 +269,7 @@ class RajaOngkirShippingTest extends TestCase
         ])->assertOk()->json('quotes.0');
         $this->postJson(route('checkout.store'), [
             'address_id' => $address->id,
+            'checkout_token' => (string) \Illuminate\Support\Str::uuid(),
             'shipping_quote_token' => $quote['quote_token'],
         ])->assertStatus(422)->assertJsonValidationErrors('shipping_quote_token');
 
@@ -304,6 +308,7 @@ class RajaOngkirShippingTest extends TestCase
         $item->update(['product_variant_id' => $replacement->id]);
         $this->postJson(route('checkout.store'), [
             'address_id' => $address->id,
+            'checkout_token' => (string) \Illuminate\Support\Str::uuid(),
             'shipping_quote_token' => $quote['quote_token'],
         ])->assertStatus(422)->assertJsonValidationErrors('shipping_quote_token');
 
@@ -315,6 +320,7 @@ class RajaOngkirShippingTest extends TestCase
         $address->update(['address_line' => 'Alamat diperbarui setelah quote dibuat']);
         $this->postJson(route('checkout.store'), [
             'address_id' => $address->id,
+            'checkout_token' => (string) \Illuminate\Support\Str::uuid(),
             'shipping_quote_token' => $quote['quote_token'],
         ])->assertStatus(422)->assertJsonValidationErrors('shipping_quote_token');
         $this->assertSame(0, Order::count());

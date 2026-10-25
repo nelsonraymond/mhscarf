@@ -67,6 +67,7 @@ class OrderTest extends TestCase
 
         $response = $this->actingAs($customer)->post(route('checkout.store'), [
             'address_id' => $address->id,
+            'checkout_token' => (string) \Illuminate\Support\Str::uuid(),
             'shipping_quote_token' => $this->fakeShippingQuote(weight: (int) $variant->weight_gram * 2),
             'customer_note' => 'Mohon dipacking rapi untuk hadiah.',
         ]);
@@ -114,6 +115,7 @@ class OrderTest extends TestCase
 
         $this->actingAs($customer)->post(route('checkout.store'), [
             'address_id' => $address->id,
+            'checkout_token' => (string) \Illuminate\Support\Str::uuid(),
             'shipping_quote_token' => $this->fakeShippingQuote(weight: (int) $variant->weight_gram * 2),
         ]);
 
@@ -153,6 +155,7 @@ class OrderTest extends TestCase
 
         $this->actingAs($customer)->post(route('checkout.store'), [
             'address_id' => $address->id,
+            'checkout_token' => (string) \Illuminate\Support\Str::uuid(),
             'shipping_quote_token' => $this->fakeShippingQuote(weight: (int) $variant->weight_gram * 3),
         ]);
 
@@ -183,6 +186,7 @@ class OrderTest extends TestCase
 
         $this->actingAs($customer)->post(route('checkout.store'), [
             'address_id' => $address->id,
+            'checkout_token' => (string) \Illuminate\Support\Str::uuid(),
             'shipping_quote_token' => $this->fakeShippingQuote(),
         ]);
 
@@ -198,6 +202,7 @@ class OrderTest extends TestCase
 
         $this->actingAs($customer)->post(route('checkout.store'), [
             'address_id' => $address->id,
+            'checkout_token' => (string) \Illuminate\Support\Str::uuid(),
             'shipping_quote_token' => $this->fakeShippingQuote(),
         ]);
 
@@ -269,6 +274,7 @@ class OrderTest extends TestCase
 
         $response = $this->actingAs($customer)->post(route('checkout.store'), [
             'address_id' => $address->id,
+            'checkout_token' => (string) \Illuminate\Support\Str::uuid(),
             'shipping_quote_token' => $this->fakeShippingQuote(weight: (int) $variant1->weight_gram * 2 + (int) $variant2->weight_gram * 3),
         ]);
 

@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\StockReservation;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
 use App\Models\Voucher;
 use App\Models\VoucherUsage;
@@ -49,6 +50,10 @@ class OrderService
      */
     public function transitionStatus(Order $order, string $newStatus, ?string $reason = null, ?User $actor = null): Order
 {
+    if ($newStatus !== 'cancelled') {
+        $this->ensureStatusHistorySchema();
+    }
+
     $result = DB::transaction(function () use ($order, $newStatus, $reason, $actor) {
         // Baca ulang status terbaru dengan kunci, supaya tidak memakai instance yang basi
         $locked = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
@@ -112,6 +117,8 @@ class OrderService
      */
     public function cancelOrder(Order $order, ?string $reason = null, ?User $actor = null): Order
     {
+        $this->ensureStatusHistorySchema();
+
         $cancellableStatuses = ['pending', 'confirmed', 'processing', 'packed'];
 
         $cancelled = DB::transaction(function () use ($order, $reason, $actor, $cancellableStatuses) {
@@ -204,5 +211,14 @@ if ($locked->payment_status === 'paid') {
         $order->forceFill($cancelled->getAttributes())->syncOriginal();
 
         return $cancelled;
+    }
+
+    private function ensureStatusHistorySchema(): void
+    {
+        if (! Schema::hasTable('order_status_histories')) {
+            throw new \LogicException(
+                'Skema order_status_histories belum tersedia. Terapkan migration 2026_10_25_000001_create_order_status_histories_table sebelum mengubah status order.'
+            );
+        }
     }
 }

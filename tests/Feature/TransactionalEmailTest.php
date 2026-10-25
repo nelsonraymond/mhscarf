@@ -55,7 +55,7 @@ class TransactionalEmailTest extends TestCase
         $payload = [
             'address_id' => $address->id,
             'shipping_quote_token' => $this->fakeShippingQuote(),
-            'checkout_token' => 'transactional-email-order-once',
+            'checkout_token' => '44444444-4444-4444-8444-444444444444',
         ];
 
         $first = $this->actingAs($customer)->postJson(route('checkout.store'), $payload)->assertOk();
@@ -83,6 +83,7 @@ class TransactionalEmailTest extends TestCase
 
         $response = $this->actingAs($customer)->post(route('checkout.store'), [
             'address_id' => $address->id,
+            'checkout_token' => (string) \Illuminate\Support\Str::uuid(),
             'shipping_quote_token' => $this->fakeShippingQuote(),
         ]);
 
@@ -253,6 +254,7 @@ class TransactionalEmailTest extends TestCase
 
         $this->actingAs($customer)->post(route('checkout.store'), [
             'address_id' => $address->id,
+            'checkout_token' => (string) \Illuminate\Support\Str::uuid(),
             'shipping_quote_token' => $this->fakeShippingQuote(),
         ])->assertRedirect();
     }

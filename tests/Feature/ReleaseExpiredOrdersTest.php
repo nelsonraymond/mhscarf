@@ -45,6 +45,7 @@ class ReleaseExpiredOrdersTest extends TestCase
 
         $order = $this->app->make(CheckoutService::class)->placeOrder($user, [
             'address_id' => $user->addresses()->first()->id,
+            'checkout_token' => (string) \Illuminate\Support\Str::uuid(),
             'shipping_quote' => $this->internalShippingQuote(weight: (int) $variant->weight_gram * $quantity),
         ]);
 

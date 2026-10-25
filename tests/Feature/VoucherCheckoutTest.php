@@ -59,6 +59,7 @@ class VoucherCheckoutTest extends TestCase
         $quoteToken = $this->fakeShippingQuote(cost: 16000);
         return $this->actingAs($customer)->postJson(route('checkout.store'), array_filter([
             'address_id' => $address->id,
+            'checkout_token' => (string) \Illuminate\Support\Str::uuid(),
             'shipping_quote_token' => $quoteToken,
             'voucher_code' => $code,
         ]));

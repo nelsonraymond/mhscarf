@@ -2,3 +2,6 @@
 .git/**
 **/.git
 **/.git/**
+.env
+.env.*
+!.env.example

@@ -15,7 +15,7 @@ interface PaymentGatewayInterface
     /**
      * Initialize/create a transaction session with the payment gateway.
      *
-     * Opsi yang dikenali: payment_method (string), expiry_minutes (int).
+     * Opsi yang dikenali: payment_method (string), expiry_minutes (int), idempotency_key (string).
      *
      * @param  array<string, mixed>  $options
      * @return array{

@@ -86,6 +86,7 @@ class CartCheckoutIntegrationTest extends TestCase
         // 5. Perform checkout via JSON request to receive the API payload.
         $checkoutResponse = $this->postJson(route('checkout.store'), [
             'address_id' => $address->id,
+            'checkout_token' => (string) \Illuminate\Support\Str::uuid(),
             'shipping_quote_token' => $this->fakeShippingQuote(weight: 300),
         ]);
         $checkoutResponse->assertOk();
@@ -128,6 +129,7 @@ class CartCheckoutIntegrationTest extends TestCase
 
         $response = $this->postJson(route('checkout.store'), [
             'address_id' => $address->id,
+            'checkout_token' => (string) \Illuminate\Support\Str::uuid(),
             'shipping_quote_token' => $this->fakeShippingQuote(),
         ]);
         $response->assertStatus(422);
@@ -150,6 +152,7 @@ class CartCheckoutIntegrationTest extends TestCase
         $addressA = Address::factory()->create(['user_id' => $customerA->id]);
         $orderResponse = $this->postJson(route('checkout.store'), [
             'address_id' => $addressA->id,
+            'checkout_token' => (string) \Illuminate\Support\Str::uuid(),
             'shipping_quote_token' => $this->fakeShippingQuote(),
         ]);
         $orderResponse->assertOk();

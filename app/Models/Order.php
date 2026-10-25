@@ -21,6 +21,9 @@ class Order extends Model
         'order_number',
         'user_id',
         'checkout_token',
+        'checkout_fingerprint',
+        'checkout_cart_fingerprint',
+        'checkout_source',
         'status',
         'payment_status',
         'subtotal',
@@ -71,6 +74,11 @@ class Order extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function paymentInitializationAttempts(): HasMany
+    {
+        return $this->hasMany(PaymentInitializationAttempt::class);
     }
 
     public function shipment(): HasOne
