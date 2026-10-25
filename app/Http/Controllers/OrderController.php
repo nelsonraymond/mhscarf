@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Services\OrderService;
+use App\Services\ShipmentTrackingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,7 +33,7 @@ class OrderController extends Controller
     /**
      * Display single order details with tracking timeline.
      */
-    public function show(Order $order): View
+    public function show(Order $order, ShipmentTrackingService $trackingService): View
     {
         // Enforce authorization: customer can only view their own order
         if ($order->user_id !== Auth::id()) {
@@ -40,8 +41,11 @@ class OrderController extends Controller
         }
 
         $order->load(['items.variant.product.images', 'items.review', 'shipment', 'payments', 'user']);
+        $trackingSnapshot = $order->shipment
+            ? $trackingService->cachedSnapshot($order->shipment)
+            : null;
 
-        return view('orders.show', compact('order'));
+        return view('orders.show', compact('order', 'trackingSnapshot'));
     }
 
     /**

@@ -69,9 +69,16 @@ class OrderStateTransitionTest extends TestCase
     {
         [$order] = $this->createOrderWithStock('pending');
 
-        $updated = $this->orderService->transitionStatus($order, 'confirmed');
+        $updated = $this->orderService->transitionStatus($order, 'confirmed', 'Pembayaran diterima');
 
         $this->assertSame('confirmed', $updated->status);
+        $this->assertDatabaseHas('order_status_histories', [
+            'order_id' => $order->id,
+            'from_status' => 'pending',
+            'to_status' => 'confirmed',
+            'reason' => 'Pembayaran diterima',
+            'actor_id' => null,
+        ]);
     }
 
     public function test_confirmed_to_processing(): void
@@ -95,6 +102,8 @@ class OrderStateTransitionTest extends TestCase
     public function test_packed_to_shipped(): void
     {
         [$order] = $this->createOrderWithStock('packed');
+        $order->update(['payment_status' => 'paid']);
+        $order->shipment()->create(['courier' => 'JNE', 'service' => 'REG', 'tracking_number' => 'RESI-123']);
 
         $updated = $this->orderService->transitionStatus($order, 'shipped');
 
@@ -124,6 +133,10 @@ class OrderStateTransitionTest extends TestCase
         [$order] = $this->createOrderWithStock('pending');
 
         foreach (['confirmed', 'processing', 'packed', 'shipped', 'delivered', 'completed'] as $next) {
+            if ($next === 'shipped') {
+                $order->update(['payment_status' => 'paid']);
+                $order->shipment()->create(['courier' => 'JNE', 'service' => 'REG', 'tracking_number' => 'RESI-123']);
+            }
             $order = $this->orderService->transitionStatus($order, $next);
             $this->assertSame($next, $order->status);
         }
@@ -202,6 +215,13 @@ class OrderStateTransitionTest extends TestCase
 
         $this->assertNotNull($movement);
         $this->assertSame(3, (int) $movement->quantity);
+        $this->assertDatabaseHas('order_status_histories', [
+            'order_id' => $order->id,
+            'from_status' => 'pending',
+            'to_status' => 'cancelled',
+            'reason' => 'Dibatalkan pelanggan',
+            'actor_id' => null,
+        ]);
     }
 
     public function test_customer_cancellation_endpoint_restores_stock_and_owns_check(): void
@@ -233,6 +253,7 @@ class OrderStateTransitionTest extends TestCase
         $this->orderService->cancelOrder($order->fresh(), 'kedua');
 
         $this->assertSame(13, $variant->fresh()->stock_qty);
+        $this->assertSame(1, $order->statusHistories()->where('to_status', 'cancelled')->count());
         $this->assertSame(
             1,
             InventoryMovement::where('reference_type', Order::class)
@@ -282,6 +303,13 @@ class OrderStateTransitionTest extends TestCase
         $response->assertRedirect();
         $response->assertSessionHas('success');
         $this->assertSame('processing', $order->fresh()->status);
+        $this->assertDatabaseHas('order_status_histories', [
+            'order_id' => $order->id,
+            'from_status' => 'confirmed',
+            'to_status' => 'processing',
+            'actor_id' => $admin->id,
+            'reason' => 'Sedang disiapkan',
+        ]);
     }
 
     public function test_admin_cannot_access_customer_payment_page(): void

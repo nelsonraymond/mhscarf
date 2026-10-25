@@ -15,4 +15,9 @@ class ShippingProviderException extends RuntimeException
     {
         return new self('Konfigurasi layanan ongkir belum lengkap atau tidak valid.');
     }
+
+    public static function rateLimited(): self
+    {
+        return new self('Permintaan pelacakan terlalu sering. Silakan coba kembali beberapa saat lagi.');
+    }
 }

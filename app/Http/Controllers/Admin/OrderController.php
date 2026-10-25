@@ -6,17 +6,21 @@ use App\Exceptions\InvalidOrderStateTransitionException;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\OrderService;
+use App\Services\ShipmentTrackingService;
 use App\Services\TransactionalEmailService;
+use App\Exceptions\ShippingProviderException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class OrderController extends Controller
 {
     public function __construct(
         protected OrderService $orderService,
+        protected ShipmentTrackingService $shipmentTrackingService,
         protected TransactionalEmailService $transactionalEmailService,
     ) {}
 
@@ -25,6 +29,12 @@ class OrderController extends Controller
      */
     public function index(Request $request): View
     {
+        $request->validate([
+            'status' => ['nullable', 'in:pending,confirmed,processing,packed,shipped,delivered,completed,cancelled'],
+            'payment_status' => ['nullable', 'in:pending,paid,failed,expired,refunded'],
+            'search' => ['nullable', 'string', 'max:120'],
+        ]);
+
         $query = Order::query()->with(['user', 'items', 'payments', 'shipment']);
 
         if ($request->filled('status')) {
@@ -61,12 +71,32 @@ class OrderController extends Controller
      */
     public function show(Order $order): View
     {
-        $order->load(['user', 'items.variant.product.images', 'payments', 'shipment']);
+        $order->load(['user', 'items.variant.product.images', 'payments', 'shipment', 'statusHistories.actor']);
 
         // Determine allowed next statuses according to state machine
         $allowedNextStatuses = OrderService::ALLOWED_TRANSITIONS[$order->status] ?? [];
+        $trackingSnapshot = $order->shipment
+            ? $this->shipmentTrackingService->cachedSnapshot($order->shipment)
+            : null;
 
-        return view('admin.orders.show', compact('order', 'allowedNextStatuses'));
+        return view('admin.orders.show', compact('order', 'allowedNextStatuses', 'trackingSnapshot'));
+    }
+
+    /** Refresh tracking through a throttled, admin-only action. */
+    public function refreshTracking(Order $order): RedirectResponse
+    {
+        $shipment = $order->shipment;
+        if (! $shipment) {
+            return back()->with('error', 'Informasi pengiriman belum tersedia.');
+        }
+
+        try {
+            $this->shipmentTrackingService->refresh($shipment);
+
+            return back()->with('success', 'Informasi pelacakan berhasil diperbarui.');
+        } catch (ShippingProviderException|\InvalidArgumentException $exception) {
+            return back()->with('error', $exception->getMessage());
+        }
     }
 
     /**
@@ -80,24 +110,26 @@ class OrderController extends Controller
         ]);
 
         try {
-            $previousStatus = $order->status;
-            $updatedOrder = $this->orderService->transitionStatus(
-                order: $order,
-                newStatus: $validated['status'],
-                reason: $validated['note'] ?? 'Diperbarui oleh admin',
-                actor: Auth::user()
-            );
+            $previousStatus = null;
+            $updatedOrder = DB::transaction(function () use ($order, $validated, &$previousStatus) {
+                $locked = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+                $previousStatus = $locked->status;
+
+                return $this->orderService->transitionStatus(
+                    order: $locked,
+                    newStatus: $validated['status'],
+                    reason: $validated['note'] ?? 'Diperbarui oleh admin',
+                    actor: Auth::user()
+                );
+            });
 
             if ($previousStatus !== 'shipped' && $updatedOrder->status === 'shipped') {
-                $shipment = $updatedOrder->shipment()->first();
-
-                if ($shipment?->status === 'shipped') {
-                    $this->transactionalEmailService->shipmentDispatched($updatedOrder->fresh(['items', 'shipment']), $shipment);
-                }
+                $shipment = $updatedOrder->shipment;
+                $this->transactionalEmailService->shipmentDispatched($updatedOrder->fresh(['items', 'shipment']), $shipment);
             }
 
             return back()->with('success', "Status pesanan #{$order->order_number} berhasil diperbarui.");
-        } catch (InvalidOrderStateTransitionException $e) {
+        } catch (InvalidOrderStateTransitionException|\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }
     }
@@ -108,44 +140,26 @@ class OrderController extends Controller
     public function updateShipment(Request $request, Order $order): RedirectResponse
     {
         $validated = $request->validate([
-            'courier' => ['nullable', 'string', 'max:255'],
-            'service' => ['nullable', 'string', 'max:255'],
-            'tracking_number' => ['nullable', 'string', 'max:255'],
-            'shipping_cost' => ['nullable', 'numeric', 'min:0'],
-            'status' => ['nullable', 'string', 'in:pending,picked_up,in_transit,shipped,delivered,returned,cancelled'],
+            'courier' => ['required', 'string', 'max:80'],
+            'courier_code' => ['nullable', 'string', Rule::in(\App\Services\ShippingService::availableCouriers())],
+            'service' => ['required', 'string', 'max:80'],
+            'tracking_number' => ['nullable', 'string', 'max:120'],
         ]);
 
-        $shipment = $order->shipment;
-        $wasShipped = $shipment?->status === 'shipped';
-
-        if (array_key_exists('status', $validated) && $validated['status'] === null) {
-            unset($validated['status']);
-        }
-
-        if (($validated['status'] ?? null) === 'shipped' && empty($shipment?->shipped_at)) {
-            $validated['shipped_at'] = now();
-        }
-
-        if (($validated['status'] ?? null) === 'delivered' && empty($shipment?->delivered_at)) {
-            $validated['delivered_at'] = now();
-        }
-
-        // Ensure shipment exists; create if missing
-        if ($shipment) {
-            $shipment->update($validated);
-            $shipment = $shipment->fresh();
-        } else {
-            if (empty($validated['courier'])) {
-                $validated['courier'] = 'MH Scarf Express Delivery';
+        $saved = DB::transaction(function () use ($order, $validated): bool {
+            $locked = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+            if ($locked->payment_status !== 'paid'
+                || ! in_array($locked->status, ['confirmed', 'processing', 'packed'], true)) {
+                return false;
             }
-            if (empty($validated['status'])) {
-                $validated['status'] = 'pending';
-            }
-            $shipment = $order->shipment()->create($validated);
-        }
 
-        if (! $wasShipped && $shipment->status === 'shipped' && $order->fresh()->status === 'shipped') {
-            $this->transactionalEmailService->shipmentDispatched($order->fresh(['items', 'shipment']), $shipment);
+            $locked->shipment()->updateOrCreate([], $validated + ['status' => 'pending']);
+
+            return true;
+        });
+
+        if (! $saved) {
+            return back()->with('error', 'Informasi pengiriman hanya dapat diubah setelah pembayaran dikonfirmasi dan sebelum pesanan dikirim.');
         }
 
         return back()->with('success', "Detail pengiriman untuk pesanan #{$order->order_number} berhasil diperbarui.");

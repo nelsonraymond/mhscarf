@@ -81,7 +81,7 @@
         </section>
 
         {{-- Shortcuts --}}
-        <h2 class="font-display text-lg font-bold text-ink mt-8 sm:mt-10 mb-3 sm:mb-4">Akses Cepat</h2>
+        <h2 class="font-display text-lg font-bold text-ink mt-8 sm:mt-10 mb-3 sm:mb-4">Menu</h2>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
 
             {{-- Pesanan --}}

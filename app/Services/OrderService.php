@@ -65,11 +65,36 @@ class OrderService
             return $this->cancelOrder($locked, $reason, $actor);
         }
 
+        if ($newStatus === 'shipped') {
+            $locked->loadMissing('shipment');
+            if ($locked->payment_status !== 'paid'
+                || ! $locked->shipment
+                || blank($locked->shipment->courier)
+                || blank($locked->shipment->service)
+                || blank($locked->shipment->tracking_number)) {
+                throw new InvalidArgumentException('Pesanan hanya dapat ditandai dikirim setelah pembayaran lunas dan kurir, layanan, serta nomor resi terisi.');
+            }
+        }
+
+        $previousStatus = $locked->status;
         $attributes = ['status' => $newStatus];
         if ($newStatus === 'delivered') {
             $attributes['delivered_at'] = now();
         }
         $locked->update($attributes);
+
+        if ($newStatus === 'shipped') {
+            $locked->shipment()->update(['status' => 'shipped', 'shipped_at' => now()]);
+        } elseif ($newStatus === 'delivered') {
+            $locked->shipment()->update(['status' => 'delivered', 'delivered_at' => now()]);
+        }
+
+        $locked->statusHistories()->create([
+            'from_status' => $previousStatus,
+            'to_status' => $newStatus,
+            'reason' => $reason,
+            'actor_id' => $actor?->id,
+        ]);
 
         return $locked->fresh();
     });
@@ -101,6 +126,8 @@ class OrderService
             if (! in_array($locked->status, $cancellableStatuses, true)) {
                 throw new InvalidArgumentException("Pesanan dengan status '{$locked->statusLabel()}' tidak dapat dibatalkan.");
             }
+
+            $previousStatus = $locked->status;
 
             // Restore product variant stock for each ordered item
             $locked->loadMissing('items.variant');
@@ -161,6 +188,13 @@ if ($locked->payment_status === 'paid') {
 
             $locked->update([
                 'status' => 'cancelled',
+            ]);
+
+            $locked->statusHistories()->create([
+                'from_status' => $previousStatus,
+                'to_status' => 'cancelled',
+                'reason' => $reason,
+                'actor_id' => $actor?->id,
             ]);
 
             return $locked->fresh();

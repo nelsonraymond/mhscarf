@@ -79,12 +79,17 @@
                 @if ($primaryImg)
                     <div class="relative aspect-[4/5] w-full overflow-hidden rounded-lg bg-cream sm:rounded-xl">
                         <img
-                            src="{{ Storage::url($primaryImg->image_url) }}"
+                            src="{{ $primaryImg->image_url }}"
                             alt="{{ $primaryImg->alt_text ?? $product->name }}"
                             class="h-full w-full object-cover object-center"
                             id="pd-main-image"
                             fetchpriority="high"
+                            onerror="this.hidden = true; this.parentElement.querySelector('[data-image-fallback]').hidden = false;"
                         >
+                        <span data-image-fallback hidden role="img" aria-label="Foto {{ $product->name }} belum tersedia"
+                              class="absolute inset-0 flex items-center justify-center bg-cream px-6 text-center text-sm text-muted">
+                            Foto produk belum tersedia
+                        </span>
                     </div>
 
                     @if ($galleryImages->count() > 1)
@@ -96,21 +101,23 @@
 
                                 <button
                                     type="button"
-                                    data-src="{{ Storage::url($img->image_path) }}"
+                                    data-src="{{ $img->image_url }}"
                                     data-alt="{{ $img->alt_text ?? $product->name }}"
                                     aria-label="Lihat foto {{ $loop->iteration }}"
                                     aria-pressed="{{ $isActive ? 'true' : 'false' }}"
-                                    class="pd-thumb aspect-[4/5] overflow-hidden rounded-lg border bg-cream transition
+                                    class="pd-thumb relative aspect-[4/5] overflow-hidden rounded-lg border bg-cream transition
                                         {{ $isActive
                                             ? 'border-pink-deep'
                                             : 'border-transparent hover:border-pink-mauve' }}"
                                 >
                                     <img
-                                        src="{{ Storage::url($img->image_path) }}"
+                                        src="{{ $img->image_url }}"
                                         alt=""
                                         class="h-full w-full object-cover"
                                         loading="lazy"
+                                        onerror="this.hidden = true; this.parentElement.querySelector('[data-image-fallback]').hidden = false;"
                                     >
+                                    <span data-image-fallback hidden class="absolute inset-0 flex items-center justify-center bg-cream px-1 text-center text-[10px] text-muted">Foto tidak tersedia</span>
                                 </button>
                             @endforeach
                         </div>
@@ -761,6 +768,8 @@
                 button.addEventListener('click', function () {
                     if (!mainImage) return;
 
+                    mainImage.hidden = false;
+                    mainImage.parentElement.querySelector('[data-image-fallback]').hidden = true;
                     mainImage.src = button.dataset.src;
                     mainImage.alt = button.dataset.alt || '';
 

@@ -117,6 +117,75 @@ class RajaOngkirClient
         return $services;
     }
 
+    /**
+     * Retrieve sanitized AWB tracking data from the Shipping Cost API.
+     *
+     * @return array{status: string, delivered: ?bool, events: list<array{code: ?string, description: ?string, date: ?string, time: ?string, city: ?string}>}
+     */
+    public function trackWaybill(string $awb, string $courier, string $lastPhoneNumber): array
+    {
+        if (trim($awb) === '' || trim($courier) === '' || ! preg_match('/^\d{5}$/', $lastPhoneNumber)) {
+            throw new InvalidArgumentException('Data pelacakan pengiriman tidak valid.');
+        }
+
+        $response = $this->request('track_waybill', fn () => $this->client()
+            ->asForm()
+            ->post('/track/waybill', [
+                'awb' => trim($awb),
+                'courier' => strtolower(trim($courier)),
+                'last_phone_number' => $lastPhoneNumber,
+            ]));
+
+        $body = $this->validatedBody($response, 'track_waybill');
+        $data = $body['data'] ?? null;
+        $summary = is_array($data) ? ($data['summary'] ?? null) : null;
+        $manifest = is_array($data) ? ($data['manifest'] ?? null) : null;
+
+        if (! is_array($summary)
+            || ! is_string($summary['status'] ?? null)
+            || trim($summary['status']) === ''
+            || ! is_array($manifest)
+            || ! array_is_list($manifest)) {
+            throw $this->invalidResponse('track_waybill');
+        }
+
+        $events = [];
+        foreach ($manifest as $event) {
+            if (! is_array($event)) {
+                throw $this->invalidResponse('track_waybill');
+            }
+
+            $normalized = [];
+            foreach ([
+                'manifest_code' => 'code',
+                'manifest_description' => 'description',
+                'manifest_date' => 'date',
+                'manifest_time' => 'time',
+                'city_name' => 'city',
+            ] as $source => $target) {
+                $value = $event[$source] ?? null;
+                if ($value !== null && (! is_string($value) || mb_strlen($value) > 255)) {
+                    throw $this->invalidResponse('track_waybill');
+                }
+
+                $normalized[$target] = is_string($value) ? trim($value) : null;
+            }
+
+            $events[] = $normalized;
+        }
+
+        $delivered = $data['delivered'] ?? null;
+        if ($delivered !== null && ! is_bool($delivered)) {
+            throw $this->invalidResponse('track_waybill');
+        }
+
+        return [
+            'status' => trim($summary['status']),
+            'delivered' => $delivered,
+            'events' => $events,
+        ];
+    }
+
     private function client(): \Illuminate\Http\Client\PendingRequest
     {
         $key = config('services.rajaongkir.key');
@@ -154,7 +223,9 @@ class RajaOngkirClient
                 'status' => $response->status(),
             ]);
 
-            throw ShippingProviderException::unavailable();
+            throw $response->status() === 429
+                ? ShippingProviderException::rateLimited()
+                : ShippingProviderException::unavailable();
         }
 
         return $response;

@@ -82,6 +82,13 @@ class OrderTest extends TestCase
         $this->assertEquals(106000.0, (float) $order->grand_total);
         $this->assertEquals('pending', $order->status);
         $this->assertEquals('pending', $order->payment_status);
+        $this->assertDatabaseHas('order_status_histories', [
+            'order_id' => $order->id,
+            'from_status' => null,
+            'to_status' => 'pending',
+            'reason' => 'Pesanan dibuat saat checkout',
+            'actor_id' => null,
+        ]);
         $this->assertEquals('Aisyah Putri', $order->shipping_recipient_name);
         $this->assertEquals('Mohon dipacking rapi untuk hadiah.', $order->customer_note);
 
@@ -208,6 +215,9 @@ class OrderTest extends TestCase
             'user_id' => $customer->id,
             'status' => 'processing',
         ]);
+        $order->shipment()->create([
+            'courier' => 'JNE', 'service' => 'REG', 'tracking_number' => 'MH-RESI-123', 'status' => 'pending',
+        ]);
 
         // Order history
         $indexResponse = $this->actingAs($customer)->get(route('orders.index'));
@@ -221,6 +231,8 @@ class OrderTest extends TestCase
         $showResponse->assertSee($order->order_number);
         $showResponse->assertSee('Lacak Perjalanan Pesanan');
         $showResponse->assertSee('Diproses');
+        $showResponse->assertSee('JNE');
+        $showResponse->assertSee('MH-RESI-123');
     }
 
     public function test_customer_cannot_view_another_customers_order(): void
@@ -297,11 +309,11 @@ class OrderTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
         $order = Order::factory()->create();
+        $order->update(['status' => 'packed', 'payment_status' => 'paid']);
         $shipment = $order->shipment()->create([
             'courier' => 'JNE',
             'service' => 'REG',
             'tracking_number' => null,
-            'shipping_cost' => 15000,
             'status' => 'pending',
         ]);
 
@@ -309,8 +321,6 @@ class OrderTest extends TestCase
             'courier' => 'JNE',
             'service' => 'REG',
             'tracking_number' => 'JKKA2131928213',
-            'shipping_cost' => 15000,
-            'status' => 'shipped',
         ]);
 
         $response->assertRedirect();
@@ -318,7 +328,50 @@ class OrderTest extends TestCase
 
         $shipment->refresh();
         $this->assertEquals('JKKA2131928213', $shipment->tracking_number);
+        $this->actingAs($admin)->patch(route('admin.orders.status', $order), ['status' => 'shipped'])->assertRedirect();
+        $shipment->refresh();
         $this->assertEquals('shipped', $shipment->status);
         $this->assertNotNull($shipment->shipped_at);
+    }
+
+    public function test_customer_cannot_change_admin_shipment_details(): void
+    {
+        $customer = User::factory()->customer()->create();
+        $order = Order::factory()->create(['status' => 'packed', 'payment_status' => 'paid']);
+
+        $this->actingAs($customer)->patch(route('admin.orders.shipment', $order), [
+            'courier' => 'JNE', 'service' => 'REG', 'tracking_number' => 'RESI-1',
+        ])->assertForbidden();
+
+        $this->assertDatabaseMissing('shipments', ['order_id' => $order->id]);
+    }
+
+    public function test_shipment_endpoint_cannot_change_shipping_cost_or_force_shipped_state(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $order = Order::factory()->create(['status' => 'packed', 'payment_status' => 'paid']);
+        $originalShippingCost = (float) $order->shipping_cost;
+
+        $this->actingAs($admin)->patch(route('admin.orders.shipment', $order), [
+            'courier' => 'JNE', 'service' => 'REG', 'tracking_number' => 'RESI-1',
+            'shipping_cost' => 1, 'status' => 'shipped',
+        ])->assertSessionHas('success');
+
+        $this->assertSame('packed', $order->fresh()->status);
+        $this->assertSame($originalShippingCost, (float) $order->fresh()->shipping_cost);
+        $this->assertSame('pending', $order->shipment()->firstOrFail()->status);
+    }
+
+    public function test_shipment_details_cannot_be_saved_before_payment_is_paid(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $order = Order::factory()->create(['status' => 'packed', 'payment_status' => 'pending']);
+
+        $this->actingAs($admin)->patch(route('admin.orders.shipment', $order), [
+            'courier' => 'JNE', 'service' => 'REG', 'tracking_number' => 'RESI-1',
+        ])->assertSessionHas('error');
+
+        $this->assertDatabaseMissing('shipments', ['order_id' => $order->id]);
+        $this->assertSame('pending', $order->fresh()->payment_status);
     }
 }

@@ -176,17 +176,15 @@ class TransactionalEmailTest extends TestCase
         $admin = User::factory()->admin()->create();
         [$order, $owner] = $this->createShippableOrder('TRACK-12345');
 
-        // The order state machine must reach shipped before the shipment is marked dispatched.
-        $this->actingAs($admin)->patch(route('admin.orders.status', $order), ['status' => 'shipped'])->assertRedirect();
+        // Shipment data is saved first; the order transition then dispatches exactly once.
         $this->actingAs($admin)->patch(route('admin.orders.shipment', $order), [
             'courier' => 'JNE',
             'service' => 'REG',
             'tracking_number' => 'TRACK-12345',
-            'status' => 'shipped',
         ])->assertRedirect();
+        $this->actingAs($admin)->patch(route('admin.orders.status', $order), ['status' => 'shipped'])->assertRedirect();
         $this->actingAs($admin)->patch(route('admin.orders.shipment', $order), [
-            'tracking_number' => 'TRACK-12345',
-            'status' => 'shipped',
+            'courier' => 'JNE', 'service' => 'REG', 'tracking_number' => 'TRACK-12345',
         ])->assertRedirect();
 
         Mail::assertSent(ShipmentDispatchedMail::class, function (ShipmentDispatchedMail $mail) use ($order, $owner): bool {
@@ -199,25 +197,43 @@ class TransactionalEmailTest extends TestCase
         Mail::assertSentCount(1);
     }
 
-    public function test_shipped_email_explains_when_tracking_number_is_not_available(): void
+    public function test_order_cannot_be_marked_shipped_without_tracking_number(): void
     {
         Mail::fake();
         $admin = User::factory()->admin()->create();
         [$order, $owner] = $this->createShippableOrder(null);
-        $order->update(['status' => 'shipped']);
-
         $this->actingAs($admin)->patch(route('admin.orders.shipment', $order), [
             'courier' => 'JNE',
             'service' => 'REG',
             'tracking_number' => null,
-            'status' => 'shipped',
         ])->assertRedirect();
+        $this->actingAs($admin)->patch(route('admin.orders.status', $order), ['status' => 'shipped'])
+            ->assertSessionHas('error');
+        $this->assertSame('packed', $order->fresh()->status);
+        Mail::assertNothingSent();
+    }
 
-        Mail::assertSent(ShipmentDispatchedMail::class, function (ShipmentDispatchedMail $mail) use ($owner): bool {
-            $mail->assertSeeInHtml('Belum tersedia');
+    public function test_shipment_email_failure_does_not_roll_back_shipped_transition(): void
+    {
+        $admin = User::factory()->admin()->create();
+        [$order] = $this->createShippableOrder('TRACK-FAIL-1');
+        Mail::shouldReceive('to')
+            ->once()
+            ->with($order->user->email)
+            ->andThrow(new RuntimeException('Simulated Resend failure'));
 
-            return $mail->hasTo($owner->email) && $mail->shipment->tracking_number === null;
-        });
+        $this->actingAs($admin)->patch(route('admin.orders.status', $order), ['status' => 'shipped'])
+            ->assertRedirect()
+            ->assertSessionHas('success');
+
+        $this->assertSame('shipped', $order->fresh()->status);
+        $this->assertSame('shipped', $order->shipment->fresh()->status);
+        $this->assertDatabaseHas('order_status_histories', [
+            'order_id' => $order->id,
+            'from_status' => 'packed',
+            'to_status' => 'shipped',
+            'actor_id' => $admin->id,
+        ]);
     }
 
     public function test_order_email_is_sent_after_checkout_transaction_finishes(): void
@@ -248,20 +264,11 @@ class TransactionalEmailTest extends TestCase
         [$order] = $this->createShippableOrder('TRACK-54321');
 
         $this->actingAs($admin)->patch(route('admin.orders.shipment', $order), [
-            'tracking_number' => 'TRACK-54321',
-            'status' => 'shipped',
+            'courier' => 'JNE', 'service' => 'REG', 'tracking_number' => 'TRACK-54321',
         ])->assertRedirect();
         Mail::assertNothingSent();
 
-        $order->update(['status' => 'packed']);
-        $order->shipment->update(['status' => 'pending', 'shipped_at' => null]);
         $this->actingAs($admin)->patch(route('admin.orders.status', $order), ['status' => 'shipped'])->assertRedirect();
-        Mail::assertNothingSent();
-
-        $this->actingAs($admin)->patch(route('admin.orders.shipment', $order), [
-            'tracking_number' => 'TRACK-54321',
-            'status' => 'shipped',
-        ])->assertRedirect();
         Mail::assertSent(ShipmentDispatchedMail::class, 1);
         Mail::assertSentCount(1);
     }
@@ -326,6 +333,7 @@ class TransactionalEmailTest extends TestCase
         $order = Order::factory()->create([
             'user_id' => $owner->id,
             'status' => 'packed',
+            'payment_status' => 'paid',
         ]);
         Shipment::factory()->create([
             'order_id' => $order->id,

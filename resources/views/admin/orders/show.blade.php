@@ -224,6 +224,18 @@
             </div>
 
             <div class="admin-card p-6">
+                <h2 class="mb-4 text-sm font-semibold text-admin-text">Riwayat status</h2>
+                @forelse ($order->statusHistories as $history)
+                    <div class="mb-3 border-l-2 border-admin-border pl-3 text-xs last:mb-0">
+                        <p class="font-semibold text-admin-text">{{ $history->from_status ? ucfirst($history->from_status).' → ' : '' }}{{ ucfirst($history->to_status) }}</p>
+                        <p class="text-admin-muted">{{ $history->reason ?: 'Perubahan status' }} · {{ $history->actor?->name ?? 'Sistem' }} · {{ $history->created_at->format('d M Y, H:i') }}</p>
+                    </div>
+                @empty
+                    <p class="text-xs italic text-admin-muted">Belum ada riwayat status.</p>
+                @endforelse
+            </div>
+
+            <div class="admin-card p-6">
                 <div class="mb-4 flex items-center justify-between">
                     <h2 class="text-sm font-semibold text-admin-text">Detail pengiriman</h2>
                     @if ($order->shipment)
@@ -245,35 +257,64 @@
                     @method('PATCH')
                     <div>
                         <label for="courier" class="admin-label">Kurir</label>
-                        <input id="courier" type="text" name="courier" value="{{ old('courier', $order->shipment?->courier) }}" class="admin-input" placeholder="Contoh: JNE, J&T, SiCepat">
+                        <input id="courier" type="text" name="courier" value="{{ old('courier', $order->shipment?->courier) }}" class="admin-input" placeholder="Contoh: JNE, J&T, SiCepat" required>
+                    </div>
+                    <div>
+                        <label for="courier_code" class="admin-label">Kode kurir untuk tracking</label>
+                        <select id="courier_code" name="courier_code" class="admin-input">
+                            <option value="">Pilih kode kurir</option>
+                            @foreach (\App\Services\ShippingService::availableCouriers() as $courierCode)
+                                <option value="{{ $courierCode }}" @selected(old('courier_code', $order->shipment?->courier_code) === $courierCode)>{{ strtoupper($courierCode) }}</option>
+                            @endforeach
+                        </select>
                     </div>
                     <div>
                         <label for="service" class="admin-label">Layanan</label>
-                        <input id="service" type="text" name="service" value="{{ old('service', $order->shipment?->service) }}" class="admin-input" placeholder="Contoh: Reguler, YES, dsb.">
+                        <input id="service" type="text" name="service" value="{{ old('service', $order->shipment?->service) }}" class="admin-input" placeholder="Contoh: Reguler, YES, dsb." required>
                     </div>
                     <div>
                         <label for="tracking_number" class="admin-label">Nomor resi</label>
                         <input id="tracking_number" type="text" name="tracking_number" value="{{ old('tracking_number', $order->shipment?->tracking_number) }}" class="admin-input font-mono" placeholder="Masukkan nomor resi...">
                     </div>
-                    <div>
-                        <label for="shipping_cost" class="admin-label">Biaya pengiriman</label>
-                        <input id="shipping_cost" type="number" step="0.01" name="shipping_cost" value="{{ old('shipping_cost', $order->shipment?->shipping_cost) }}" class="admin-input">
-                    </div>
-                    <div>
-                        <label for="shipment-status" class="admin-label">Status pengiriman</label>
-                        <select id="shipment-status" name="status" class="admin-input">
-                            <option value="">-- Pilih status --</option>
-                            <option value="pending" {{ $order->shipment?->status == 'pending' ? 'selected' : '' }}>Pending (Menunggu)</option>
-                            <option value="picked_up" {{ $order->shipment?->status == 'picked_up' ? 'selected' : '' }}>Diambil Kurir (Picked up)</option>
-                            <option value="in_transit" {{ $order->shipment?->status == 'in_transit' ? 'selected' : '' }}>Dalam Perjalanan (In transit)</option>
-                            <option value="shipped" {{ $order->shipment?->status == 'shipped' ? 'selected' : '' }}>Dikirim (Shipped)</option>
-                            <option value="delivered" {{ $order->shipment?->status == 'delivered' ? 'selected' : '' }}>Tiba di Tujuan (Delivered)</option>
-                            <option value="returned" {{ $order->shipment?->status == 'returned' ? 'selected' : '' }}>Dikembalikan (Returned)</option>
-                            <option value="cancelled" {{ $order->shipment?->status == 'cancelled' ? 'selected' : '' }}>Dibatalkan</option>
-                        </select>
-                    </div>
-                    <button type="submit" class="admin-btn admin-btn-primary w-full">{{ $order->shipment ? 'Perbarui pengiriman' : 'Simpan pengiriman' }}</button>
+                    <p class="text-xs text-admin-muted">Ongkos kirim mengikuti nominal checkout dan tidak dapat diubah di sini. Simpan data kurir dan resi, lalu ubah status pesanan menjadi Dikirim setelah paket diserahkan ke kurir.</p>
+                    <button type="submit" class="admin-btn admin-btn-primary w-full" {{ in_array($order->status, ['confirmed', 'processing', 'packed'], true) ? '' : 'disabled' }}>Simpan detail pengiriman</button>
                 </form>
+
+                @if ($order->shipment && in_array($order->status, ['shipped', 'delivered', 'completed'], true))
+                    <div class="mt-6 border-t border-admin-border pt-5">
+                        <div class="mb-3 flex items-center justify-between gap-3">
+                            <h3 class="text-sm font-semibold text-admin-text">Pelacakan kurir</h3>
+                            @if ($trackingSnapshot)
+                                <span class="text-[11px] text-admin-muted">Diperbarui {{ \Illuminate\Support\Carbon::parse($trackingSnapshot['fetched_at'])->format('d M Y, H:i') }}</span>
+                            @endif
+                        </div>
+                        @if (filled($order->shipment->tracking_number) && filled($order->shipment->courier_code))
+                            <form method="POST" action="{{ route('admin.orders.tracking.refresh', $order) }}" class="mb-4">
+                                @csrf
+                                <button type="submit" class="admin-btn admin-btn-secondary w-full">Perbarui status dari kurir</button>
+                            </form>
+                            @if ($trackingSnapshot)
+                                <p class="mb-3 text-sm font-medium text-admin-text">Status kurir: {{ $trackingSnapshot['status'] }}</p>
+                                @if (count($trackingSnapshot['events']))
+                                    <ol class="space-y-3 border-l border-admin-border pl-4">
+                                        @foreach ($trackingSnapshot['events'] as $event)
+                                            <li class="text-xs">
+                                                <p class="font-medium text-admin-text">{{ $event['description'] ?: $event['code'] ?: 'Pembaruan pengiriman' }}</p>
+                                                <p class="mt-0.5 text-admin-muted">{{ trim(($event['date'] ?? '').' '.($event['time'] ?? '')) }} {{ $event['city'] ? '· '.$event['city'] : '' }}</p>
+                                            </li>
+                                        @endforeach
+                                    </ol>
+                                @else
+                                    <p class="text-xs text-admin-muted">Belum ada riwayat scan dari kurir.</p>
+                                @endif
+                            @else
+                                <p class="text-xs text-admin-muted">Belum ada data pelacakan. Pembaruan dilakukan saat admin menekan tombol di atas.</p>
+                            @endif
+                        @else
+                            <p class="text-xs text-admin-muted">Tracking tersedia setelah kode kurir dari layanan ongkir dan nomor resi tersedia.</p>
+                        @endif
+                    </div>
+                @endif
             </div>
         </div>
     </div>

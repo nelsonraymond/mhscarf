@@ -296,6 +296,11 @@ $order = Order::create([
     'customer_note' => $data['customer_note'] ?? null,
     'placed_at' => now(),
 ]);
+$order->statusHistories()->create([
+    'from_status' => null,
+    'to_status' => 'pending',
+    'reason' => 'Pesanan dibuat saat checkout',
+]);
 
 if ($voucherResult) {
     $this->voucherService->recordUsage($voucherResult['voucher'], $user, $order, $discount);

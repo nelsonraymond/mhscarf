@@ -140,6 +140,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::patch('/orders/{order}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.status');
         Route::post('/orders/{order}/cancel', [AdminOrderController::class, 'cancel'])->name('orders.cancel');
         Route::patch('/orders/{order}/shipment', [AdminOrderController::class, 'updateShipment'])->name('orders.shipment');
+        Route::post('/orders/{order}/tracking/refresh', [AdminOrderController::class, 'refreshTracking'])
+            ->middleware('throttle:5,1')->name('orders.tracking.refresh');
         Route::post('/orders/{order}/refunded', [AdminOrderController::class, 'markRefunded'])->name('orders.refunded');
 
         // Category Management

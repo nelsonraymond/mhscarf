@@ -15,11 +15,17 @@
         <a href="{{ route('shop.product', $product->slug) }}" class="block w-full h-full" aria-label="{{ $product->name }}">
             @if ($primaryImg)
                 <img src="{{ $primaryImg->image_url }}" alt="{{ $primaryImg->alt_text ?? $product->name }}"
-                    class="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]" loading="lazy">
+                    class="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]" loading="lazy"
+                    onerror="this.hidden = true; this.parentElement.parentElement.querySelector('[data-image-fallback]').hidden = false;">
                 @if ($secondaryImg)
                     <img src="{{ $secondaryImg->image_url }}" alt="{{ $secondaryImg->alt_text ?? $product->name }}"
-                        class="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-out" loading="lazy">
+                        class="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-500 ease-out" loading="lazy"
+                        onerror="this.hidden = true;">
                 @endif
+                <span data-image-fallback hidden role="img" aria-label="Foto {{ $product->name }} belum tersedia"
+                    class="absolute inset-0 flex items-center justify-center bg-cream px-4 text-center text-xs text-muted">
+                    Foto produk belum tersedia
+                </span>
             @else
                 <div class="w-full h-full flex items-center justify-center bg-cream text-[10px] tracking-widest uppercase text-pink-deep">
                     MH Scarf

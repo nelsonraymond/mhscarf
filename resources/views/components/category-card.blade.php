@@ -18,14 +18,7 @@
 
     // Prioritas 3: gambar produk pertama sebagai fallback.
     if (empty($src)) {
-        $path = data_get($category, 'image_path')
-            ?? $category->products?->first()?->primaryImage()?->image_path;
-
-        if ($path) {
-            $src = preg_match('#^https?://#i', $path)
-                ? $path
-                : Storage::url($path);
-        }
+        $src = $category->products?->first()?->primaryImage()?->image_url;
     }
 @endphp
 
@@ -34,7 +27,9 @@
     <div class="relative aspect-[4/5] overflow-hidden bg-[#F6EEF1]">
         @if ($src)
             <img src="{{ $src }}" alt="{{ $category->name }}" loading="lazy"
-                 class="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]">
+                 class="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+                 onerror="this.hidden = true; this.parentElement.querySelector('[data-image-fallback]').hidden = false;">
+            <div data-image-fallback hidden aria-hidden="true" class="absolute inset-0 bg-gradient-to-br from-[#FAF5F7] via-[#F6EEF1] to-[#EFE2E7]"></div>
         @else
             <div class="h-full w-full bg-gradient-to-br from-[#FAF5F7] via-[#F6EEF1] to-[#EFE2E7]"></div>
         @endif
