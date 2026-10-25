@@ -1,77 +1,75 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-const dir = '.vercel/output/functions/api/index.func';
-const configPath = path.join(dir, '.vc-config.json');
-const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+const dir = ".vercel/output/functions/api/index.func";
+const configPath = path.join(dir, ".vc-config.json");
+const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
 
-NODEole.log('Mapping launcher-orig.js:', map['launcher-orig.js']);er.js')));;
-root@160f321028c8:/workspace# 
-node patch-vercel-lambda.cjs
+if (config.handler !== "launcher.launcher") {
+  throw new Error(`Handler tidak sesuai dugaan: ${config.handler}`);
+}
 
-echo
-echo "=== VERIFIKASI FILE ==="
-ls -la .vercel/output/functions/api/index.func/launcher.js
+const map = config.filePathMap || {};
+const originalTarget = map["launcher.js"];
 
-echo
-echo "=== VERIFIKASI KONFIGURASI ==="
-node -e "const c=require('./.vercel/output/functions/api/index.func/.vc-config.json'); console.log('Handler:',c.handler); console.log('Launcher mapping:',c.filePathMap['launcher.js']); console.log('Original mapping:',c.filePathMap['launcher-orig.js'])"
-Bridge dibuat: true
-Handler: launcher.launcher
-Mapping launcher.js: launcher.js
-Mapping launcher-orig.js: .vercel/builders/node_modules/vercel-php/dist/launchers/builtin.js
+if (!originalTarget) {
+  throw new Error("Mapping launcher.js asli tidak ditemukan.");
+}
 
-=== VERIFIKASI FILE ===
--rw-r--r-- 1 root root 559 Oct 20 18:32 .vercel/output/functions/api/index.func/launcher.js
+if (map["launcher-orig.js"]) {
+  throw new Error("Mapping launcher-orig.js sudah ada; build ulang dahulu.");
+}
 
-=== VERIFIKASI KONFIGURASI ===
-Handler: launcher.launcher
-Launcher mapping: launcher.js
-Original mapping: .vercel/builders/node_modules/vercel-php/dist/launchers/builtin.js
-root@160f321028c8:/workspace# 
-Q
-EXIT
+map["launcher-orig.js"] = originalTarget;
+map["launcher.js"] = "launcher.js";
 
-
-
-
-
-exit
-q
-qq
-
-
-node <<'NODE'
-const fs = require('fs');
-const path = require('path');
-
-const dir = '.vercel/output/functions/api/index.func';
-const config = JSON.parse(
-  fs.readFileSync(path.join(dir, '.vc-config.json'), 'utf8')
-);
-
-for (const key of ['launcher.js', 'launcher-orig.js', 'helpers.js']) {
-  const target = config.filePathMap?.[key];
-  console.log(`\n${key} => ${target}`);
-
-  if (target) {
-    const candidates = [
-      path.join(dir, target),
-      path.resolve(target),
-      path.join('.vercel/output/functions/api/index.func', target)
-    ];
-
-    for (const candidate of [...new Set(candidates)]) {
-      console.log(
-        `  ${candidate}: ${fs.existsSync(candidate) ? 'ADA' : 'tidak ditemukan'}`
-      );
-    }
+for (const [key, value] of Object.entries(map)) {
+  const base = path.basename(key);
+  if (
+    key.includes(".git/") ||
+    value.includes(".git/") ||
+    key === "user/public/storage" ||
+    base === ".env" ||
+    base.startsWith(".env.")
+  ) {
+    delete map[key];
   }
 }
 
-console.log('\n=== METADATA HANDLER ===');
-console.log(JSON.stringify({
-  handler: config.handler,
-  launcherType: config.launcherType,
-  awsLambdaHandler: config.awsLambdaHandler
-}, null, 2));
+const bridge = `
+process.env.LAMBDA_TASK_ROOT =
+  process.env.LAMBDA_TASK_ROOT || "/var/task";
+
+const orig = require("./launcher-orig.js");
+
+exports.launcher = async (event, context) => {
+  const e = { ...event };
+  const h = e.headers || {};
+
+  if (Array.isArray(e.body)) {
+    e.body = Buffer.from(e.body);
+  } else if (typeof e.body === "string") {
+    e.body = Buffer.from(
+      e.body,
+      e.isBase64Encoded ? "base64" : "utf8"
+    );
+  } else {
+    e.body = undefined;
+  }
+
+  e.host = e.host || h["x-forwarded-host"] || h.host;
+  return orig.launcher(e, context);
+};
+module.exports = exports.launcher;
+module.exports.launcher = exports.launcher;
+`.trimStart();
+
+fs.writeFileSync(path.join(dir, "launcher.js"), bridge);
+config.handler = "launcher.js";
+config.filePathMap = map;
+fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n");
+
+console.log("Bridge dibuat:", fs.existsSync(path.join(dir, "launcher.js")));
+console.log("Handler:", config.handler);
+console.log("Mapping launcher.js:", map["launcher.js"]);
+console.log("Mapping launcher-orig.js:", map["launcher-orig.js"]);

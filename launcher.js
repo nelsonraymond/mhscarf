@@ -3,16 +3,13 @@ process.env.LAMBDA_TASK_ROOT =
 
 const orig = require("./launcher-orig.js");
 
-exports.launcher = async (event, context) => {
+const launcher = async (event, context) => {
   const e = { ...event };
 
   if (Array.isArray(e.body)) {
     e.body = Buffer.from(e.body);
   } else if (typeof e.body === "string") {
-    e.body = Buffer.from(
-      e.body,
-      e.isBase64Encoded ? "base64" : "utf8"
-    );
+    e.body = Buffer.from(e.body, e.isBase64Encoded ? "base64" : "utf8");
   } else {
     e.body = undefined;
   }
@@ -22,3 +19,6 @@ exports.launcher = async (event, context) => {
 
   return orig.launcher(e, context);
 };
+
+module.exports = launcher;
+module.exports.launcher = launcher;
