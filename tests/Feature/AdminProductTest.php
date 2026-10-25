@@ -120,6 +120,7 @@ class AdminProductTest extends TestCase
             'size' => 'All Size',
             'stock_qty' => 25,
             'additional_price' => 0,
+            'weight_gram' => 150,
             'is_active' => true,
         ]);
 
@@ -128,6 +129,7 @@ class AdminProductTest extends TestCase
         $variant = ProductVariant::where('sku', 'VAR-RP-01')->first();
         $this->assertNotNull($variant);
         $this->assertEquals(25, $variant->stock_qty);
+        $this->assertEquals(150, $variant->weight_gram);
 
         // Verify inventory movement audit record
         $this->assertDatabaseHas('inventory_movements', [

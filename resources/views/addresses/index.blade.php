@@ -10,9 +10,8 @@
                 <span>/</span>
                 <a href="{{ route('profile') }}" class="hover:underline">Akun</a>
                 <span>/</span>
-                <span class="text-ink font-medium">Buku Alamat</span>
+                <span class="text-ink font-medium">Alamat</span>
             </div>
-            <p class="text-[11px] tracking-[0.25em] uppercase text-pink-deep mb-2">Buku Alamat</p>
             <h1 class="font-display text-2xl sm:text-4xl font-bold text-ink">Alamat Pengiriman</h1>
             <p class="text-xs sm:text-sm text-muted mt-1">Kelola daftar alamat untuk kemudahan proses checkout pesanan Anda.</p>
         </div>

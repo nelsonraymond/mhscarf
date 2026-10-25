@@ -5,19 +5,23 @@ namespace Tests\Feature;
 use App\Models\Category;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\PaymentInitializationAttempt;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\StockReservation;
 use App\Models\User;
 use App\Services\CartService;
 use App\Services\CheckoutService;
+use App\Contracts\PaymentGatewayInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
+use Tests\Concerns\InteractsWithShippingQuotes;
 
 class PaymentTest extends TestCase
 {
     use RefreshDatabase;
+    use InteractsWithShippingQuotes;
 
     protected function setUp(): void
     {
@@ -128,7 +132,8 @@ class PaymentTest extends TestCase
 
         $order = $this->app->make(CheckoutService::class)->placeOrder($user, [
             'address_id' => $user->addresses()->first()->id,
-            'shipping_method' => 'regular',
+            'checkout_token' => (string) \Illuminate\Support\Str::uuid(),
+            'shipping_quote' => $this->internalShippingQuote(weight: (int) $variant->weight_gram * $quantity),
         ]);
 
         return [$order, $variant, $user];
@@ -186,6 +191,80 @@ class PaymentTest extends TestCase
         $secondToken = $order->payments()->first()->metadata['snap_token'];
 
         $this->assertSame($firstToken, $secondToken);
+    }
+
+    public function test_active_database_claim_prevents_a_second_provider_initialization(): void
+    {
+        $order = $this->createOrderWithItems();
+        $requestFingerprint = hash('sha256', json_encode([
+            'payment_method' => null,
+            'amount' => (string) $order->grand_total,
+        ], JSON_THROW_ON_ERROR));
+        PaymentInitializationAttempt::query()->create([
+            'order_id' => $order->id,
+            'attempt_number' => 1,
+            'idempotency_key' => (string) \Illuminate\Support\Str::uuid(),
+            'request_fingerprint' => $requestFingerprint,
+            'status' => 'processing',
+            'lease_expires_at' => now()->addSeconds(30),
+        ]);
+
+        $gateway = \Mockery::mock(PaymentGatewayInterface::class);
+        $gateway->shouldNotReceive('createPayment');
+        $this->app->instance(PaymentGatewayInterface::class, $gateway);
+
+        try {
+            $this->app->make(\App\Services\PaymentService::class)->initializePayment($order);
+            $this->fail('An active initialization claim must block another provider call.');
+        } catch (\RuntimeException $exception) {
+            $this->assertStringContainsString('sedang disiapkan', $exception->getMessage());
+        }
+
+        $this->assertSame(0, $order->payments()->count());
+        $this->assertSame('processing', PaymentInitializationAttempt::query()->first()->status);
+    }
+
+    public function test_provider_timeout_retry_reuses_the_database_claim_and_midtrans_idempotency_key(): void
+    {
+        $order = $this->createOrderWithItems();
+        $keys = [];
+        $calls = 0;
+        $gateway = \Mockery::mock(PaymentGatewayInterface::class);
+        $gateway->shouldReceive('getName')->andReturn('midtrans');
+        $gateway->shouldReceive('createPayment')->twice()->andReturnUsing(function (Order $passedOrder, array $options) use (&$keys, &$calls): array {
+            $keys[] = $options['idempotency_key'];
+            $calls++;
+            if ($calls === 1) {
+                throw new \RuntimeException('simulated timeout');
+            }
+
+            return [
+                'transaction_reference' => $passedOrder->order_number,
+                'payment_method' => 'midtrans_snap',
+                'metadata' => [
+                    'snap_token' => 'retry-snap-token',
+                    'token_expires_at' => now()->addMinutes(10)->toIso8601String(),
+                ],
+            ];
+        });
+        $this->app->instance(PaymentGatewayInterface::class, $gateway);
+        $service = $this->app->make(\App\Services\PaymentService::class);
+
+        try {
+            $service->initializePayment($order);
+            $this->fail('The first provider call should simulate a timeout.');
+        } catch (\RuntimeException) {
+            // A provider timeout is ambiguous, so the durable claim remains retryable.
+        }
+
+        $attempt = PaymentInitializationAttempt::query()->firstOrFail();
+        $this->assertSame('retryable', $attempt->status);
+        $payment = $service->initializePayment($order);
+
+        $this->assertSame($keys[0], $keys[1]);
+        $this->assertSame('completed', $attempt->fresh()->status);
+        $this->assertSame($payment->id, $attempt->fresh()->payment_id);
+        $this->assertSame(1, $order->payments()->count());
     }
 
     public function test_payment_page_is_blocked_after_the_payment_deadline(): void
@@ -357,6 +436,13 @@ class PaymentTest extends TestCase
         $payment->refresh();
         $this->assertSame('failed', $payment->status);
         $this->assertSame('failed', $order->payment_status);
+
+        // A failed attempt remains retryable; initialization refreshes the existing history row.
+        $retried = $this->app->make(\App\Services\PaymentService::class)->initializePayment($order->fresh());
+        $this->assertSame(1, $order->payments()->count());
+        $this->assertSame('pending', $retried->fresh()->status);
+        $this->assertSame('pending', $order->fresh()->payment_status);
+        $this->assertNotEmpty($retried->fresh()->metadata['snap_token'] ?? null);
         // Percobaan bayar gagal tidak mengonfirmasi maupun membatalkan order: customer masih bisa mencoba lagi
         $this->assertSame('pending', $order->status);
         $this->assertNull($payment->paid_at);

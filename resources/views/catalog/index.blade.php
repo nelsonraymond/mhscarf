@@ -40,9 +40,6 @@
             {{-- Heading + supporting copy + accurate count --}}
             <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
                 <div class="min-w-0">
-                    <p class="text-[11px] tracking-[0.3em] uppercase text-pink-mauve font-medium mb-2">
-                        {{ $selectedCategory ? 'Kategori' : 'MH Scarf Collection' }}
-                    </p>
                     <h1 class="font-display text-3xl md:text-4xl font-medium text-ink leading-tight">
                         {{ $selectedCategory?->name ?? 'Semua Koleksi Hijab' }}
                     </h1>

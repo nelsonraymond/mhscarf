@@ -9,17 +9,17 @@ use App\Models\Order;
 use App\Models\ProductVariant;
 use App\Models\Shipment;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Collection;
 
 class CheckoutService
 {
     public function __construct(
     protected CartService $cartService,
     protected InventoryService $inventoryService,
-    protected ShippingService $shippingService,
     protected StockReservationService $stockReservationService,
     protected VoucherService $voucherService,
 ) {}
@@ -99,16 +99,92 @@ public function currentSubtotal(User $user): float
 }
 
     /**
+     * Calculate the package weight from every variant and its quantity.
+     *
+     * @throws ValidationException when any cart item has no valid unit weight
+     */
+    public function currentShippingWeight(User $user): int
+    {
+        if (session()->has('buy_now')) {
+            $buyNow = session()->get('buy_now');
+            $variant = ProductVariant::find($buyNow['product_variant_id'] ?? null);
+
+            if (! $variant) {
+                throw ValidationException::withMessages([
+                    'shipping_quote_token' => 'Produk tidak tersedia untuk menghitung berat paket.',
+                ]);
+            }
+
+            return $this->weightForLines(collect([
+                (object) [
+                    'product_variant_id' => $variant->id,
+                    'quantity' => (int) ($buyNow['quantity'] ?? 0),
+                ],
+            ]), collect([$variant->id => $variant]));
+        }
+
+        $items = $this->getValidatedCartData($user)['items'];
+        $variants = $items->mapWithKeys(fn (CartItem $item): array => [
+            $item->product_variant_id => $item->variant,
+        ]);
+
+        return $this->weightForLines($items, $variants);
+    }
+
+    /** A stable server-side identity for the products and quantities currently being quoted. */
+    public function currentShippingFingerprint(User $user): string
+    {
+        if (session()->has('buy_now')) {
+            $buyNow = session()->get('buy_now');
+            $variant = ProductVariant::with('product')->find($buyNow['product_variant_id'] ?? null);
+            if (! $variant || ! $variant->product) {
+                throw ValidationException::withMessages(['cart' => 'Produk tidak tersedia untuk checkout.']);
+            }
+
+            return $this->fingerprintForLines(
+                collect([(object) ['product_variant_id' => $variant->id, 'quantity' => (int) ($buyNow['quantity'] ?? 0)]]),
+                collect([$variant->id => $variant]),
+            );
+        }
+
+        $items = $this->getValidatedCartData($user)['items'];
+        $variants = $items->mapWithKeys(fn (CartItem $item): array => [$item->product_variant_id => $item->variant]);
+
+        return $this->fingerprintForLines($items, $variants);
+    }
+
+    /**
      * Create an order from current customer's cart (or Buy Now session).
      *
      * @param array{
      *     address_id: int,
-     *     shipping_method: string,
+     *     shipping_quote: array<string, int|string>,
      *     customer_note?: ?string
      * } $data
      */
     public function placeOrder(User $user, array $data): Order
     {
+        $checkoutToken = $data['checkout_token'] ?? null;
+        if (! is_string($checkoutToken) || ! Str::isUuid($checkoutToken)) {
+            throw ValidationException::withMessages([
+                'checkout_token' => 'Token checkout tidak valid. Muat ulang halaman checkout lalu coba lagi.',
+            ]);
+        }
+
+        if (! Schema::hasTable('order_status_histories')) {
+            throw new \LogicException(
+                'Skema order_status_histories belum tersedia. Terapkan migration 2026_10_25_000001_create_order_status_histories_table sebelum menerima checkout.'
+            );
+        }
+
+        if (! Schema::hasColumn('orders', 'checkout_fingerprint')
+            || ! Schema::hasColumn('orders', 'checkout_cart_fingerprint')
+            || ! Schema::hasColumn('orders', 'checkout_source')) {
+            throw new \LogicException(
+                'Skema idempotensi checkout belum tersedia. Terapkan migration 2026_10_25_000002_add_checkout_fingerprint_to_orders_table sebelum menerima checkout.'
+            );
+        }
+
         // 1. Verify that address belongs to user
         /** @var Address $address */
         $address = $user->addresses()->where('id', $data['address_id'])->first();
@@ -118,12 +194,28 @@ public function currentSubtotal(User $user): float
             ]);
         }
 
-        // 2. Validate shipping method & cost server-side
-        $shippingOption = $this->shippingService->getMethod($data['shipping_method']);
-        $shippingCost = $shippingOption['cost'];
+        $shippingOption = $data['shipping_quote'] ?? null;
+        if (! is_array($shippingOption)
+            || ! isset(
+                $shippingOption['destination_id'],
+                $shippingOption['courier'],
+                $shippingOption['courier_name'],
+                $shippingOption['service'],
+                $shippingOption['cost'],
+                $shippingOption['weight_gram'],
+            )
+            || (int) $shippingOption['destination_id'] < 1
+            || (int) $shippingOption['weight_gram'] < 1
+            || (int) $shippingOption['cost'] < 1) {
+            throw ValidationException::withMessages([
+                'shipping_quote_token' => 'Pilihan ongkir tidak valid. Hitung ulang ongkir sebelum checkout.',
+            ]);
+        }
+        $shippingCost = (int) $shippingOption['cost'];
 
-        return DB::transaction(function () use ($user, $address, $shippingOption, $shippingCost, $data) {
+        return DB::transaction(function () use ($user, $address, $shippingOption, $shippingCost, $data, $checkoutToken) {
             $cart = null;
+            $checkoutSource = session()->has('buy_now') ? 'buy_now' : 'cart';
 
             if (session()->has('buy_now')) {
                 // ----- Buy Now flow -----
@@ -168,6 +260,20 @@ public function currentSubtotal(User $user): float
                     ->keyBy('id');
             }
 
+            $lockedWeight = $this->weightForLines($cartItems, $lockedVariants);
+            if ($lockedWeight !== (int) $shippingOption['weight_gram']) {
+                throw ValidationException::withMessages([
+                    'shipping_quote_token' => 'Berat keranjang berubah. Hitung ulang ongkir sebelum checkout.',
+                ]);
+            }
+
+            if (isset($shippingOption['cart_fingerprint'])
+                && ! hash_equals((string) $shippingOption['cart_fingerprint'], $this->fingerprintForLines($cartItems, $lockedVariants))) {
+                throw ValidationException::withMessages([
+                    'shipping_quote_token' => 'Isi atau harga keranjang berubah. Hitung ulang ongkir sebelum melanjutkan checkout.',
+                ]);
+            }
+
             // Validate, reserve and deduct stock
             $orderItemsData = $this->stockReservationService->reserveAndDeduct(
                 lockedVariants: $lockedVariants,
@@ -177,6 +283,7 @@ public function currentSubtotal(User $user): float
             );
 
             $orderSubtotal = array_sum(array_column($orderItemsData, 'subtotal'));
+            $checkoutCartFingerprint = $this->checkoutLineIdentityFingerprint($cartItems);
 
 // Voucher: dikunci dan divalidasi ulang di dalam transaksi ini
 $voucherResult = null;
@@ -195,6 +302,21 @@ $grandTotal = $orderSubtotal + $shippingCost - $discount;
 $order = Order::create([
     'order_number' => $this->generateUniqueOrderNumber(),
     'user_id' => $user->id,
+    'checkout_token' => $checkoutToken,
+    'checkout_fingerprint' => $data['checkout_fingerprint'] ?? hash('sha256', json_encode([
+        'address_id' => (int) $data['address_id'],
+        'voucher_code' => strtoupper(trim((string) ($data['voucher_code'] ?? ''))),
+        'customer_note' => trim((string) ($data['customer_note'] ?? '')),
+        'shipping_quote' => [
+            'destination_id' => (int) $shippingOption['destination_id'],
+            'courier' => (string) $shippingOption['courier'],
+            'service' => (string) $shippingOption['service'],
+            'cost' => $shippingCost,
+            'weight_gram' => (int) $shippingOption['weight_gram'],
+        ],
+    ], JSON_THROW_ON_ERROR)),
+    'checkout_cart_fingerprint' => $checkoutCartFingerprint,
+    'checkout_source' => $checkoutSource,
     'status' => 'pending',
     'payment_status' => 'pending',
     'subtotal' => $orderSubtotal,
@@ -211,6 +333,11 @@ $order = Order::create([
     'shipping_postal_code' => $address->postal_code,
     'customer_note' => $data['customer_note'] ?? null,
     'placed_at' => now(),
+]);
+$order->statusHistories()->create([
+    'from_status' => null,
+    'to_status' => 'pending',
+    'reason' => 'Pesanan dibuat saat checkout',
 ]);
 
 if ($voucherResult) {
@@ -237,10 +364,14 @@ if ($voucherResult) {
             // Create Shipment record
             Shipment::create([
                 'order_id' => $order->id,
-                'courier' => $shippingOption['courier'],
+                'courier' => $shippingOption['courier_name'],
+                'courier_code' => $shippingOption['courier'],
                 'service' => $shippingOption['service'],
                 'tracking_number' => null,
                 'shipping_cost' => $shippingCost,
+                'destination_id' => $shippingOption['destination_id'],
+                'weight_gram' => $shippingOption['weight_gram'],
+                'estimated_delivery' => $shippingOption['etd'] ?? null,
                 'status' => 'pending',
             ]);
 
@@ -259,6 +390,47 @@ if ($voucherResult) {
     }
 
     /**
+     * Check current cart context when replaying an idempotent order. An empty cart
+     * is expected after a successful checkout and remains a valid retry.
+     */
+    public function matchesExistingOrderCart(Order $order, User $user): bool
+    {
+        if (! $order->checkout_cart_fingerprint) {
+            return false;
+        }
+
+        if (session()->has('buy_now')) {
+            if ($order->checkout_source !== 'buy_now') {
+                return false;
+            }
+
+            $buyNow = session()->get('buy_now');
+            $lines = collect([(object) [
+                'product_variant_id' => (int) ($buyNow['product_variant_id'] ?? 0),
+                'quantity' => (int) ($buyNow['quantity'] ?? 0),
+            ]]);
+
+            return hash_equals($order->checkout_cart_fingerprint, $this->checkoutLineIdentityFingerprint($lines));
+        }
+
+        // Buy Now is deliberately separate from the customer's saved cart. After
+        // its successful commit the session flag is cleared, so an unrelated cart
+        // must not invalidate a retry of that same operation.
+        if ($order->checkout_source === 'buy_now') {
+            return true;
+        }
+
+        $cart = $this->cartService->getCart($user, session()->getId());
+        $items = $cart?->items()->get() ?? collect();
+
+        if ($items->isEmpty()) {
+            return true;
+        }
+
+        return hash_equals($order->checkout_cart_fingerprint, $this->checkoutLineIdentityFingerprint($items));
+    }
+
+    /**
      * Generate unique order number with prefix and timestamp.
      */
     protected function generateUniqueOrderNumber(): string
@@ -268,5 +440,67 @@ if ($voucherResult) {
         } while (Order::where('order_number', $number)->exists());
 
         return $number;
+    }
+
+    /**
+     * @param  Collection<int|string, object>  $lines
+     * @param  Collection<int|string, ProductVariant>  $variants
+     */
+    private function weightForLines(Collection $lines, Collection $variants): int
+    {
+        $total = 0;
+
+        foreach ($lines as $line) {
+            $variant = $variants->get($line->product_variant_id);
+            $unitWeight = $variant?->weight_gram;
+            $quantity = (int) $line->quantity;
+
+            if (! is_int($unitWeight) || $unitWeight < 1 || $quantity < 1
+                || $unitWeight > intdiv(PHP_INT_MAX - $total, $quantity)) {
+                throw ValidationException::withMessages([
+                    'shipping_quote_token' => 'Berat salah satu produk belum valid. Admin perlu mengisi berat varian dalam gram.',
+                ]);
+            }
+
+            $total += $unitWeight * $quantity;
+        }
+
+        if ($total < 1) {
+            throw ValidationException::withMessages([
+                'shipping_quote_token' => 'Berat keranjang belum valid untuk menghitung ongkir.',
+            ]);
+        }
+
+        return $total;
+    }
+
+    /** @param Collection<int|string, object> $lines
+     *  @param Collection<int|string, ProductVariant> $variants
+     */
+    private function fingerprintForLines(Collection $lines, Collection $variants): string
+    {
+        $contents = $lines->map(function (object $line) use ($variants): array {
+            $variant = $variants->get($line->product_variant_id);
+
+            return [
+                'variant_id' => (int) $line->product_variant_id,
+                'quantity' => (int) $line->quantity,
+                'weight_gram' => (int) ($variant?->weight_gram ?? 0),
+                'unit_price' => number_format((float) ($variant?->finalPrice() ?? 0), 2, '.', ''),
+            ];
+        })->sortBy('variant_id')->values()->all();
+
+        return hash('sha256', json_encode($contents, JSON_THROW_ON_ERROR));
+    }
+
+    /** @param Collection<int|string, object> $lines */
+    private function checkoutLineIdentityFingerprint(Collection $lines): string
+    {
+        $contents = $lines->map(fn (object $line): array => [
+            'variant_id' => (int) $line->product_variant_id,
+            'quantity' => (int) $line->quantity,
+        ])->sortBy('variant_id')->values()->all();
+
+        return hash('sha256', json_encode($contents, JSON_THROW_ON_ERROR));
     }
 }

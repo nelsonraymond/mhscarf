@@ -229,6 +229,30 @@ class CustomerAuthTest extends TestCase
         $this->assertAuthenticatedAs($user);
     }
 
+    public function test_google_callback_accepts_legacy_verified_email_field(): void
+    {
+        $abstractUser = Mockery::mock(SocialiteUser::class);
+        $abstractUser->shouldReceive('getId')->andReturn('google-id-legacy');
+        $abstractUser->shouldReceive('getName')->andReturn('Google User');
+        $abstractUser->shouldReceive('getEmail')->andReturn('legacy-googleuser@example.com');
+        $abstractUser->user = ['verified_email' => true];
+
+        $provider = Mockery::mock(Provider::class);
+        $provider->shouldReceive('user')->andReturn($abstractUser);
+
+        Socialite::shouldReceive('driver')->with('google')->andReturn($provider);
+
+        $response = $this->get(route('auth.google.callback'));
+
+        $response->assertRedirect(route('home'));
+        $this->assertDatabaseHas('users', [
+            'email' => 'legacy-googleuser@example.com',
+            'google_id' => 'google-id-legacy',
+            'role' => 'customer',
+        ]);
+        $this->assertAuthenticated();
+    }
+
     public function test_google_callback_rejects_admin_user(): void
     {
         User::factory()->admin()->create([

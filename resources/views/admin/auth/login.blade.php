@@ -4,11 +4,7 @@
     <div class="flex min-h-screen items-center justify-center bg-admin-bg px-4 py-10">
         <div class="w-full max-w-md">
             <div class="mb-6 text-center">
-                <div class="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-admin-sidebar text-sm font-bold text-white">
-                    MH
-                </div>
                 <h1 class="text-2xl font-semibold tracking-tight text-admin-text">Portal Administrator</h1>
-                <p class="mt-1 text-sm text-admin-muted">Masuk untuk mengelola katalog, pesanan, dan ulasan MH Scarf.</p>
             </div>
 
             <div class="admin-card p-6 sm:p-8">

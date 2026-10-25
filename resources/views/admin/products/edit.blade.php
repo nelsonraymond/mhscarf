@@ -115,6 +115,7 @@
                                 <th>Nama / warna</th>
                                 <th>SKU varian</th>
                                 <th>Ukuran</th>
+                                <th>Berat paket</th>
                                 <th>Harga tambahan</th>
                                 <th class="text-center">Stok saat ini</th>
                                 <th class="text-center">Penyesuaian stok</th>
@@ -134,6 +135,17 @@
                                     </td>
                                     <td class="font-mono text-xs text-admin-muted">{{ $variant->sku }}</td>
                                     <td class="text-admin-muted">{{ $variant->size ?? 'All Size' }}</td>
+                                    <td>
+                                        <form method="POST" action="{{ route('admin.products.variants.weight', [$product, $variant]) }}" class="flex items-center gap-1.5">
+                                            @csrf
+                                            @method('PATCH')
+                                            <label class="sr-only" for="weight-{{ $variant->id }}">Berat varian dalam gram</label>
+                                            <input id="weight-{{ $variant->id }}" type="number" name="weight_gram" min="1" required value="{{ $variant->weight_gram }}" placeholder="gram"
+                                                class="admin-input w-20 px-2 py-1 text-xs @error('weight_gram') admin-input-error @enderror">
+                                            <span class="text-xs text-admin-muted">g</span>
+                                            <button type="submit" class="admin-btn admin-btn-secondary px-2 py-1 text-xs">Simpan</button>
+                                        </form>
+                                    </td>
                                     <td class="text-admin-muted">+Rp{{ number_format($variant->additional_price, 0, ',', '.') }}</td>
                                     <td class="text-center">
                                         <span class="admin-badge {{ $variant->stock_qty > $variant->low_stock_threshold ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-rose-200 bg-rose-50 text-rose-800' }}">
@@ -169,7 +181,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="py-6 text-center text-xs text-admin-muted">Belum ada varian. Silakan tambahkan varian pertama di bawah ini.</td>
+                                    <td colspan="8" class="py-6 text-center text-xs text-admin-muted">Belum ada varian. Silakan tambahkan varian pertama di bawah ini.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -196,6 +208,10 @@
                     <div>
                         <label for="variant-stock" class="admin-label text-xs">Stok awal</label>
                         <input id="variant-stock" type="number" name="stock_qty" min="0" value="10" class="admin-input text-xs">
+                    </div>
+                    <div>
+                        <label for="variant-weight" class="admin-label text-xs">Berat (gram) *</label>
+                        <input id="variant-weight" type="number" name="weight_gram" min="1" required placeholder="150" class="admin-input text-xs">
                     </div>
                     <div>
                         <label for="variant-price" class="admin-label text-xs">Biaya tambahan (Rp)</label>

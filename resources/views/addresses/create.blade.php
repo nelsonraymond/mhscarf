@@ -6,7 +6,6 @@
         <a href="{{ route('addresses.index') }}" class="text-muted hover:text-pink-deep text-xs font-medium transition">
             ← Kembali ke Daftar Alamat
         </a>
-        <p class="text-[11px] tracking-[0.25em] uppercase text-pink-deep mt-5 mb-2">Buku Alamat</p>
         <h1 class="font-display text-2xl sm:text-3xl font-bold text-ink">Tambah Alamat Pengiriman</h1>
         <p class="text-xs sm:text-sm text-muted mt-1">Lengkapi informasi alamat untuk memastikan pesanan sampai dengan tepat.</p>
     </div>

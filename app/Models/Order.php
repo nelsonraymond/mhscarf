@@ -20,6 +20,10 @@ class Order extends Model
     protected $fillable = [
         'order_number',
         'user_id',
+        'checkout_token',
+        'checkout_fingerprint',
+        'checkout_cart_fingerprint',
+        'checkout_source',
         'status',
         'payment_status',
         'subtotal',
@@ -72,9 +76,19 @@ class Order extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function paymentInitializationAttempts(): HasMany
+    {
+        return $this->hasMany(PaymentInitializationAttempt::class);
+    }
+
     public function shipment(): HasOne
     {
         return $this->hasOne(Shipment::class);
+    }
+
+    public function statusHistories(): HasMany
+    {
+        return $this->hasMany(OrderStatusHistory::class)->latest('id');
     }
 
     public function voucherUsages(): HasMany

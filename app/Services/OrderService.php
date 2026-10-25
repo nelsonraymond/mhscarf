@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\StockReservation;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use InvalidArgumentException;
 use App\Models\Voucher;
 use App\Models\VoucherUsage;
@@ -49,6 +50,10 @@ class OrderService
      */
     public function transitionStatus(Order $order, string $newStatus, ?string $reason = null, ?User $actor = null): Order
 {
+    if ($newStatus !== 'cancelled') {
+        $this->ensureStatusHistorySchema();
+    }
+
     $result = DB::transaction(function () use ($order, $newStatus, $reason, $actor) {
         // Baca ulang status terbaru dengan kunci, supaya tidak memakai instance yang basi
         $locked = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
@@ -65,11 +70,36 @@ class OrderService
             return $this->cancelOrder($locked, $reason, $actor);
         }
 
+        if ($newStatus === 'shipped') {
+            $locked->loadMissing('shipment');
+            if ($locked->payment_status !== 'paid'
+                || ! $locked->shipment
+                || blank($locked->shipment->courier)
+                || blank($locked->shipment->service)
+                || blank($locked->shipment->tracking_number)) {
+                throw new InvalidArgumentException('Pesanan hanya dapat ditandai dikirim setelah pembayaran lunas dan kurir, layanan, serta nomor resi terisi.');
+            }
+        }
+
+        $previousStatus = $locked->status;
         $attributes = ['status' => $newStatus];
         if ($newStatus === 'delivered') {
             $attributes['delivered_at'] = now();
         }
         $locked->update($attributes);
+
+        if ($newStatus === 'shipped') {
+            $locked->shipment()->update(['status' => 'shipped', 'shipped_at' => now()]);
+        } elseif ($newStatus === 'delivered') {
+            $locked->shipment()->update(['status' => 'delivered', 'delivered_at' => now()]);
+        }
+
+        $locked->statusHistories()->create([
+            'from_status' => $previousStatus,
+            'to_status' => $newStatus,
+            'reason' => $reason,
+            'actor_id' => $actor?->id,
+        ]);
 
         return $locked->fresh();
     });
@@ -87,6 +117,8 @@ class OrderService
      */
     public function cancelOrder(Order $order, ?string $reason = null, ?User $actor = null): Order
     {
+        $this->ensureStatusHistorySchema();
+
         $cancellableStatuses = ['pending', 'confirmed', 'processing', 'packed'];
 
         $cancelled = DB::transaction(function () use ($order, $reason, $actor, $cancellableStatuses) {
@@ -101,6 +133,8 @@ class OrderService
             if (! in_array($locked->status, $cancellableStatuses, true)) {
                 throw new InvalidArgumentException("Pesanan dengan status '{$locked->statusLabel()}' tidak dapat dibatalkan.");
             }
+
+            $previousStatus = $locked->status;
 
             // Restore product variant stock for each ordered item
             $locked->loadMissing('items.variant');
@@ -163,6 +197,13 @@ if ($locked->payment_status === 'paid') {
                 'status' => 'cancelled',
             ]);
 
+            $locked->statusHistories()->create([
+                'from_status' => $previousStatus,
+                'to_status' => 'cancelled',
+                'reason' => $reason,
+                'actor_id' => $actor?->id,
+            ]);
+
             return $locked->fresh();
         });
 
@@ -170,5 +211,14 @@ if ($locked->payment_status === 'paid') {
         $order->forceFill($cancelled->getAttributes())->syncOriginal();
 
         return $cancelled;
+    }
+
+    private function ensureStatusHistorySchema(): void
+    {
+        if (! Schema::hasTable('order_status_histories')) {
+            throw new \LogicException(
+                'Skema order_status_histories belum tersedia. Terapkan migration 2026_10_25_000001_create_order_status_histories_table sebelum mengubah status order.'
+            );
+        }
     }
 }

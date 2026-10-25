@@ -20,6 +20,17 @@ return [
 
     'resend' => [
         'key' => env('RESEND_API_KEY'),
+        'base_url' => env('RESEND_BASE_URL', 'api.resend.com'),
+        'timeout' => (int) env('RESEND_TIMEOUT', 8),
+        'connect_timeout' => (int) env('RESEND_CONNECT_TIMEOUT', 3),
+    ],
+
+    'rajaongkir' => [
+        'key' => env('RAJAONGKIR_API_KEY'),
+        'base_url' => env('RAJAONGKIR_BASE_URL', 'https://rajaongkir.komerce.id/api/v1'),
+        'origin_id' => env('RAJAONGKIR_ORIGIN_ID'),
+        'timeout' => (int) env('RAJAONGKIR_TIMEOUT', 15),
+        'connect_timeout' => (int) env('RAJAONGKIR_CONNECT_TIMEOUT', 5),
     ],
 
     'ses' => [

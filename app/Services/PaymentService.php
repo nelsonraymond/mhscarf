@@ -6,26 +6,32 @@ use App\Contracts\PaymentGatewayInterface;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
+use App\Models\PaymentInitializationAttempt;
 use App\Models\StockReservation;
 use Carbon\Carbon;
-use Illuminate\Contracts\Cache\LockTimeoutException;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 use RuntimeException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
+use App\Exceptions\PaymentInitializationAmbiguousException;
 
 class PaymentService
 {
     /** Snap dibuat kedaluwarsa SEBELUM reservasi stok habis, supaya webhook "expire" datang lebih dulu. */
     protected const SNAP_EXPIRY_BUFFER_MINUTES = 1;
 
+    /** Provider requests have a bounded runtime so an expired DB lease cannot race a live request. */
+    protected const INITIALIZATION_LEASE_SECONDS = 60;
+
     public function __construct(
         protected PaymentGatewayInterface $gateway,
         protected OrderService $orderService,
         protected StockReservationService $stockReservationService,
+        protected TransactionalEmailService $transactionalEmailService,
     ) {}
 
     /**
@@ -44,6 +50,12 @@ class PaymentService
      */
     public function initializePayment(Order $order, ?string $paymentMethod = null): Payment
     {
+        if (! Schema::hasTable('payment_initialization_attempts')) {
+            throw new \LogicException(
+                'Skema klaim inisialisasi pembayaran belum tersedia. Terapkan migration 2026_10_25_000003_create_payment_initialization_attempts_table sebelum menerima pembayaran.'
+            );
+        }
+
         if ($order->status === 'cancelled') {
             throw new InvalidArgumentException('Tidak dapat memproses pembayaran untuk pesanan yang telah dibatalkan.');
         }
@@ -56,25 +68,40 @@ class PaymentService
             throw new InvalidArgumentException('Pembayaran untuk pesanan ini sudah tidak dapat dilanjutkan. Silakan buat pesanan baru.');
         }
 
-        // Snap token yang masih berlaku dipakai ulang. Membuat token baru untuk order_id yang sama
-        // ditolak Midtrans begitu customer sudah memilih metode bayar (mis. VA sudah terbit).
-        if ($reusable = $this->reusablePayment($order)) {
-            return $reusable;
+        // Claim durable under a database row lock. Cache locks are not shared by all
+        // Vercel instances when CACHE_STORE=array, so they cannot serialize this operation.
+        $claim = $this->claimInitialization($order, $paymentMethod);
+
+        if ($claim instanceof Payment) {
+            return $claim;
         }
 
         try {
-            return Cache::lock('payment-init:'.$order->id, 15)->block(5, function () use ($order, $paymentMethod) {
-                // Request lain mungkin sudah membuat token selagi kita menunggu lock
-                if ($reusable = $this->reusablePayment($order)) {
-                    return $reusable;
-                }
+            return $this->createSnapSession($order->fresh(), $paymentMethod, $claim);
+        } catch (PaymentInitializationAmbiguousException $e) {
+            $this->markInitializationAmbiguous($claim);
 
-                return $this->createSnapSession($order, $paymentMethod);
-            });
-        } catch (LockTimeoutException) {
-            throw new RuntimeException('Pembayaran sedang disiapkan. Silakan coba lagi beberapa saat.');
+            report($e);
+
+            throw new \RuntimeException(
+                'Status permintaan pembayaran belum dapat dipastikan. '
+                .'Jangan mencoba membuat sesi pembayaran baru; '
+                .'perlu rekonsiliasi terlebih dahulu.',
+                0,
+                $e
+            );
+        } catch (\Throwable $e) {
+            $this->markInitializationRetryable($claim);
+
+            report($e);
+
+            throw new \RuntimeException(
+                'Gagal menyiapkan pembayaran. Silakan coba lagi beberapa saat.',
+                0,
+                $e
+            );
         }
-    }
+}
 
     /**
      * Proses webhook dari payment gateway: verifikasi signature, cek nominal, lalu terapkan perubahan.
@@ -190,7 +217,81 @@ class PaymentService
         return Carbon::parse($expiresAt)->isFuture() ? $payment : null;
     }
 
-    protected function createSnapSession(Order $order, ?string $paymentMethod): Payment
+    protected function claimInitialization(Order $order, ?string $paymentMethod): Payment|PaymentInitializationAttempt
+    {
+        return DB::transaction(function () use ($order, $paymentMethod) {
+            $lockedOrder = Order::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
+
+            if ($lockedOrder->status === 'cancelled' || in_array($lockedOrder->payment_status, ['expired', 'refunded'], true)) {
+                throw new InvalidArgumentException('Pembayaran untuk pesanan ini sudah tidak dapat dilanjutkan.');
+            }
+
+            if ($lockedOrder->payment_status === 'paid') {
+                return $lockedOrder->payments()->where('status', 'paid')->latest('id')->firstOrFail();
+            }
+
+            if ($reusable = $this->reusablePayment($lockedOrder)) {
+                return $reusable;
+            }
+
+            $requestFingerprint = hash('sha256', json_encode([
+                'payment_method' => $paymentMethod,
+                'amount' => (string) $lockedOrder->grand_total,
+            ], JSON_THROW_ON_ERROR));
+
+            $attempt = PaymentInitializationAttempt::query()
+                ->where('order_id', $lockedOrder->id)
+                ->latest('attempt_number')
+                ->lockForUpdate()
+                ->first();
+
+            if ($attempt && $attempt->status === 'ambiguous') {
+    if (! hash_equals(
+        $attempt->request_fingerprint,
+        $requestFingerprint
+    )) {
+        throw new RuntimeException(
+            'Ada permintaan pembayaran sebelumnya yang belum terselesaikan.'
+        );
+    }
+
+    throw new RuntimeException(
+        'Permintaan pembayaran sebelumnya masih perlu direkonsiliasi. '
+        .'Sesi baru tidak boleh dibuat otomatis.'
+    );
+}
+
+            if ($attempt && in_array($attempt->status, ['processing', 'retryable'], true)) {
+                if (! hash_equals($attempt->request_fingerprint, $requestFingerprint)) {
+                    throw new InvalidArgumentException('Inisialisasi pembayaran sebelumnya memakai metode pembayaran berbeda.');
+                }
+
+                if ($attempt->status === 'processing' && $attempt->lease_expires_at?->isFuture()) {
+                    throw new RuntimeException('Pembayaran sedang disiapkan. Silakan coba lagi beberapa saat.');
+                }
+
+                $attempt->update([
+                    'status' => 'processing',
+                    'lease_expires_at' => now()->addSeconds(self::INITIALIZATION_LEASE_SECONDS),
+                ]);
+
+                return $attempt->fresh();
+            }
+
+            $attemptNumber = ($attempt?->attempt_number ?? 0) + 1;
+
+            return PaymentInitializationAttempt::query()->create([
+                'order_id' => $lockedOrder->id,
+                'attempt_number' => $attemptNumber,
+                'idempotency_key' => (string) Str::uuid(),
+                'request_fingerprint' => $requestFingerprint,
+                'status' => 'processing',
+                'lease_expires_at' => now()->addSeconds(self::INITIALIZATION_LEASE_SECONDS),
+            ]);
+        });
+    }
+
+    protected function createSnapSession(Order $order, ?string $paymentMethod, PaymentInitializationAttempt $attempt): Payment
     {
         $secondsLeft = $this->paymentDeadline($order)->getTimestamp() - now()->getTimestamp();
         $expiryMinutes = intdiv($secondsLeft, 60) - self::SNAP_EXPIRY_BUFFER_MINUTES;
@@ -199,20 +300,39 @@ class PaymentService
             throw new RuntimeException('Batas waktu pembayaran pesanan ini sudah habis. Silakan buat pesanan baru.');
         }
 
-        // Panggilan HTTP ke gateway sengaja di luar DB transaction
-        try {
-            $result = $this->gateway->createPayment($order, [
-                'payment_method' => $paymentMethod,
-                'expiry_minutes' => $expiryMinutes,
-            ]);
-        } catch (RuntimeException $e) {
-            Log::error('Gagal membuat sesi pembayaran', ['order' => $order->order_number, 'error' => $e->getMessage()]);
+        // Never hold a DB transaction or row lock while the provider request is in flight.
+        $result = $this->gateway->createPayment($order, [
+            'payment_method' => $paymentMethod,
+            'expiry_minutes' => $expiryMinutes,
+            'idempotency_key' => $attempt->idempotency_key,
+        ]);
 
-            throw new RuntimeException('Gagal menyiapkan pembayaran. Silakan coba lagi atau hubungi kami.');
-        }
+        $payment = DB::transaction(function () use ($order, $paymentMethod, $result, $attempt) {
+            $lockedOrder = Order::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
+            $lockedAttempt = PaymentInitializationAttempt::query()
+                ->whereKey($attempt->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        return DB::transaction(function () use ($order, $paymentMethod, $result) {
-            $payment = $order->payments()
+            if ($lockedOrder->status === 'cancelled'
+                || in_array($lockedOrder->payment_status, ['expired', 'refunded'], true)) {
+                $lockedAttempt->update(['status' => 'abandoned', 'lease_expires_at' => null]);
+
+                return null;
+            }
+
+            if ($lockedOrder->payment_status === 'paid') {
+                $payment = $lockedOrder->payments()->where('status', 'paid')->latest('id')->firstOrFail();
+                $lockedAttempt->update([
+                    'status' => 'completed',
+                    'payment_id' => $payment->id,
+                    'lease_expires_at' => null,
+                ]);
+
+                return $payment;
+            }
+
+            $payment = $lockedOrder->payments()
                 ->whereIn('status', ['pending', 'failed'])
                 ->latest('id')
                 ->lockForUpdate()
@@ -222,7 +342,7 @@ class PaymentService
                 'provider' => $this->gateway->getName(),
                 'payment_method' => $result['payment_method'] ?? $paymentMethod ?? 'midtrans_snap',
                 'transaction_reference' => $result['transaction_reference'],
-                'amount' => $order->grand_total,
+                'amount' => $lockedOrder->grand_total,
                 'status' => 'pending',
             ];
 
@@ -230,13 +350,39 @@ class PaymentService
                 $payment->update($attributes + [
                     'metadata' => array_merge($payment->metadata ?? [], $result['metadata'] ?? []),
                 ]);
-
-                return $payment->fresh();
+            } else {
+                $payment = $lockedOrder->payments()->create($attributes + [
+                    'metadata' => $result['metadata'] ?? [],
+                ]);
             }
 
-            return $order->payments()->create($attributes + [
-                'metadata' => $result['metadata'] ?? [],
+            $lockedAttempt->update([
+                'status' => 'completed',
+                'payment_id' => $payment->id,
+                'lease_expires_at' => null,
             ]);
+
+            if ($lockedOrder->payment_status === 'failed') {
+                $lockedOrder->update(['payment_status' => 'pending']);
+            }
+
+            return $payment->fresh();
+        });
+
+        if (! $payment) {
+            throw new InvalidArgumentException('Pesanan telah berubah dan tidak dapat menerima sesi pembayaran baru.');
+        }
+
+        return $payment;
+    }
+
+    protected function markInitializationRetryable(PaymentInitializationAttempt $attempt): void
+    {
+        DB::transaction(function () use ($attempt) {
+            $locked = PaymentInitializationAttempt::query()->whereKey($attempt->id)->lockForUpdate()->first();
+            if ($locked && $locked->status === 'processing') {
+                $locked->update(['status' => 'retryable', 'lease_expires_at' => null]);
+            }
         });
     }
 
@@ -277,7 +423,7 @@ class PaymentService
             throw new HttpException(422, 'Jumlah nominal pembayaran tidak sesuai dengan total tagihan pesanan.');
         }
 
-        return DB::transaction(function () use ($order, $parsed) {
+        $result = DB::transaction(function () use ($order, $parsed) {
             // Kunci order lalu payment: webhook ganda / sweeper / halaman bayar diproses satu per satu
             $order = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
 
@@ -350,6 +496,14 @@ class PaymentService
 
             return $this->result('success', $payment->fresh(), $order->fresh());
         });
+
+        // Only a verified transition into paid reaches this branch. Replayed webhooks
+        // return already_processed above, so they cannot send a duplicate confirmation.
+        if ($parsed['status'] === 'paid' && $result['status'] === 'success') {
+            $this->transactionalEmailService->paymentReceived($result['order'], $result['payment']);
+        }
+
+        return $result;
     }
 
     /**
@@ -395,6 +549,25 @@ public function syncFromGateway(Order $order): Order
             return true;
         });
     }
+protected function markInitializationAmbiguous(
+    PaymentInitializationAttempt $claim
+): void {
+    DB::transaction(function () use ($claim) {
+        $attempt = PaymentInitializationAttempt::query()
+            ->whereKey($claim->getKey())
+            ->lockForUpdate()
+            ->first();
+
+        if (! $attempt || $attempt->status !== 'processing') {
+            return;
+        }
+
+        $attempt->status = 'ambiguous';
+        $attempt->lease_expires_at = null;
+        $attempt->save();
+    });
+}
+
 
     /**
      * @return array{status: string, payment: Payment, order: Order}

@@ -234,6 +234,32 @@
                             </span>
                         </div>
                     </div>
+
+                    @if ($trackingSnapshot)
+                        <div class="mt-5 border-t border-line pt-4">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <h3 class="text-xs font-semibold uppercase tracking-wide text-ink">Update dari kurir</h3>
+                                    <p class="mt-1 text-sm font-medium text-pink-deep">{{ $trackingSnapshot['status'] }}</p>
+                                </div>
+                                <span class="shrink-0 text-[10px] text-muted">{{ \Illuminate\Support\Carbon::parse($trackingSnapshot['fetched_at'])->format('d M Y, H:i') }}</span>
+                            </div>
+                            @if (count($trackingSnapshot['events']))
+                                <ol class="mt-4 space-y-3 border-l border-line pl-4">
+                                    @foreach ($trackingSnapshot['events'] as $event)
+                                        <li class="text-xs">
+                                            <p class="font-medium text-ink">{{ $event['description'] ?: $event['code'] ?: 'Pembaruan pengiriman' }}</p>
+                                            <p class="mt-0.5 text-muted">{{ trim(($event['date'] ?? '').' '.($event['time'] ?? '')) }} {{ $event['city'] ? '· '.$event['city'] : '' }}</p>
+                                        </li>
+                                    @endforeach
+                                </ol>
+                            @else
+                                <p class="mt-3 text-xs text-muted">Belum ada riwayat scan dari kurir.</p>
+                            @endif
+                        </div>
+                    @elseif ($order->shipment && filled($order->shipment->tracking_number))
+                        <p class="mt-4 border-t border-line pt-4 text-xs leading-relaxed text-muted">Informasi tracking dari kurir akan muncul setelah admin memperbarui status pengiriman.</p>
+                    @endif
                 </div>
 
                 {{-- Price Summary Card --}}

@@ -18,7 +18,7 @@ $navIdle = 'text-muted';
 
     $isShopRoot = request()->routeIs('shop.index') && ! request()->hasAny(['sort', 'sale']);
     $isNewIn = request()->routeIs('shop.index') && request('sort') === 'newest';
-    $isBest = request()->routeIs('shop.index') && request('sort') === 'best';
+    $isBest = request()->routeIs('shop.index') && in_array(request('sort'), ['best', 'best_seller'], true);
     $isSale = request()->routeIs('shop.index') && request()->filled('sale');
     $isCollection = request()->routeIs('shop.category');
 
@@ -179,7 +179,9 @@ $navIdle = 'text-muted';
         <nav class="grid" aria-label="Navigasi mobile">
             <a href="{{ route('shop.index') }}" class="py-3.5 text-[13px] uppercase tracking-[0.08em] text-ink border-b border-line/60 {{ $isShopRoot ? 'font-semibold' : '' }}">Shop</a>
             <a href="{{ route('shop.index', ['sort' => 'newest']) }}" class="py-3.5 text-[13px] uppercase tracking-[0.08em] text-ink border-b border-line/60">New In</a>
-            <a href="{{ route('shop.index', ['sort' => 'best']) }}" class="py-3.5 text-[13px] uppercase tracking-[0.08em] text-ink border-b border-line/60">Best Seller</a>
+            <a href="{{ route('shop.index', ['sort' => 'best']) }}"
+                @if ($isBest) aria-current="page" @endif
+                class="py-3.5 text-[13px] uppercase tracking-[0.08em] border-b border-line/60 {{ $isBest ? 'font-semibold text-ink' : 'text-muted' }}">Best Seller</a>
 
             {{-- Collections: accordion --}}
             <div class="border-b border-line/60" data-accordion>

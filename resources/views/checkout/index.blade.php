@@ -1,10 +1,7 @@
 <x-layouts.app>
     @section('title', 'Checkout Pesanan — MH Scarf')
 
-    {{-- Tahap 4: migrated to shared app layout; per-field errors surfaced; shipping card gets
-         selected state + keyboard focus ring; fake "Diskon Voucher - Rp 0" row removed (checkout
-         backend has no voucher input); payment info honest (post-order simulated gateway).
-         Contract unchanged: POST checkout.store with address_id, shipping_method, customer_note. --}}
+    {{-- Checkout uses a server-validated RajaOngkir quote token for the final total. --}}
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 pb-28 lg:pb-12">
 
@@ -24,7 +21,7 @@
             <p class="text-sm text-muted mt-1.5">Periksa alamat pengiriman, metode kurir, dan rincian hijab pilihan Anda.</p>
         </div>
 
-        {{-- General + field errors (address_id, shipping_method, cart) --}}
+        {{-- General + field errors (address_id, shipping quote, cart) --}}
         @if ($errors->any())
             <div role="alert" aria-live="assertive" class="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm space-y-1">
                 <p class="font-semibold text-rose-900">Periksa kesalahan sebelum melanjutkan:</p>
@@ -40,6 +37,7 @@
             @csrf
             <input type="hidden" name="checkout_token" value="{{ $checkoutToken }}">
             <input type="hidden" name="voucher_code" id="voucher-code-field" value="">
+            <input type="hidden" name="shipping_quote_token" id="shipping-quote-token" value="">
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
 
@@ -106,46 +104,48 @@
                         @endif
                     </section>
 
-                    <!-- 2. Shipping Method -->
+                    <!-- 2. Shipping Quote -->
                     <section class="bg-white rounded-2xl border border-line p-5 sm:p-6 shadow-card" aria-labelledby="co-shipping-h">
                         <div class="flex items-center gap-2.5 pb-4 border-b border-line mb-5">
                             <span class="w-7 h-7 rounded-full bg-pink-deep/15 text-pink-deep flex items-center justify-center text-xs font-bold" aria-hidden="true">2</span>
-                            <h2 id="co-shipping-h" class="font-semibold text-base text-ink">Metode Pengiriman</h2>
+                            <h2 id="co-shipping-h" class="font-semibold text-base text-ink">Kurir dan Ongkos Kirim</h2>
                         </div>
 
-                        <fieldset>
-                            <legend class="sr-only">Pilih metode pengiriman</legend>
-                            <div class="space-y-3">
-                                @foreach ($shippingMethods as $method)
-                                    @php $shipChecked = old('shipping_method', $defaultShipping) === $method['code']; @endphp
-                                    <label class="block p-4 rounded-xl border cursor-pointer transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-pink-deep {{ $shipChecked ? 'border-pink-deep bg-cream/60 ring-1 ring-pink-deep/30' : 'border-line bg-white hover:border-pink-deep/70' }}">
-                                        <div class="flex items-center justify-between gap-3">
-                                            <div class="flex items-start gap-3 min-w-0">
-                                                <input type="radio" name="shipping_method" value="{{ $method['code'] }}"
-                                                    data-cost="{{ $method['cost'] }}"
-                                                    {{ $shipChecked ? 'checked' : '' }}
-                                                    class="shipping-method-radio mt-1 w-4 h-4 accent-pink-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-deep shrink-0">
-                                                <div class="min-w-0">
-                                                    <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                                        <span class="font-semibold text-sm text-ink">{{ $method['courier'] }} — {{ $method['name'] }}</span>
-                                                        <span class="px-2 py-0.5 rounded-full text-[10px] bg-cream border border-line text-muted">
-                                                            {{ $method['estimated_days'] }}
-                                                        </span>
-                                                    </div>
-                                                    <p class="text-xs text-muted mt-0.5">{{ $method['description'] }}</p>
-                                                </div>
-                                            </div>
-                                            <span class="font-semibold text-sm text-ink shrink-0">
-                                                Rp{{ number_format($method['cost'], 0, ',', '.') }}
-                                            </span>
-                                        </div>
-                                    </label>
-                                @endforeach
+                        <div class="space-y-4">
+                            <p class="text-xs text-muted">Tarif dihitung dari alamat dan berat seluruh produk di keranjang.</p>
+                            @if ($shippingWeight)
+                                <p class="text-xs text-muted">Berat paket: <strong class="text-ink">{{ number_format($shippingWeight, 0, ',', '.') }} gram</strong></p>
+                            @endif
+                            <div id="shipping-message" role="status" aria-live="polite"
+                                class="rounded-lg bg-cream px-3 py-2 text-xs text-muted {{ $shippingWeightError ? 'text-rose-600' : 'hidden' }}">
+                                {{ $shippingWeightError }}
                             </div>
-                            @error('shipping_method')
-                                <p class="text-xs text-rose-600 mt-2" role="alert">{{ $message }}</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label for="shipping-destination" class="block text-xs font-medium text-muted mb-1">Kelurahan / tujuan terverifikasi</label>
+                                    <select id="shipping-destination" disabled class="w-full h-11 px-3 rounded-xl border border-line bg-cream/40 text-sm text-ink focus-visible:ring-2 focus-visible:ring-pink-deep">
+                                        <option value="">Pilih alamat terlebih dahulu</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="shipping-courier" class="block text-xs font-medium text-muted mb-1">Kurir</label>
+                                    <select id="shipping-courier" disabled class="w-full h-11 px-3 rounded-xl border border-line bg-cream/40 text-sm text-ink focus-visible:ring-2 focus-visible:ring-pink-deep">
+                                        <option value="" selected>Pilih kurir</option>
+                                        @foreach ($shippingCouriers as $courier)
+                                            <option value="{{ $courier }}">{{ strtoupper($courier) }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="button" id="shipping-calculate" disabled
+                                class="inline-flex items-center justify-center h-10 px-4 rounded-xl bg-pink-deep text-white text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50 hover:bg-pink-mauve transition">
+                                Hitung ongkir
+                            </button>
+                            <div id="shipping-results" class="space-y-2" role="radiogroup" aria-label="Pilihan layanan pengiriman"></div>
+                            @error('shipping_quote_token')
+                                <p class="text-xs text-rose-600" role="alert">{{ $message }}</p>
                             @enderror
-                        </fieldset>
+                        </div>
                     </section>
 
                     <!-- 3. Customer Note -->
@@ -237,8 +237,6 @@
                                     <span id="summary-grand-total" class="font-display text-xl font-bold text-pink-deep">
                                         Rp{{ number_format($grandTotal, 0, ',', '.') }}
                                     </span>
-                                    <p id="summary-note" class="text-[11px] text-muted mt-0.5">Sesuai perhitungan server.</p>
-                                </div>
                             </div>
                         </div>
 
@@ -265,15 +263,13 @@
                         <!-- Confirmation Button -->
                         <div class="pt-1">
                             <button type="submit"
-                                {{ $addresses->isEmpty() ? 'disabled' : '' }}
+                                disabled
                                 class="w-full py-3.5 px-4 bg-pink-deep hover:bg-pink-mauve disabled:bg-stone-300 disabled:cursor-not-allowed text-white font-semibold text-sm rounded-xl shadow-card transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-pink-deep">
                                 Konfirmasi &amp; Bayar
                             </button>
-                            @if ($addresses->isEmpty())
-                                <p class="text-xs text-rose-600 text-center mt-2" role="note">
-                                    Tambahkan alamat pengiriman terlebih dahulu untuk konfirmasi pesanan.
-                                </p>
-                            @endif
+                            <p id="checkout-guidance" class="text-xs text-muted text-center mt-2" role="status" aria-live="polite">
+                                {{ $addresses->isEmpty() ? 'Silakan tambahkan alamat pengiriman terlebih dahulu.' : 'Pilih alamat, kurir, lalu hitung ongkir untuk melanjutkan.' }}
+                            </p>
                         </div>
 
                         <!-- Payment info: honest — no payment option is collected at checkout;
@@ -321,6 +317,8 @@
 
         function setLoading(state) {
             submitting = state;
+            form.dataset.submitting = state ? 'true' : 'false';
+            form.dispatchEvent(new Event('checkout:state-change'));
             buttons.forEach(function (btn) {
                 btn.disabled = state;
                 var spinner = btn.querySelector('.spinner');
@@ -329,18 +327,40 @@
         }
 
         function extractMessage(err) {
+            if (err && err.status >= 500) {
+                return err.order_id
+                    ? 'Pesanan sudah dibuat, tetapi pembayaran belum dapat disiapkan. Buka halaman pesanan atau coba lagi dengan aman.'
+                    : 'Server mengalami kendala saat checkout. Hasil pesanan belum dapat dipastikan; token checkout mencegah pesanan ganda jika Anda mencoba lagi.';
+            }
+            if (err && err.status === 401) return 'Sesi Anda telah berakhir. Silakan masuk kembali sebelum checkout.';
+            if (err && err.status === 403) return 'Anda tidak memiliki akses untuk melakukan checkout ini.';
+            if (err && err.status === 419) return 'Sesi checkout kedaluwarsa. Muat ulang halaman, hitung ongkir kembali, lalu coba lagi.';
+            if (err && err.status === 422 && err.errors) {
+                var validation = Object.values(err.errors)[0];
+                return Array.isArray(validation) ? validation[0] : validation;
+            }
             if (err && err.error) return err.error;
             if (err && err.errors) {
                 var first = Object.values(err.errors)[0];
                 return Array.isArray(first) ? first[0] : first;
             }
-            return (err && err.message) || 'Terjadi kesalahan saat memproses pembayaran. Silakan coba lagi.';
+            if (err && (err.name === 'AbortError' || err.networkError)) return 'Respons checkout belum diterima. Pesanan mungkin sudah tercatat; token checkout mencegah pesanan ganda. Anda dapat mencoba lagi dengan aman.';
+            return 'Terjadi kesalahan saat memproses pembayaran. Silakan coba lagi.';
         }
 
         form.addEventListener('submit', async function (e) {
             e.preventDefault();
             if (submitting) return;
+            if (!form.reportValidity()) return;
+            if (form.dataset.shippingBusy === 'true' || !form.querySelector('input[name="address_id"]:checked')
+                || !document.getElementById('shipping-courier').value
+                || !document.getElementById('shipping-quote-token').value) {
+                alert('Pilih alamat, kurir, dan layanan ongkir yang valid sebelum checkout.');
+                return;
+            }
             setLoading(true);
+            var controller = new AbortController();
+            var timeout = window.setTimeout(function () { controller.abort(); }, 90000);
 
             try {
                 var res = await fetch(form.action, {
@@ -351,11 +371,21 @@
                         'Accept': 'application/json'
                     },
                     body: new FormData(form),
-                    credentials: 'same-origin'
+                    credentials: 'same-origin',
+                    signal: controller.signal
                 });
 
                 var data = await res.json().catch(function () { return {}; });
-                if (!res.ok) throw data;
+                if (res.redirected && /\/login(?:\?|$)/.test(res.url)) {
+                    throw { status: 401 };
+                }
+                if (!res.ok) {
+                    data.status = res.status;
+                    throw data;
+                }
+                if (!data.order_id) {
+                    throw { networkError: true };
+                }
 
                 // Pesanan sudah dibuat di server; semua jalur akhir diarahkan ke halaman pembayaran
                 // (yang bisa melanjutkan pembayaran / sinkron status), BUKAN kembali ke checkout.
@@ -381,6 +411,8 @@
             } catch (err) {
                 setLoading(false);
                 alert(extractMessage(err));
+            } finally {
+                window.clearTimeout(timeout);
             }
         });
     });
@@ -394,7 +426,7 @@
                     <p id="bar-grand-total" class="text-base font-bold text-ink leading-tight font-display">Rp{{ number_format($grandTotal, 0, ',', '.') }}</p>
                 </div>
                 <button id="checkout-submit" type="submit" form="checkout-form"
-                    {{ $addresses->isEmpty() ? 'disabled' : '' }}
+                    disabled
                     class="shrink-0 inline-flex items-center justify-center px-5 h-12 rounded-xl bg-pink-deep text-white font-medium text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-pink-deep active:bg-pink-mauve disabled:bg-stone-300 disabled:cursor-not-allowed transition">
                     <svg class="spinner hidden mr-2 h-5 w-5 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
                     Buat Pesanan
@@ -403,19 +435,25 @@
         </div>
     </div>
 
-    <script>
-    // Pratinjau saja. Server menghitung ulang ongkir dan diskon saat pesanan dibuat.
+    <script type="module">
+    import { syncCheckoutSubmitButtons } from @json(asset('js/checkout-state.js'));
     document.addEventListener('DOMContentLoaded', function () {
         var subtotal = {{ (int) $subtotal }};
-        var state = { cost: {{ (int) $shippingCost }}, discount: 0, code: '' };
-
-        var radios = document.querySelectorAll('.shipping-method-radio');
+        var state = { cost: 0, discount: 0, code: '', quoteToken: '', quoteExpiresAt: 0 };
+        var form = document.getElementById('checkout-form');
+        var addressRadios = document.querySelectorAll('input[name="address_id"]');
+        var destination = document.getElementById('shipping-destination');
+        var courier = document.getElementById('shipping-courier');
+        var calculateButton = document.getElementById('shipping-calculate');
+        var results = document.getElementById('shipping-results');
+        var shippingMessage = document.getElementById('shipping-message');
+        var quoteField = document.getElementById('shipping-quote-token');
+        var checkoutGuidance = document.getElementById('checkout-guidance');
         var elShipping = document.getElementById('summary-shipping');
         var elTotal = document.getElementById('summary-grand-total');
         var elBar = document.getElementById('bar-grand-total');
         var elDiscountRow = document.getElementById('summary-discount-row');
         var elDiscount = document.getElementById('summary-discount');
-
         var field = document.getElementById('voucher-code-field');
         var input = document.getElementById('voucher-input');
         var applyBtn = document.getElementById('voucher-apply');
@@ -424,34 +462,91 @@
         var applied = document.getElementById('voucher-applied');
         var appliedCode = document.getElementById('voucher-applied-code');
         var msg = document.getElementById('voucher-msg');
-
         var csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        var endpoint = @json(route('checkout.voucher'));
+        var destinationEndpoint = @json(route('checkout.shipping.destinations'));
+        var quoteEndpoint = @json(route('checkout.shipping.quotes'));
+        var voucherEndpoint = @json(route('checkout.voucher'));
+        var quoteLoading = false;
+        var destinationsLoading = false;
+        var shippingRequestId = 0;
 
-        function rupiah(n) { return 'Rp' + Number(n).toLocaleString('id-ID'); }
-
-        function render() {
-            if (elShipping) elShipping.textContent = rupiah(state.cost);
+        function rupiah(value) { return 'Rp' + Number(value).toLocaleString('id-ID'); }
+        function selectedAddressId() {
+            var selected = document.querySelector('input[name="address_id"]:checked');
+            return selected ? selected.value : '';
+        }
+        function setShippingMessage(text, error) {
+            shippingMessage.textContent = text || '';
+            shippingMessage.classList.toggle('hidden', !text);
+            shippingMessage.classList.toggle('text-rose-600', !!error);
+            shippingMessage.classList.toggle('text-emerald-700', !!text && !error);
+        }
+        function renderTotal() {
+            if (elShipping) elShipping.textContent = state.quoteToken ? rupiah(state.cost) : 'Pilih layanan';
             var total = subtotal + state.cost - state.discount;
             if (elTotal) elTotal.textContent = rupiah(total);
             if (elBar) elBar.textContent = rupiah(total);
-
             if (elDiscountRow) {
                 var show = state.discount > 0;
                 elDiscountRow.classList.toggle('hidden', !show);
                 elDiscountRow.classList.toggle('flex', show);
                 if (elDiscount) elDiscount.textContent = '- ' + rupiah(state.discount);
             }
+            var addressReady = !!selectedAddressId();
+            var courierReady = !!courier.value;
+            var quoteReady = !!state.quoteToken && Number.isInteger(state.cost) && state.cost > 0
+                && Number.isInteger(state.quoteExpiresAt) && state.quoteExpiresAt * 1000 > Date.now();
+            var busy = quoteLoading || destinationsLoading || form.dataset.submitting === 'true';
+            form.dataset.shippingBusy = quoteLoading || destinationsLoading ? 'true' : 'false';
+            syncCheckoutSubmitButtons(document, {
+                addressReady: addressReady,
+                courierReady: courierReady,
+                quoteToken: state.quoteToken,
+                cost: state.cost,
+                quoteExpiresAt: state.quoteExpiresAt,
+                busy: busy
+            });
+            if (checkoutGuidance) {
+                checkoutGuidance.textContent = busy ? 'Tunggu proses pengiriman atau checkout selesai.'
+                    : !addressReady ? 'Pilih alamat pengiriman.'
+                    : !courierReady ? 'Pilih kurir dan hitung ongkir.'
+                    : !quoteReady ? 'Pilih tujuan dan hitung ongkir.' : 'Alamat dan ongkir sudah siap.';
+            }
         }
-
-        function setMessage(text, ok) {
-            if (!msg) return;
-            msg.textContent = text || '';
-            msg.classList.toggle('hidden', !text);
-            msg.classList.toggle('text-emerald-700', !!ok);
-            msg.classList.toggle('text-rose-600', !ok);
+        function clearQuote() {
+            shippingRequestId++;
+            quoteLoading = false;
+            state.cost = 0;
+            state.quoteToken = '';
+            state.quoteExpiresAt = 0;
+            quoteField.value = '';
+            results.replaceChildren();
+            clearVoucher();
+            renderTotal();
         }
-
+        function firstError(data, fallback) {
+            if (data && data.errors) {
+                var first = Object.values(data.errors)[0];
+                return Array.isArray(first) ? first[0] : first;
+            }
+            return (data && data.message) || fallback;
+        }
+        async function postJson(url, payload) {
+            var response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrf,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(payload),
+                credentials: 'same-origin'
+            });
+            var data = await response.json().catch(function () { return {}; });
+            if (!response.ok) throw data;
+            return data;
+        }
         function clearVoucher() {
             state.code = '';
             state.discount = 0;
@@ -459,36 +554,171 @@
             formRow.classList.remove('hidden');
             applied.classList.add('hidden');
             applied.classList.remove('flex');
-            render();
+            renderTotal();
         }
-
-        function firstError(data) {
-            if (data && data.errors) {
-                var first = Object.values(data.errors)[0];
-                return Array.isArray(first) ? first[0] : first;
-            }
-            return (data && data.message) || 'Voucher tidak dapat digunakan.';
-        }
-
-        async function applyVoucher(code) {
-            var radio = document.querySelector('.shipping-method-radio:checked');
-            applyBtn.disabled = true;
+        async function loadDestinations() {
+            clearQuote();
+            clearVoucher();
+            var addressId = selectedAddressId();
+            destinationsLoading = !!addressId;
+            courier.value = '';
+            destination.disabled = true;
+            courier.disabled = !addressId || {{ $shippingWeight ? 'false' : 'true' }};
+            calculateButton.disabled = true;
+            destination.replaceChildren(new Option(addressId ? 'Memuat tujuan…' : 'Pilih alamat terlebih dahulu', ''));
+            renderTotal();
+            if (!addressId) { destinationsLoading = false; renderTotal(); return; }
+            var destinationRequestId = shippingRequestId;
 
             try {
-                var res = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': csrf,
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify({ voucher_code: code, shipping_method: radio ? radio.value : 'regular' }),
-                    credentials: 'same-origin'
+                var data = await postJson(destinationEndpoint, { address_id: addressId });
+                if (destinationRequestId !== shippingRequestId || addressId !== selectedAddressId()) return;
+                destination.replaceChildren();
+                if (!data.destinations || data.destinations.length === 0) {
+                    destination.add(new Option('Tujuan tidak cocok dengan alamat', ''));
+                    setShippingMessage('Alamat belum cocok dengan data RajaOngkir. Lengkapi kelurahan/desa, kecamatan, kota, provinsi, dan kode pos.', true);
+                    return;
+                }
+                destination.add(new Option('Pilih kelurahan / tujuan', ''));
+                data.destinations.forEach(function (item) {
+                    destination.add(new Option(item.label, item.id));
                 });
-                var data = await res.json().catch(function () { return {}; });
-                if (!res.ok) throw data;
-
+                destination.disabled = false;
+                calculateButton.disabled = !{{ $shippingWeight ? 'false' : 'true' }} || !courier.value;
+                setShippingMessage(data.destinations.length + ' tujuan cocok dengan alamat yang dipilih.', false);
+                if (data.destinations.length === 1) {
+                    destination.value = String(data.destinations[0].id);
+                    calculateButton.click();
+                }
+            } catch (error) {
+                if (destinationRequestId !== shippingRequestId || addressId !== selectedAddressId()) return;
+                destination.replaceChildren(new Option('Pencarian tujuan gagal', ''));
+                setShippingMessage(firstError(error, 'Tujuan tidak dapat dicari. Silakan coba lagi.'), true);
+            } finally {
+                if (destinationRequestId === shippingRequestId && addressId === selectedAddressId()) {
+                    destinationsLoading = false;
+                    renderTotal();
+                }
+            }
+        }
+        function renderQuotes(quotes) {
+            results.replaceChildren();
+            quotes.forEach(function (quote, index) {
+                var label = document.createElement('label');
+                label.className = 'block p-4 rounded-xl border border-line bg-white cursor-pointer hover:border-pink-deep/70 transition';
+                var row = document.createElement('div');
+                row.className = 'flex items-start justify-between gap-3';
+                var info = document.createElement('div');
+                info.className = 'flex items-start gap-3 min-w-0';
+                var radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = 'shipping-service-option';
+                radio.value = quote.service;
+                radio.className = 'mt-1 w-4 h-4 accent-pink-deep shrink-0';
+                radio.addEventListener('change', function () {
+                    var cost = Number(quote.cost);
+                    if (!quote.quote_token || !Number.isInteger(cost) || cost <= 0
+                        || !Number.isInteger(Number(quote.expires_at)) || Number(quote.expires_at) * 1000 <= Date.now()) {
+                        clearQuote();
+                        setShippingMessage('Tarif ongkir tidak valid. Silakan hitung ulang.', true);
+                        return;
+                    }
+                    state.quoteToken = quote.quote_token;
+                    state.cost = cost;
+                    state.quoteExpiresAt = Number(quote.expires_at);
+                    quoteField.value = quote.quote_token;
+                    renderTotal();
+                    window.setTimeout(function () {
+                        if (state.quoteToken === quote.quote_token && Date.now() >= state.quoteExpiresAt * 1000) {
+                            clearQuote();
+                            setShippingMessage('Ongkir kedaluwarsa. Silakan hitung ulang.', true);
+                        }
+                    }, Math.max(0, state.quoteExpiresAt * 1000 - Date.now()));
+                    if (state.code) applyVoucher(state.code);
+                    results.querySelectorAll('label').forEach(function (item) {
+                        item.classList.toggle('border-pink-deep', item.contains(document.querySelector('input[name="shipping-service-option"]:checked')));
+                        item.classList.toggle('bg-cream/60', item.contains(document.querySelector('input[name="shipping-service-option"]:checked')));
+                    });
+                });
+                var text = document.createElement('div');
+                text.className = 'min-w-0';
+                var title = document.createElement('p');
+                title.className = 'font-semibold text-sm text-ink';
+                title.textContent = quote.courier_name + ' — ' + quote.service;
+                var description = document.createElement('p');
+                description.className = 'text-xs text-muted mt-0.5';
+                description.textContent = quote.description || '';
+                var etd = document.createElement('p');
+                etd.className = 'text-xs text-muted mt-1';
+                etd.textContent = quote.etd ? 'Estimasi: ' + quote.etd : '';
+                text.append(title, description, etd);
+                var cost = document.createElement('span');
+                cost.className = 'font-semibold text-sm text-ink shrink-0';
+                cost.textContent = rupiah(quote.cost);
+                info.append(radio, text);
+                row.append(info, cost);
+                label.append(row);
+                results.append(label);
+                if (index === 0) radio.checked = false;
+            });
+            if (quotes.length === 0) setShippingMessage('Tidak ada layanan untuk rute ini. Coba kurir lain.', true);
+        }
+        async function calculateQuotes() {
+            var addressId = selectedAddressId();
+            if (!addressId || !destination.value) {
+                setShippingMessage('Pilih alamat dan tujuan terlebih dahulu.', true);
+                return;
+            }
+            calculateButton.disabled = true;
+            calculateButton.textContent = 'Menghitung…';
+            clearQuote();
+            quoteLoading = true;
+            var requestId = shippingRequestId;
+            var requestedAddressId = addressId;
+            var requestedDestination = destination.value;
+            var requestedCourier = courier.value;
+            renderTotal();
+            setShippingMessage('Meminta tarif terbaru dari kurir…', false);
+            try {
+                var data = await postJson(quoteEndpoint, {
+                    address_id: addressId,
+                    destination_id: destination.value,
+                    courier: courier.value
+                });
+                if (requestId !== shippingRequestId || requestedAddressId !== selectedAddressId()
+                    || requestedDestination !== destination.value || requestedCourier !== courier.value) return;
+                var validQuotes = (data.quotes || []).filter(function (quote) {
+                    return quote.quote_token && Number.isInteger(Number(quote.cost)) && Number(quote.cost) > 0
+                        && Number.isInteger(Number(quote.expires_at)) && Number(quote.expires_at) * 1000 > Date.now();
+                });
+                renderQuotes(validQuotes);
+                setShippingMessage(validQuotes.length
+                    ? 'Berat paket: ' + Number(data.weight_gram).toLocaleString('id-ID') + ' gram.'
+                    : 'Tidak ada tarif ongkir valid untuk rute ini. Coba kurir lain.', validQuotes.length === 0);
+            } catch (error) {
+                if (requestId !== shippingRequestId) return;
+                setShippingMessage(firstError(error, 'Tarif ongkir tidak tersedia. Silakan coba lagi.'), true);
+            } finally {
+                if (requestId === shippingRequestId) {
+                    quoteLoading = false;
+                    calculateButton.disabled = destinationsLoading || !destination.value || !courier.value;
+                    calculateButton.textContent = 'Hitung ongkir';
+                    renderTotal();
+                }
+            }
+        }
+        async function applyVoucher(code) {
+            if (!state.quoteToken) {
+                setShippingMessage('Pilih layanan ongkir sebelum memakai voucher.', true);
+                return;
+            }
+            applyBtn.disabled = true;
+            try {
+                var data = await postJson(voucherEndpoint, {
+                    voucher_code: code,
+                    address_id: selectedAddressId(),
+                    shipping_quote_token: state.quoteToken
+                });
                 state.code = data.code;
                 state.discount = Number(data.discount) || 0;
                 field.value = data.code;
@@ -497,52 +727,44 @@
                 applied.classList.remove('hidden');
                 applied.classList.add('flex');
                 input.value = '';
-                setMessage('Hemat ' + rupiah(state.discount) + ' dengan voucher ini.', true);
-                render();
-            } catch (err) {
+                setShippingMessage('Hemat ' + rupiah(state.discount) + ' dengan voucher ini.', false);
+                renderTotal();
+            } catch (error) {
                 clearVoucher();
-                setMessage(firstError(err), false);
+                setShippingMessage(firstError(error, 'Voucher tidak dapat digunakan.'), true);
             } finally {
                 applyBtn.disabled = false;
             }
         }
 
+        addressRadios.forEach(function (radio) {
+            radio.addEventListener('change', loadDestinations);
+        });
+        destination.addEventListener('change', function () {
+            clearQuote();
+            calculateButton.disabled = !destination.value || !courier.value || destinationsLoading;
+        });
+        courier.addEventListener('change', function () {
+            clearQuote();
+            calculateButton.disabled = !destination.value || !courier.value || destinationsLoading;
+        });
+        calculateButton.addEventListener('click', calculateQuotes);
         applyBtn.addEventListener('click', function () {
             var code = input.value.trim();
-            if (!code) { setMessage('Masukkan kode voucher terlebih dahulu.', false); return; }
+            if (!code) { setShippingMessage('Masukkan kode voucher terlebih dahulu.', true); return; }
             applyVoucher(code);
         });
-
-        // Enter di kolom voucher tidak boleh mengirim form checkout
-        input.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') { e.preventDefault(); applyBtn.click(); }
+        input.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') { event.preventDefault(); applyBtn.click(); }
         });
-
         removeBtn.addEventListener('click', function () {
             clearVoucher();
-            setMessage('', true);
+            setShippingMessage('', false);
         });
+        form.addEventListener('checkout:state-change', renderTotal);
 
-        radios.forEach(function (radio) {
-            radio.addEventListener('change', function () {
-                if (!this.checked) return;
-                state.cost = parseFloat(this.dataset.cost || 0);
-
-                // Voucher gratis ongkir bergantung pada metode pengiriman, jadi hitung ulang
-                if (state.code) { applyVoucher(state.code); } else { render(); }
-
-                document.querySelectorAll('label:has(.shipping-method-radio)').forEach(function (label) {
-                    var r = label.querySelector('.shipping-method-radio');
-                    if (!r) return;
-                    label.classList.toggle('border-pink-deep', r.checked);
-                    label.classList.toggle('bg-cream/60', r.checked);
-                    label.classList.toggle('ring-1', r.checked);
-                    label.classList.toggle('ring-pink-deep/30', r.checked);
-                    label.classList.toggle('border-line', !r.checked);
-                    label.classList.toggle('bg-white', !r.checked);
-                });
-            });
-        });
+        renderTotal();
+        if (selectedAddressId()) loadDestinations();
     });
-</script>
+    </script>
 </x-layouts.app>

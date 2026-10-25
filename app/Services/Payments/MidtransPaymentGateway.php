@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Midtrans\Config;
 use Midtrans\Snap;
+use App\Exceptions\PaymentInitializationAmbiguousException;
 
 class MidtransPaymentGateway implements PaymentGatewayInterface
 {
@@ -65,6 +66,20 @@ class MidtransPaymentGateway implements PaymentGatewayInterface
         Config::$isSanitized = true;
         Config::$is3ds = true;
 
+        $idempotencyKey = (string) ($options['idempotency_key'] ?? '');
+        if ($idempotencyKey === '' || strlen($idempotencyKey) > 46) {
+            throw new \InvalidArgumentException('A valid Midtrans idempotency key is required.');
+        }
+
+        $previousIdempotencyKey = Config::$paymentIdempotencyKey;
+        $previousCurlOptions = Config::$curlOptions;
+        Config::$paymentIdempotencyKey = $idempotencyKey;
+        Config::$curlOptions = array_replace($previousCurlOptions, [
+            CURLOPT_HTTPHEADER => $previousCurlOptions[CURLOPT_HTTPHEADER] ?? [],
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_TIMEOUT => 20,
+        ]);
+
         // Midtrans memakai rupiah bulat. gross_amount dan jumlah item_details HARUS sama persis.
         $grossAmount = (int) round((float) $order->grand_total);
 
@@ -99,11 +114,36 @@ class MidtransPaymentGateway implements PaymentGatewayInterface
         ];
 
         try {
-            $transaction = Snap::createTransaction($params);
-                $snapToken = $transaction->token ?? null;
-                $redirectUrl = $transaction->redirect_url ?? null;
-        } catch (\Exception $e) {
-            throw new \RuntimeException('Failed to obtain Midtrans Snap token: '.$e->getMessage());
+            try {
+                $transaction = Snap::createTransaction($params);
+            } catch (\Throwable $e) {
+                // Request sudah mulai dikirim ke provider. Jangan menganggap
+                // exception sebagai bukti bahwa sesi tidak pernah dibuat.
+                throw new PaymentInitializationAmbiguousException(
+                    'Hasil pembuatan sesi Snap belum dapat dipastikan.',
+                    0,
+                    $e
+                );
+            }
+
+            // SDK dapat mengembalikan respons tanpa token yang dapat digunakan.
+            // Jangan otomatis membuat sesi baru jika hasilnya tidak lengkap.
+            $snapToken = $transaction->token ?? null;
+            $redirectUrl = $transaction->redirect_url ?? null;
+
+            if (! is_string($snapToken) || $snapToken === '') {
+                throw new PaymentInitializationAmbiguousException(
+                    'Midtrans belum memberikan Snap token yang dapat diverifikasi.'
+                );
+            }
+        } finally {
+            Config::$paymentIdempotencyKey = $previousIdempotencyKey;
+            Config::$curlOptions = $previousCurlOptions;
+        }
+
+
+        if (! is_string($snapToken) || $snapToken === '') {
+            throw new \RuntimeException('Midtrans did not return a Snap token.');
         }
 
         return [
