@@ -1,0 +1,23 @@
+@startuml
+title Activity Diagram - Memoderasi Ulasan Pelanggan
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Admin|
+start
+:Membuka modul moderasi ulasan;
+:Memilih ulasan yang masuk;
+:Mengubah status visibilitas menjadi "Tayang" atau "Sembunyi";
+
+|Sistem|
+:Menyimpan perubahan status visibilitas;
+if (Status diubah menjadi "Sembunyi"?) then (ya)
+  :Menghapus ulasan dari tampilan publik halaman produk
+  (namun data tetap tersimpan di modul admin);
+else (tidak: "Tayang")
+  :Memasukkan ulasan ke dalam daftar rating agregat
+  dan menampilkannya di etalase produk;
+endif
+
+stop
+@enduml

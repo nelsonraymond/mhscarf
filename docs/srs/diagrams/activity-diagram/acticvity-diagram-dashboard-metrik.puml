@@ -1,0 +1,24 @@
+@startuml
+title Activity Diagram - Memantau Dashboard Metrik Toko
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Admin|
+start
+:Membuka menu dashboard setelah login;
+
+|Sistem|
+:Menghitung metrik omzet sah dari pesanan berstatus paid/settlement;
+:Menghitung antrean pesanan per status (pending, processing, packed, dll);
+:Mengevaluasi tingkat stok varian untuk peringatan stok menipis;
+:Menarik daftar catatan refund yang membutuhkan penanganan;
+:Menampilkan kartu metrik, antrean, peringatan, dan daftar refund;
+
+|Admin|
+:Memilih salah satu antrean atau peringatan untuk ditindaklanjuti;
+
+|Sistem|
+:Mengarahkan admin ke modul terkait (detail pesanan, modul stok, dll);
+
+stop
+@enduml

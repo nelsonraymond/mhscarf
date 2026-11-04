@@ -1,0 +1,75 @@
+@startuml
+title Class Diagram - Fitur Katalog dan Inventaris
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+
+class Database {
+  + db: array
+}
+
+class CatalogIndex <<view>> {
+  + render()
+  + filterPanel()
+  + productCard()
+}
+
+class CatalogController <<controller>> {
+  + index()
+  + show(slug: string)
+  + search(keyword: string)
+}
+
+class AdminProductController <<controller>> {
+  + index()
+  + store()
+  + update(id: int)
+  + destroy(id: int)
+  + uploadImage(id: int)
+}
+
+class InventoryService <<service>> {
+  + adjustStock(variantId: int, qty: int, type: string, note: string)
+  + movements(variantId: int)
+}
+
+class Category <<model>> {
+  + name: string
+  + slug: string
+  + is_active: bool
+  + parent()
+  + children()
+  + products()
+  + scopeActive()
+}
+
+class Product <<model>> {
+  + name: string
+  + slug: string
+  + sku: string
+  + base_price: decimal
+  + is_active: bool
+  + category()
+  + variants()
+  + images()
+  + scopeActive()
+}
+
+class ProductVariant <<model>> {
+  + sku: string
+  + stock_qty: int
+  + weight_gram: int
+  + additional_price: decimal
+  + product()
+  + inventoryMovements()
+}
+
+CatalogIndex ..> CatalogController : dependency
+CatalogController ..> Category : dependency
+CatalogController ..> Product : dependency
+AdminProductController ..> Product : dependency
+AdminProductController ..> InventoryService : dependency
+InventoryService ..> ProductVariant : dependency
+Category "*" -- "1" Database
+Product "*" -- "1" Database
+ProductVariant "*" -- "1" Database
+@enduml

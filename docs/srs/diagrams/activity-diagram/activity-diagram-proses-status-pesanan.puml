@@ -1,0 +1,30 @@
+@startuml
+title Activity Diagram - Memproses Status Pesanan (State Machine)
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Admin|
+start
+:Membuka antrean pesanan dan memilih pesanan yang akan diproses;
+:Memilih transisi status berikutnya (misal: processing ke packed);
+
+|Sistem|
+:Memvalidasi transisi terhadap aturan state machine
+(confirmed -> processing -> packed -> shipped -> delivered -> completed);
+if (Transisi sah sesuai state machine?) then (ya)
+  if (Transisi menuju 'shipped'?) then (ya)
+    :Memeriksa prasyarat (pembayaran paid, kurir, AWB terisi);
+    if (Prasyarat terpenuhi?) then (ya)
+      :Menyimpan status baru dan mencatat riwayat status;
+    else (tidak)
+      :Menahan transisi dan menampilkan daftar prasyarat yang kurang;
+    endif
+  else (tidak)
+    :Menyimpan status baru dan mencatat riwayat status;
+  endif
+else (tidak)
+  :Menolak transisi dan menampilkan pesan status tidak diizinkan;
+endif
+
+stop
+@enduml

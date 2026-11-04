@@ -1,0 +1,55 @@
+@startuml
+title Activity Diagram - Memberikan Ulasan dan Rating Produk
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Customer|
+start
+:Membuka halaman riwayat pesanan;
+
+|Sistem|
+:Menampilkan daftar pesanan;
+
+|Customer|
+:Memilih pesanan berstatus delivered atau completed;
+
+|Sistem|
+:Menampilkan detail pesanan beserta tombol "Beri Ulasan" pada item yang belum diulas;
+
+|Customer|
+:Menekan tombol "Beri Ulasan" pada item tertentu;
+
+|Sistem|
+if (Pesanan delivered atau completed DAN item verified purchase DAN ulasan belum ada?) then (ya)
+  :Menampilkan formulir ulasan;
+else (tidak)
+  :Menampilkan pesan spesifik (status belum tiba, bukan pembelian sah, atau sudah diulas);
+  stop
+endif
+
+|Customer|
+:Mengisi rating bintang 1-5 (wajib) dan komentar (opsional);
+if (Aktor mengunggah foto ulasan?) then (ya)
+  :Mengunggah berkas foto;
+  |Sistem|
+  if (Fitur unggah foto ulasan aktif pada implementasi?) then (ya)
+    :Menyimpan berkas foto;
+  else (tidak: Partially Implemented)
+    :Menolak unggahan dengan pesan "Fitur unggah foto sedang dalam pengembangan";
+  endif
+else (tidak)
+endif
+
+|Customer|
+:Menekan tombol "Kirim Ulasan";
+
+|Sistem|
+if (Rating bintang 1-5 telah dipilih?) then (ya)
+  :Menyimpan ulasan dengan status menunggu moderasi admin;
+  :Menampilkan konfirmasi dan mengarahkan kembali ke halaman riwayat pesanan;
+else (tidak)
+  :Menampilkan pesan validasi "Pilih rating bintang 1-5" dan menolak pengiriman;
+endif
+
+stop
+@enduml

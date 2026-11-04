@@ -1,0 +1,25 @@
+@startuml
+title Activity Diagram - Pembelian Langsung (Buy Now)
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Customer|
+start
+:Membuka halaman detail produk dan memilih varian;
+:Menekan tombol "Buy Now";
+
+|Sistem|
+if (Pengguna terautentikasi sebagai Customer?) then (ya)
+  if (Stok varian tersedia?) then (ya)
+    :Memvalidasi stok di server dan membuat pesanan sementara item tunggal;
+    :Mengarahkan ke halaman checkout
+    (melanjutkan alur Gambar 4.12 Checkout dan Reservasi Stok);
+  else (tidak)
+    :Menampilkan pesan "Varian ini sedang habis" dan tetap di halaman detail;
+  endif
+else (tidak)
+  :Mengarahkan ke halaman login dengan parameter kembali ke halaman detail;
+endif
+
+stop
+@enduml

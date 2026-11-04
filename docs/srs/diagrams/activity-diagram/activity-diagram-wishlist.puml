@@ -1,0 +1,28 @@
+@startuml
+title Activity Diagram - Mengelola Wishlist
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Customer|
+start
+:Membuka kartu/detail produk atau halaman koleksi wishlist;
+:Menekan tombol toggle wishlist;
+
+|Sistem|
+if (Sesi Customer aktif?) then (ya)
+  if (Produk sudah berada di wishlist?) then (ya)
+    :Menghapus entri wishlist produk;
+  else (tidak)
+    if (Produk masih tersedia di katalog?) then (ya)
+      :Menyimpan entri wishlist produk;
+    else (tidak)
+      :Menandai produk sebagai "Tidak tersedia" pada koleksi;
+    endif
+  endif
+  :Memperbarui indikator tombol dan daftar koleksi wishlist;
+else (tidak)
+  :Mengarahkan ke halaman login dengan parameter kembali;
+endif
+
+stop
+@enduml

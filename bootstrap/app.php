@@ -13,15 +13,25 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-         $middleware->trustProxies(at: '*');
+        $middleware->trustProxies(at: '*');
 
-    $middleware->trustHosts(at: fn () => [parse_url((string) config('app.url'), PHP_URL_HOST)]);
-
-    $middleware->redirectGuestsTo(function (Request $request): string {
-        return $request->is('admin*') ? route('admin.login') : route('login');
-    });
+                $middleware->trustHosts(
+    at: fn () => array_filter([
+        parse_url((string) config('app.url'), PHP_URL_HOST),
+        app()->environment('local')
+            ? 'localhost'
+            : null,
+        app()->environment('local')
+            ? '127.0.0.1'
+            : null,
+        '^mhscarf-[a-z0-9]+-amikomevent\.vercel\.app$',
+    ]),
+    subdomains: false,
+);
         $middleware->redirectGuestsTo(function (Request $request): string {
-            return $request->is('admin*') ? route('admin.login') : route('login');
+            return $request->is('admin*')
+                ? route('admin.login')
+                : route('login');
         });
 
         $middleware->alias([
@@ -36,4 +46,5 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
-    })->create();
+    })
+    ->create();

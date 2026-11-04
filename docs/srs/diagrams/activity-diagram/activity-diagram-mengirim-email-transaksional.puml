@@ -1,0 +1,36 @@
+@startuml
+title Activity Diagram - Mengirim Email Transaksional
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Use Case Pemanggil|
+start
+:Menyelesaikan transaksi basis data dan melakukan commit;
+:Memicu pengiriman email (konfirmasi pesanan, pembayaran, pengiriman, atau reset);
+
+|Sistem|
+:Menyusun payload email (subjek, penerima, template, konten dinamis);
+:Memanggil API Resend dengan payload email;
+
+|Resend Email Service|
+:Memproses permintaan pengiriman;
+:Mengembalikan respons (berhasil atau gagal);
+
+|Sistem|
+if (Respons Resend berhasil?) then (ya)
+  :Mencatat keberhasilan beserta ID email dari Resend ke log;
+else (tidak: gagal/timeout/alamat tidak valid/template rusak)
+  :Mencatat kegagalan dengan pesan kesalahan ke log;
+  note right
+    Transaksi bisnis TETAP SAH,
+    tidak dilakukan rollback.
+    Actor dapat memeriksa
+    status melalui aplikasi.
+  end note
+endif
+
+|Use Case Pemanggil|
+:Melanjutkan alur utama tanpa menunggu konfirmasi penerimaan email oleh pengguna;
+
+stop
+@enduml

@@ -1,0 +1,24 @@
+@startuml
+title Activity Diagram - Membatalkan Pesanan dan Mencatat Refund
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Admin|
+start
+:Membuka pesanan bermasalah;
+:Memilih tindakan pembatalan dan mengisi alasan pembatalan;
+
+|Sistem|
+if (Status pesanan BUKAN shipped/delivered/completed?) then (ya)
+  :Mengubah status pesanan menjadi cancelled;
+  :Melepaskan reservasi dan memulihkan stok varian ke etalase;
+  :Mencatat entri refund (nominal, alasan, waktu, penanggung jawab)
+  sebagai data penanganan manual;
+  :Menampilkan konfirmasi dan catatan refund di dashboard;
+else (tidak)
+  :Menolak pembatalan dan menampilkan pesan bahwa pesanan telah dikirim
+  dan harus ditangani melalui prosedur manual di luar sistem;
+endif
+
+stop
+@enduml

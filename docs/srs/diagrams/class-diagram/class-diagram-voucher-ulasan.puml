@@ -1,0 +1,83 @@
+@startuml
+title Class Diagram - Fitur Voucher dan Ulasan
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+
+class Database {
+  + db: array
+}
+
+class ReviewForm <<view>> {
+  + render()
+  + ratingStars()
+}
+
+class ReviewController <<controller>> {
+  + store(orderItemId: int)
+}
+
+class AdminVoucherController <<controller>> {
+  + index()
+  + store()
+  + update(id: int)
+  + toggleActive(id: int)
+}
+
+class AdminReviewController <<controller>> {
+  + index()
+  + togglePublish(id: int)
+}
+
+class VoucherService <<service>> {
+  + validate(code: string, subtotal: decimal)
+  + apply(code: string, order: Order)
+  + recordUsage(voucherId: int, userId: int, orderId: int)
+}
+
+class ReviewService <<service>> {
+  + createReview(orderItemId: int, rating: int, comment: string)
+  + recalculateRating(productId: int)
+}
+
+class Voucher <<model>> {
+  + code: string
+  + type: string
+  + value: decimal
+  + usage_limit: int
+  + used_count: int
+  + expires_at: datetime
+  + usages()
+  + typeLabel()
+}
+
+class VoucherUsage <<model>> {
+  + discount_amount: decimal
+  + voucher()
+  + order()
+  + user()
+}
+
+class Review <<model>> {
+  + rating: int
+  + comment: string
+  + is_verified_purchase: bool
+  + is_published: bool
+  + product()
+  + user()
+  + orderItem()
+}
+
+ReviewForm ..> ReviewController : dependency
+ReviewController ..> ReviewService : dependency
+AdminVoucherController ..> VoucherService : dependency
+AdminVoucherController ..> Voucher : dependency
+AdminReviewController ..> ReviewService : dependency
+VoucherService ..> Voucher : dependency
+VoucherService ..> VoucherUsage : dependency
+ReviewService ..> Review : dependency
+Voucher "1" -- "*" VoucherUsage
+Voucher "*" -- "1" Database
+VoucherUsage "*" -- "1" Database
+Review "*" -- "1" Database
+@enduml

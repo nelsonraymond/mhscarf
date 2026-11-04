@@ -1,0 +1,27 @@
+@startuml
+title Activity Diagram - Registrasi Akun Pelanggan
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Guest|
+start
+:Membuka halaman registrasi;
+
+repeat
+  :Mengisi nama, email, kata sandi, dan menyelesaikan verifikasi reCAPTCHA;
+  |Sistem|
+  if (Validasi format, kekuatan kata sandi, dan reCAPTCHA lolos?) then (ya)
+    if (Email belum terdaftar?) then (ya)
+      :Menyimpan akun baru dan menampilkan konfirmasi keberhasilan;
+      stop
+    else (tidak)
+      :Menampilkan pesan "Email sudah terdaftar" dan tautan ke halaman login;
+      stop
+    endif
+  else (tidak)
+    :Menampilkan pesan kesalahan spesifik per kolom atau kegagalan verifikasi;
+  endif
+repeat while (Perbaiki input dan ulang?) is (ya) not (tidak)
+
+stop
+@enduml

@@ -1,0 +1,26 @@
+@startuml
+title Activity Diagram - Membaca Artikel Journal dan Panduan FAQ
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Pengguna (Guest/Customer)|
+start
+:Membuka halaman Journal atau halaman FAQ dari menu navigasi;
+
+|Sistem|
+:Menampilkan daftar konten (artikel Journal atau pertanyaan FAQ);
+if (Daftar konten berisi?) then (ya)
+  |Pengguna (Guest/Customer)|
+  :Memilih artikel atau mengklik pertanyaan yang ingin dibaca;
+  |Sistem|
+  if (Konten terpilih ditemukan?) then (ya)
+    :Menampilkan isi lengkap artikel atau jawaban pertanyaan;
+  else (tidak)
+    :Menampilkan pesan "Konten tidak tersedia" dan mengembalikan ke daftar;
+  endif
+else (tidak)
+  :Menampilkan empty state dan saran menghubungi admin;
+endif
+
+stop
+@enduml

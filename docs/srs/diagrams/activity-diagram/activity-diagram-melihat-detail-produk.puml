@@ -1,0 +1,40 @@
+@startuml
+title Activity Diagram - Melihat Detail Produk, Varian, Galeri, dan Ulasan
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Pengguna (Guest/Customer)|
+start
+:Memilih salah satu produk dari daftar katalog;
+
+|Sistem|
+if (Produk aktif dan ditemukan?) then (ya)
+  :Menampilkan galeri foto, deskripsi, harga dasar, dan daftar varian;
+else (tidak)
+  :Menampilkan pesan "Produk tidak tersedia" dan tautan kembali ke katalog;
+  stop
+endif
+
+|Pengguna (Guest/Customer)|
+:Melihat galeri foto dan memilih varian (warna/ukuran);
+
+|Sistem|
+if (Stok varian terpilih tersedia?) then (ya)
+  :Menampilkan harga dan status stok varian terpilih;
+else (tidak)
+  :Menampilkan penanda "Stok Habis" dan menonaktifkan tombol beli;
+endif
+
+|Pengguna (Guest/Customer)|
+:Menggulir ke bagian ulasan dan rekomendasi;
+
+|Sistem|
+if (Terdapat ulasan berstatus tayang?) then (ya)
+  :Menampilkan rating agregat dan ulasan yang lolos moderasi;
+else (tidak)
+  :Menampilkan pesan "Belum ada ulasan untuk produk ini";
+endif
+:Menampilkan rekomendasi produk sejenis;
+
+stop
+@enduml

@@ -1,0 +1,27 @@
+@startuml
+title Activity Diagram - Mengelola Varian dan Stok
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Admin|
+start
+:Membuka halaman varian pada produk terpilih;
+:Memilih aksi (CRUD Varian atau Penyesuaian Stok);
+
+if (Aksi yang dipilih?) then (CRUD Varian)
+  :Mengisi atribut varian (warna/ukuran, harga, berat);
+  |Sistem|
+  :Menyimpan data varian;
+else (Penyesuaian Stok)
+  :Memasukkan nilai penyesuaian (masuk/keluar/koreksi) dan keterangan;
+  |Sistem|
+  if (Nilai penyesuaian sah dan tidak menghasilkan stok negatif?) then (ya)
+    :Memperbarui jumlah stok varian;
+    :Mencatat mutasi inventaris (jenis, jumlah, keterangan, waktu) sebagai jejak audit;
+  else (tidak)
+    :Menolak penyesuaian dengan pesan kesalahan spesifik;
+  endif
+endif
+
+stop
+@enduml

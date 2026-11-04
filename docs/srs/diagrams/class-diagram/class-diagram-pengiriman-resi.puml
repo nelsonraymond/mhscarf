@@ -1,0 +1,72 @@
+@startuml
+title Class Diagram - Fitur Pengiriman dan Pelacakan Resi
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+
+class Database {
+  + db: array
+}
+
+class ShipmentPage <<view>> {
+  + render()
+  + trackingTimeline()
+}
+
+class OrderController <<controller>> {
+  + history()
+  + track(orderId: int)
+}
+
+class AdminOrderController <<controller>> {
+  + index()
+  + show(id: int)
+  + updateStatus(id: int, status: string)
+  + fillShipment(id: int)
+}
+
+class OrderService <<service>> {
+  + transitionStatus(order: Order, to: string, reason: string)
+  + recordHistory(order: Order, from: string, to: string, actorId: int)
+}
+
+class ShipmentTrackingService <<service>> {
+  + track(awb: string, courierCode: string, phoneSuffix: string)
+  + isCooldownActive(key: string)
+}
+
+class Shipment <<model>> {
+  + courier: string
+  + courier_code: string
+  + tracking_number: string
+  + status: string
+  + order()
+}
+
+class OrderStatusHistory <<model>> {
+  + from_status: string
+  + to_status: string
+  + reason: string
+  + order()
+  + actor()
+}
+
+class Order <<model>> {
+  + status: string
+  + shipment()
+  + statusHistories()
+}
+
+ShipmentPage ..> OrderController : dependency
+OrderController ..> ShipmentTrackingService : dependency
+AdminOrderController ..> OrderService : dependency
+AdminOrderController ..> Shipment : dependency
+OrderService ..> Order : dependency
+OrderService ..> OrderStatusHistory : dependency
+ShipmentTrackingService ..> Shipment : dependency
+Order "1" -- "1" Shipment
+Order "1" -- "*" OrderStatusHistory
+Shipment "*" -- "1" Database
+OrderStatusHistory "*" -- "1" Database
+Order "*" -- "1" Database
+@enduml

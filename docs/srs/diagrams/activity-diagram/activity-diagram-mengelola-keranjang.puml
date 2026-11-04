@@ -1,0 +1,30 @@
+@startuml
+title Activity Diagram - Mengelola Keranjang Belanja
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Pengguna (Guest/Customer)|
+start
+:Membuka halaman keranjang belanja;
+
+|Sistem|
+:Menampilkan daftar item beserta kuantitas, harga, dan subtotal;
+
+repeat
+  |Pengguna (Guest/Customer)|
+  :Memilih aksi: tambah item dari halaman detail,
+  ubah kuantitas, hapus item, atau kosongkan keranjang;
+  |Sistem|
+  if (Aksi menambah atau mengubah kuantitas?) then (ya)
+    if (Stok varian mencukupi?) then (ya)
+      :Menyimpan atau memperbarui item dan memperbarui subtotal;
+    else (tidak)
+      :Menampilkan pesan batas stok atau penanda "Tidak tersedia";
+    endif
+  else (hapus/kosongkan)
+    :Menghapus item dari keranjang dan memperbarui tampilan;
+  endif
+repeat while (Masih mengelola keranjang?) is (ya) not (tidak)
+
+stop
+@enduml

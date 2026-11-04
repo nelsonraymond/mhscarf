@@ -1,0 +1,115 @@
+@startuml
+title Use Case Diagram - MH SCARF E-Commerce Platform
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 11
+
+actor "Pengunjung Tamu\n(Guest)" as Guest
+actor "Pelanggan Terdaftar\n(Customer)" as Customer
+actor "Administrator Toko\n(Admin)" as Admin
+
+actor "Midtrans Payment Gateway" as Midtrans <<External System>>
+actor "Komerce / RajaOngkir API" as RajaOngkir <<External System>>
+actor "Resend Email Service" as Resend <<External System>>
+actor "Background Scheduler" as Scheduler <<System Worker>>
+
+Customer -up-|> Guest
+
+rectangle "MH SCARF E-Commerce Platform" {
+  package "Katalog & Informasi Produk" {
+    usecase "Menjelajah Beranda dan Katalog Produk" as UC01
+    usecase "Melihat Detail Produk, Varian, Galeri, dan Ulasan" as UC02
+    usecase "Membaca Artikel Jurnal Fashion" as UC03
+    usecase "Membaca Panduan dan FAQ" as UC04
+  }
+  package "Keranjang & Daftar Keinginan" {
+    usecase "Mengelola Keranjang Belanja" as UC05
+    usecase "Pembelian Langsung (Buy Now)" as UC06
+    usecase "Mengelola Wishlist" as UC07
+  }
+  package "Autentikasi & Akun" {
+    usecase "Registrasi Akun Pelanggan" as UC08
+    usecase "Login Pelanggan\n(Manual dan Google OAuth 2.0)" as UC09
+    usecase "Reset Kata Sandi melalui Email" as UC10
+    usecase "Logout Pelanggan" as UC11
+    usecase "Mengelola Profil Akun dan Buku Alamat" as UC12
+  }
+  package "Transaksi & Pengiriman" {
+    usecase "Menghitung Tarif Ongkir Real-time" as UC13
+    usecase "Menerapkan Voucher Promo" as UC14
+    usecase "Melakukan Checkout dan Reservasi Stok" as UC15
+    usecase "Membayar melalui Midtrans Snap" as UC16
+    usecase "Menerima dan Memproses Webhook Pembayaran" as UC17
+    usecase "Melihat Riwayat, Detail, dan Membatalkan Pesanan" as UC18
+    usecase "Melacak Resi Pengiriman" as UC19
+    usecase "Memberikan Ulasan dan Rating Produk" as UC21
+  }
+  package "Layanan Transaksional & Sistem Latar Belakang" {
+    usecase "Mengirim Email Transaksional" as UC20
+    usecase "Sweeper Pembatalan Pesanan Kedaluwarsa" as UC22
+    usecase "Mengirim Pengingat Ulasan" as UC23 <<Planned>>
+  }
+  package "Backoffice & Administrasi Toko" {
+    usecase "Login Panel Administrator" as UC24
+    usecase "Memantau Dashboard Metrik Toko" as UC25
+    usecase "Mengelola Kategori Produk" as UC26
+    usecase "Mengelola Produk dan Galeri Gambar" as UC27
+    usecase "Mengelola Varian dan Stok" as UC28
+    usecase "Memproses Status Pesanan (State Machine)" as UC29
+    usecase "Mengelola Pengiriman dan Nomor Resi" as UC30
+    usecase "Membatalkan Pesanan dan Mencatat Refund" as UC31
+    usecase "Mengelola Kode Voucher Promo" as UC32
+    usecase "Memoderasi Ulasan Pelanggan" as UC33
+  }
+}
+
+Guest --> UC01
+Guest --> UC02
+Guest --> UC03
+Guest --> UC04
+Guest --> UC05
+Guest --> UC08
+Guest --> UC09
+Guest --> UC10
+
+Customer --> UC06
+Customer --> UC07
+Customer --> UC11
+Customer --> UC12
+Customer --> UC15
+Customer --> UC16
+Customer --> UC18
+Customer --> UC19
+Customer --> UC21
+
+UC06 ..> UC15 : <<include>>
+UC15 ..> UC13 : <<include>>
+UC14 ..> UC15 : <<extend>>
+UC15 ..> UC20 : <<include>>
+UC20 ..> UC17 : <<extend>>\n{kondisi: status pembayaran menjadi paid}
+UC30 ..> UC20 : <<include>>
+UC23 ..> UC20 : <<include>>
+
+UC20 --> Resend
+UC13 --> RajaOngkir
+UC19 --> RajaOngkir
+UC30 --> RajaOngkir
+UC16 --> Midtrans
+Midtrans --> UC17
+
+Scheduler --> UC22
+Scheduler --> UC23
+
+Admin --> UC24
+Admin --> UC25
+Admin --> UC26
+Admin --> UC27
+Admin --> UC28
+Admin --> UC29
+Admin --> UC30
+Admin --> UC31
+Admin --> UC32
+Admin --> UC33
+@enduml

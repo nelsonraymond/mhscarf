@@ -1,0 +1,83 @@
+@startuml
+title Class Diagram - Fitur Keranjang, Wishlist, dan Alamat
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+
+class Database {
+  + db: array
+}
+
+class CartIndex <<view>> {
+  + render()
+  + itemRow()
+  + summary()
+}
+
+class CartController <<controller>> {
+  + index()
+  + add()
+  + updateQuantity(itemId: int, qty: int)
+  + remove(itemId: int)
+}
+
+class WishlistController <<controller>> {
+  + index()
+  + toggle(productId: int)
+}
+
+class AddressController <<controller>> {
+  + index()
+  + store()
+  + update(id: int)
+  + destroy(id: int)
+  + setDefault(id: int)
+}
+
+class CartService <<service>> {
+  + resolveCart(sessionId: string, userId: int)
+  + addItem(variantId: int, qty: int)
+  + updateQuantity(itemId: int, qty: int)
+  + mergeGuestCart(userId: int)
+}
+
+class Cart <<model>> {
+  + user_id: int
+  + session_id: string
+  + user()
+  + items()
+}
+
+class CartItem <<model>> {
+  + quantity: int
+  + unit_price: decimal
+  + cart()
+  + variant()
+}
+
+class Wishlist <<model>> {
+  + user()
+  + product()
+}
+
+class Address <<model>> {
+  + recipient_name: string
+  + city: string
+  + province: string
+  + postal_code: string
+  + is_default: bool
+  + user()
+}
+
+CartIndex ..> CartController : dependency
+CartController ..> CartService : dependency
+CartService ..> Cart : dependency
+CartService ..> CartItem : dependency
+WishlistController ..> Wishlist : dependency
+AddressController ..> Address : dependency
+Cart "1" -- "*" CartItem
+Cart "*" -- "1" Database
+CartItem "*" -- "1" Database
+Wishlist "*" -- "1" Database
+Address "*" -- "1" Database
+@enduml

@@ -20,3 +20,7 @@ Thumbs.db
 .env*
 /node_modules
 /public/storage
+
+.vercel
+/docker-build.log
+/vercel.json.backup

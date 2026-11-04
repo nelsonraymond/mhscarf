@@ -1,0 +1,27 @@
+@startuml
+title Activity Diagram - Sweeper Pembatalan Pesanan Kedaluwarsa
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Background Scheduler|
+start
+:Memicu proses sweeping sesuai jadwal yang dikonfigurasi;
+
+|Sistem|
+:Memilih seluruh pesanan berstatus pending yang usia reservasi stoknya melebihi TTL 15 menit;
+if (Terdapat pesanan kedaluwarsa?) then (ya)
+  fork
+    :Membatalkan pesanan terpilih;
+    :Mencatat perpindahan status pada riwayat status pesanan;
+  fork again
+    :Melepaskan reservasi dan memulihkan stok varian ke etalase;
+  end fork
+  :Mencatat hasil eksekusi sweeping (jumlah pesanan dibatalkan, stok dipulihkan) ke log;
+else (tidak)
+  :Menyelesaikan proses tanpa perubahan data;
+endif
+
+:Mencatat eksekusi scheduler pada log;
+
+stop
+@enduml

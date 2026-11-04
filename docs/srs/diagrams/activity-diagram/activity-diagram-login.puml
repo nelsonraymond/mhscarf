@@ -1,0 +1,61 @@
+@startuml
+title Activity Diagram - Login Pelanggan (Manual dan Google OAuth 2.0)
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Guest|
+start
+:Membuka halaman login pelanggan;
+
+if (Metode login dipilih?) then (Manual)
+  :Mengisi email dan kata sandi serta menyelesaikan reCAPTCHA;
+  |Sistem|
+  if (reCAPTCHA dan format input valid?) then (ya)
+    if (Kredensial cocok dengan basis data?) then (ya)
+      :Membuat sesi autentikasi pelanggan;
+    else (tidak)
+      :Menampilkan pesan "Email atau kata sandi salah";
+      stop
+    endif
+  else (tidak)
+    :Menolak pengiriman formulir dan meminta ulang verifikasi;
+    stop
+  endif
+else (Google OAuth)
+  :Menekan tombol "Login dengan Google";
+  |Sistem|
+  :Mengarahkan ke halaman persetujuan Google;
+  |Google|
+  :Menampilkan halaman persetujuan akun;
+  |Guest|
+  if (Menyetujui persetujuan?) then (ya)
+    |Google|
+    :Mengembalikan callback berisi profil terautentikasi;
+    |Sistem|
+    if (Akun ber-role admin?) then (ya)
+      :Menolak autentikasi dan menampilkan pesan gerbang admin terpisah;
+      stop
+    else (tidak)
+      if (Email Google sudah memiliki akun?) then (ya)
+        :Memakai akun existing;
+      else (tidak)
+        :Membuat akun pelanggan baru otomatis;
+      endif
+      :Membuat sesi autentikasi pelanggan;
+    endif
+  else (tidak)
+    |Sistem|
+    :Mengembalikan ke halaman login tanpa sesi dengan pesan pembatalan;
+    stop
+  endif
+endif
+
+|Sistem|
+if (Terdapat keranjang tamu aktif?) then (ya)
+  :Menggabungkan item keranjang tamu ke keranjang akun per varian;
+else (tidak)
+endif
+:Mengarahkan pengguna ke halaman tujuan;
+
+stop
+@enduml

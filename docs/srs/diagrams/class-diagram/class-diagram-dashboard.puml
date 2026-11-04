@@ -1,0 +1,52 @@
+@startuml
+title Class Diagram - Fitur Dashboard dan Konten Informasi
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+
+class Database {
+  + db: array
+}
+
+class DashboardPage <<view>> {
+  + render()
+  + metricCards()
+}
+
+class JournalPage <<view>> {
+  + render()
+  + articleList()
+}
+
+class AdminDashboardController <<controller>> {
+  + index()
+}
+
+class JournalController <<controller>> {
+  + index()
+  + show(slug: string)
+}
+
+class JournalArticles <<config>> {
+  + articles(): array
+}
+
+class Order <<model>> {
+  + status: string
+  + payment_status: string
+  + grand_total: decimal
+}
+
+class ProductVariant <<model>> {
+  + stock_qty: int
+  + low_stock_threshold: int
+}
+
+DashboardPage ..> AdminDashboardController : dependency
+JournalPage ..> JournalController : dependency
+AdminDashboardController ..> Order : dependency
+AdminDashboardController ..> ProductVariant : dependency
+JournalController ..> JournalArticles : dependency
+Order "*" -- "1" Database
+ProductVariant "*" -- "1" Database
+@enduml

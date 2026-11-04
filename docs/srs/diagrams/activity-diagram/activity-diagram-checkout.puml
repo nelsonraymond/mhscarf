@@ -1,0 +1,72 @@
+@startuml
+title Activity Diagram - Melakukan Checkout dan Reservasi Stok
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Customer|
+start
+:Memulai checkout dari keranjang akun atau Buy Now;
+:Membuka halaman checkout dan memilih alamat pengiriman;
+
+|Sistem|
+:Memverifikasi harga item dan stok di sisi server;
+if (Seluruh item tersedia dan stok mencukupi?) then (ya)
+else (tidak)
+  :Menampilkan pesan per item kehabisan stok dan mengarahkan kembali ke keranjang;
+  stop
+endif
+
+:Memanggil API Komerce/RajaOngkir V2 dengan berat dan kecamatan tujuan;
+
+|Komerce/RajaOngkir API|
+:Mengembalikan daftar kurir, layanan, tarif, estimasi hari;
+
+|Sistem|
+if (API merespons dengan sukses?) then (ya)
+  :Menerbitkan token penawaran ongkir bertanda HMAC;
+  :Menampilkan opsi pengiriman sebagai radio button;
+else (tidak)
+  :Menampilkan pesan sopan dan saran coba lagi tanpa stack trace;
+  stop
+endif
+
+|Customer|
+:Memilih opsi pengiriman;
+if (Menerapkan voucher promo?) then (ya)
+  :Memasukkan kode voucher dan menekan terapkan;
+  |Sistem|
+  if (Voucher valid: periode, kuota, minimum belanja terpenuhi?) then (ya)
+    :Menghitung potongan dan memperbarui rincian biaya;
+  else (tidak)
+    :Menampilkan pesan spesifik voucher tidak berlaku, total tidak berubah;
+  endif
+else (tidak)
+endif
+
+|Customer|
+:Meninjau rincian pesanan dan menekan "Buat Pesanan";
+
+|Sistem|
+:Memverifikasi ulang harga, ongkir, dan voucher di sisi server;
+if (Token HMAC ongkir masih valid?) then (ya)
+else (tidak)
+  :Meminta kalkulasi ongkir ulang dan menampilkan pesan kedaluwarsa;
+  stop
+endif
+
+:Menerbitkan token idempotensi UUID;
+if (Token UUID sudah pernah dipakai?) then (ya, submit ganda)
+  :Mengembalikan pesanan existing tanpa membuat duplikat;
+  :Mengarahkan ke halaman pembayaran pesanan existing;
+  stop
+else (tidak)
+endif
+
+:Melakukan reservasi stok atomik (TTL 15 menit) untuk seluruh item;
+:Menyimpan pesanan pending beserta rincian item, ongkir, voucher, dan total;
+:Commit transaksi basis data;
+:Memicu pengiriman email konfirmasi pesanan (UC-20) pasca-commit;
+:Mengarahkan ke halaman pembayaran atau memicu inisialisasi Midtrans Snap;
+
+stop
+@enduml

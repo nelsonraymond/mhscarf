@@ -1,0 +1,38 @@
+@startuml
+title Activity Diagram - Reset Kata Sandi melalui Email
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Guest|
+start
+:Membuka halaman "Lupa Kata Sandi" dan mengisi email terdaftar;
+
+|Sistem|
+:Membuat token reset berbatas masa berlaku dan menyimpannya;
+if (Email berhasil dikirim melalui Resend?) then (ya)
+  :Mencatat keberhasilan pengiriman;
+else (tidak)
+  :Mencatat kegagalan pengiriman tanpa menghentikan alur;
+endif
+:Menampilkan pesan konfirmasi bahwa tautan telah dikirim;
+
+|Guest|
+:Membuka email dan mengklik tautan reset;
+
+|Sistem|
+if (Token valid dan belum kedaluwarsa?) then (ya)
+  :Menampilkan formulir kata sandi baru;
+  |Guest|
+  :Mengisi kata sandi baru dan konfirmasi;
+  |Sistem|
+  if (Kata sandi memenuhi ketentuan dan konfirmasi cocok?) then (ya)
+    :Memperbarui kata sandi, menginvalidasi token, dan menampilkan konfirmasi;
+  else (tidak)
+    :Menampilkan pesan kesalahan validasi dan menolak penyimpanan;
+  endif
+else (tidak)
+  :Menampilkan pesan tautan tidak valid/kedaluwarsa dan opsi meminta ulang;
+endif
+
+stop
+@enduml

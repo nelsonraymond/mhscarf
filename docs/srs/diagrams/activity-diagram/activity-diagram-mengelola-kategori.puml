@@ -1,0 +1,29 @@
+@startuml
+title Activity Diagram - Mengelola Kategori Produk
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Admin|
+start
+:Membuka modul manajemen kategori;
+:Memilih aksi (Tambah, Ubah, atau Hapus);
+
+|Sistem|
+if (Aksi yang dipilih?) then (Tambah/Ubah)
+  |Admin|
+  :Mengisi atau mengubah nama kategori;
+  |Sistem|
+  :Memvalidasi input dan membentuk slug otomatis yang unik;
+  :Menyimpan data kategori dan menampilkan konfirmasi;
+else (Hapus)
+  |Sistem|
+  :Memeriksa keterkaitan kategori dengan produk aktif;
+  if (Kategori masih digunakan oleh produk?) then (ya)
+    :Menolak penghapusan dan menampilkan pesan peringatan;
+  else (tidak)
+    :Menghapus kategori dari basis data;
+  endif
+endif
+
+stop
+@enduml

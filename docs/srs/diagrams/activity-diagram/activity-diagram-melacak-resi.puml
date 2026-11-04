@@ -1,0 +1,41 @@
+@startuml
+title Activity Diagram - Melacak Resi Pengiriman
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Pengguna (Customer/Admin)|
+start
+:Membuka detail pesanan yang telah dikirim (status shipped atau lebih lanjut);
+
+|Sistem|
+if (Data pengiriman (AWB) tersedia?) then (ya)
+  :Menampilkan detail pesanan, kurir, layanan, AWB, dan tombol "Lacak Pengiriman";
+else (tidak)
+  :Menampilkan pesan "Pesanan belum diproses pengiriman, hubungi admin";
+  stop
+endif
+
+|Pengguna (Customer/Admin)|
+:Menekan tombol "Lacak Pengiriman";
+
+|Sistem|
+:Membentuk kunci cache dari AWB + kode kurir + 5 digit terakhir telepon penerima;
+if (Cache tersedia dan cooldown 5 menit belum lewat?) then (ya)
+  :Memuat riwayat perjalanan paket dari cache;
+else (tidak)
+  :Memanggil API Komerce/RajaOngkir untuk pelacakan resi;
+  |Komerce/RajaOngkir API|
+  if (API mengembalikan data?) then (ya)
+    :Mengembalikan riwayat perjalanan paket;
+    |Sistem|
+    :Menyimpan hasil ke cache dengan cooldown 5 menit;
+  else (tidak: gagal atau AWB tidak ditemukan)
+    :Menampilkan pesan sopan dengan informasi coba lagi setelah cooldown;
+    stop
+  endif
+endif
+
+:Menampilkan riwayat perjalanan paket (status, lokasi, waktu per pembaruan);
+
+stop
+@enduml

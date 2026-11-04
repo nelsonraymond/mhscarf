@@ -1,0 +1,48 @@
+@startuml
+title Activity Diagram - Membayar melalui Midtrans Snap
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Customer|
+start
+:Membuka halaman pembayaran pesanan pending (dari checkout atau riwayat pesanan);
+
+|Sistem|
+:Menampilkan rincian pesanan dan tombol "Bayar Sekarang";
+
+|Customer|
+:Menekan tombol "Bayar Sekarang";
+
+|Sistem|
+:Memanggil API Midtrans untuk membuat transaksi Snap (order_id, total terverifikasi);
+if (Inisialisasi Snap berhasil?) then (ya)
+  :Menerima snap_token dari Midtrans;
+  :Menampilkan pop-up Midtrans Snap dengan daftar metode pembayaran;
+else (tidak)
+  :Menampilkan pesan gagal memulai pembayaran dan menyarankan coba lagi;
+  stop
+endif
+
+|Customer|
+:Memilih metode pembayaran dan menyelesaikan instruksi pada pop-up;
+
+|Midtrans Payment Gateway|
+:Memproses pembayaran dan mengirimkan status melalui webhook ke sistem;
+note right
+  Konfirmasi sah pembayaran
+  hanya diterima melalui
+  webhook terverifikasi
+  (lihat Gambar 4.14),
+  bukan callback browser.
+end note
+
+|Customer|
+if (Pop-up Snap ditutup tanpa menyelesaikan pembayaran?) then (ya)
+  |Sistem|
+  :Mempertahankan status pesanan pending hingga batas reservasi 15 menit;
+  stop
+else (tidak)
+endif
+
+stop
+@enduml

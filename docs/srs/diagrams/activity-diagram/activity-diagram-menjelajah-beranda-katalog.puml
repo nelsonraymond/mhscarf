@@ -1,0 +1,29 @@
+@startuml
+title Activity Diagram - Menjelajah Beranda dan Katalog Produk
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Pengguna (Guest/Customer)|
+start
+:Membuka beranda MH SCARF;
+
+|Sistem|
+:Menampilkan daftar produk aktif terbaru beserta foto dan harga;
+
+repeat
+  |Pengguna (Guest/Customer)|
+  :Menerapkan atau mengubah filter kategori,
+  kata kunci pencarian, atau pengurutan;
+  |Sistem|
+  if (Produk cocok dengan kriteria?) then (ya)
+    :Menampilkan daftar hasil dan memuat halaman berikutnya saat diminta;
+  else (tidak)
+    :Menampilkan empty state "Produk tidak ditemukan"
+    beserta saran reset filter;
+  endif
+  |Pengguna (Guest/Customer)|
+  :Meninjau hasil penelusuran;
+repeat while (Ingin mengubah kriteria?) is (ya) not (tidak)
+
+stop
+@enduml

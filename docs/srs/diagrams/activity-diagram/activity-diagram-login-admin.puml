@@ -1,0 +1,29 @@
+@startuml
+title Activity Diagram - Login Panel Administrator
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Admin|
+start
+:Membuka URL /admin/login pada peramban;
+
+|Sistem|
+:Menampilkan formulir login khusus administrator;
+
+|Admin|
+:Mengisi email dan kata sandi akun admin;
+
+|Sistem|
+:Memvalidasi format input;
+if (Kredensial cocok dengan basis data?) then (ya)
+  if (Akun memiliki role admin?) then (ya)
+    :Membuat sesi admin dan mengarahkan ke halaman dashboard operasional;
+  else (tidak)
+    :Menolak autentikasi dengan pesan "Akun tidak memiliki hak akses administrator";
+  endif
+else (tidak)
+  :Menampilkan pesan kesalahan umum tanpa menyebut bagian yang keliru;
+endif
+
+stop
+@enduml

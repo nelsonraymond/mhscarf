@@ -1,0 +1,60 @@
+@startuml
+title Class Diagram - Fitur Autentikasi dan Akun
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+
+class Database {
+  + db: array
+}
+
+class AuthPages <<view>> {
+  + renderLogin()
+  + renderRegister()
+  + renderReset()
+}
+
+class CustomerAuthController <<controller>> {
+  + register()
+  + login()
+  + loginGoogle()
+  + logout()
+}
+
+class AdminAuthController <<controller>> {
+  + showLogin()
+  + login()
+}
+
+class PasswordResetController <<controller>> {
+  + requestLink()
+  + reset(token: string)
+}
+
+class GoogleOAuthProvider <<external>> {
+  + redirect()
+  + callback()
+}
+
+class User <<model>> {
+  + name: string
+  + email: string
+  + password: string
+  + role: string
+  + google_id: string
+  + isAdmin()
+  + isCustomer()
+  + carts()
+  + addresses()
+  + orders()
+}
+
+AuthPages ..> CustomerAuthController : dependency
+AuthPages ..> AdminAuthController : dependency
+AuthPages ..> PasswordResetController : dependency
+CustomerAuthController ..> GoogleOAuthProvider : dependency
+CustomerAuthController ..> User : dependency
+AdminAuthController ..> User : dependency
+PasswordResetController ..> User : dependency
+User "*" -- "1" Database
+@enduml

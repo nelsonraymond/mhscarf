@@ -1,0 +1,25 @@
+@startuml
+title Activity Diagram - Mengirim Pengingat Ulasan
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam noteBackgroundColor #FFF8DC
+
+|Background Scheduler|
+start
+
+:Memicu proses pengingat ulasan sesuai jadwal;
+
+|Sistem|
+:Memilih pesanan berstatus completed yang itemnya belum memiliki ulasan;
+if (Terdapat pesanan completed tanpa ulasan?) then (ya)
+  :Menyusun email pengingat ulasan untuk pelanggan terkait;
+  :Memanggil Use Case UC-20 (Mengirim Email Transaksional);
+  :Mencatat hasil pengiriman pada log;
+else (tidak)
+  :Menyelesaikan proses tanpa pengiriman email;
+endif
+
+:Mencatat eksekusi scheduler pada log;
+
+stop
+@enduml

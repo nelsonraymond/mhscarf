@@ -1,0 +1,523 @@
+@startuml
+!theme plain
+title Entity Relationship Diagram - MH SCARF E-Commerce Platform
+
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam entity {
+  BackgroundColor #FEFEFE
+  BorderColor #333333
+  ArrowColor #555555
+}
+
+' ========================================
+' DOMAIN: AUTENTIKASI & PENGGUNA
+' ========================================
+
+entity "users" as users {
+  * id : bigint <<PK>>
+  --
+  * name : varchar(255)
+  * email : varchar(255) <<UQ>>
+  google_id : varchar(255) <<UQ>>
+  phone : varchar(30)
+  email_verified_at : timestamp
+  * password : varchar(255)
+  * role : enum('customer','admin')
+  remember_token : varchar(100)
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "password_reset_tokens" as password_reset_tokens {
+  * email : varchar(255) <<PK>>
+  --
+  * token : varchar(255)
+  created_at : timestamp
+}
+
+entity "sessions" as sessions <<DORMANT>> {
+  * id : varchar(255) <<PK>>
+  --
+  user_id : bigint <<FK>>
+  ip_address : varchar(45)
+  user_agent : text
+  * payload : longtext
+  * last_activity : int
+}
+
+' ========================================
+' DOMAIN: KATALOG & INVENTARIS
+' ========================================
+
+entity "categories" as categories {
+  * id : bigint <<PK>>
+  --
+  parent_id : bigint <<FK>>
+  * name : varchar(100)
+  * slug : varchar(120) <<UQ>>
+  description : text
+  image : varchar(255)
+  * is_active : tinyint(1)
+  created_at : timestamp
+  updated_at : timestamp
+  deleted_at : timestamp
+}
+
+entity "products" as products {
+  * id : bigint <<PK>>
+  --
+  * category_id : bigint <<FK>>
+  * name : varchar(180)
+  * slug : varchar(200) <<UQ>>
+  * sku : varchar(80) <<UQ>>
+  description : text
+  material : varchar(100)
+  care_instructions : text
+  * base_price : decimal(12,2)
+  compare_at_price : decimal(12,2)
+  * is_featured : tinyint(1)
+  * is_best_seller : tinyint(1)
+  * is_active : tinyint(1)
+  * rating_avg : decimal(3,2)
+  * rating_count : int
+  created_at : timestamp
+  updated_at : timestamp
+  deleted_at : timestamp
+}
+
+entity "product_variants" as product_variants {
+  * id : bigint <<PK>>
+  --
+  * product_id : bigint <<FK>>
+  * name : varchar(120)
+  * sku : varchar(80) <<UQ>>
+  color_name : varchar(80)
+  color_hex : varchar(20)
+  size : varchar(50)
+  * additional_price : decimal(12,2)
+  * stock_qty : int
+  * low_stock_threshold : int
+  weight_gram : int
+  * is_active : tinyint(1)
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "product_images" as product_images {
+  * id : bigint <<PK>>
+  --
+  * product_id : bigint <<FK>>
+  variant_id : bigint <<FK>>
+  * image_path : varchar(255)
+  alt_text : varchar(255)
+  * sort_order : int
+  * is_primary : tinyint(1)
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "inventory_movements" as inventory_movements {
+  * id : bigint <<PK>>
+  --
+  * product_variant_id : bigint <<FK>>
+  * type : enum('in','out','adjustment','return')
+  * quantity : int
+  reference_type : varchar(50)
+  reference_id : bigint
+  note : varchar(255)
+  created_by : bigint <<FK>>
+  created_at : timestamp
+}
+
+entity "product_views" as product_views <<DORMANT>> {
+  * id : bigint <<PK>>
+  --
+  user_id : bigint <<FK>>
+  * product_id : bigint <<FK>>
+  session_id : varchar(120)
+  created_at : timestamp
+}
+
+' ========================================
+' DOMAIN: KERANJANG & WISHLIST
+' ========================================
+
+entity "carts" as carts {
+  * id : bigint <<PK>>
+  --
+  user_id : bigint <<FK,UQ>>
+  session_id : varchar(120) <<UQ>>
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "cart_items" as cart_items {
+  * id : bigint <<PK>>
+  --
+  * cart_id : bigint <<FK>>
+  * product_variant_id : bigint <<FK>>
+  * quantity : int
+  * unit_price : decimal(12,2)
+  created_at : timestamp
+  updated_at : timestamp
+  ..
+  <<UQ: cart_id + product_variant_id>>
+}
+
+entity "wishlists" as wishlists {
+  * id : bigint <<PK>>
+  --
+  * user_id : bigint <<FK>>
+  * product_id : bigint <<FK>>
+  created_at : timestamp
+  ..
+  <<UQ: user_id + product_id>>
+}
+
+' ========================================
+' DOMAIN: PESANAN & PEMBAYARAN
+' ========================================
+
+entity "orders" as orders {
+  * id : bigint <<PK>>
+  --
+  * order_number : varchar(40) <<UQ>>
+  * user_id : bigint <<FK>>
+  checkout_token : varchar(64)
+  checkout_fingerprint : char(64)
+  checkout_cart_fingerprint : char(64)
+  checkout_source : varchar(20)
+  * status : enum('pending','confirmed',...)
+  * payment_status : enum('pending','paid',...)
+  * subtotal : decimal(12,2)
+  * discount_amount : decimal(12,2)
+  * shipping_cost : decimal(12,2)
+  * grand_total : decimal(12,2)
+  voucher_code : varchar(50)
+  voucher_discount : decimal(12,2)
+  shipping_recipient_name : varchar(120)
+  shipping_phone : varchar(30)
+  shipping_address : text
+  shipping_city : varchar(100)
+  shipping_province : varchar(100)
+  shipping_postal_code : varchar(10)
+  customer_note : text
+  placed_at : timestamp
+  delivered_at : timestamp
+  review_reminded_at : timestamp
+  created_at : timestamp
+  updated_at : timestamp
+  ..
+  <<UQ: user_id + checkout_token>>
+}
+
+entity "order_items" as order_items {
+  * id : bigint <<PK>>
+  --
+  * order_id : bigint <<FK>>
+  * product_id : bigint <<FK>>
+  * product_variant_id : bigint <<FK>>
+  * product_name : varchar(180)
+  * variant_name : varchar(120)
+  * sku : varchar(80)
+  * unit_price : decimal(12,2)
+  * quantity : int
+  * subtotal : decimal(12,2)
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "payments" as payments {
+  * id : bigint <<PK>>
+  --
+  * order_id : bigint <<FK>>
+  * provider : varchar(50)
+  payment_method : varchar(50)
+  transaction_reference : varchar(150)
+  * amount : decimal(12,2)
+  * status : enum('pending','paid',...)
+  paid_at : timestamp
+  metadata : json
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "shipments" as shipments {
+  * id : bigint <<PK>>
+  --
+  * order_id : bigint <<FK,UQ>>
+  destination_id : bigint
+  * courier : varchar(80)
+  courier_code : varchar(24)
+  service : varchar(80)
+  tracking_number : varchar(120)
+  * shipping_cost : decimal(12,2)
+  weight_gram : int
+  estimated_delivery : varchar(80)
+  * status : varchar(40)
+  shipped_at : timestamp
+  delivered_at : timestamp
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "stock_reservations" as stock_reservations {
+  * id : bigint <<PK>>
+  --
+  order_item_id : bigint <<FK>>
+  * product_variant_id : bigint <<FK>>
+  * quantity : int
+  * status : enum('pending','reserved',...)
+  * expires_at : timestamp
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "order_status_histories" as order_status_histories {
+  * id : bigint <<PK>>
+  --
+  * order_id : bigint <<FK>>
+  from_status : varchar(40)
+  * to_status : varchar(40)
+  reason : varchar(255)
+  actor_id : bigint <<FK>>
+  created_at : timestamp
+  updated_at : timestamp
+  ..
+  <<IDX: order_id + id>>
+}
+
+entity "payment_initialization_attempts" as payment_initialization_attempts {
+  * id : bigint <<PK>>
+  --
+  * order_id : bigint <<FK>>
+  * attempt_number : int
+  * idempotency_key : varchar(46) <<UQ>>
+  * request_fingerprint : char(64)
+  * status : varchar(20)
+  lease_expires_at : timestamp
+  payment_id : bigint <<FK>>
+  created_at : timestamp
+  updated_at : timestamp
+  ..
+  <<UQ: order_id + attempt_number>>
+}
+
+entity "addresses" as addresses {
+  * id : bigint <<PK>>
+  --
+  * user_id : bigint <<FK>>
+  label : varchar(50)
+  * recipient_name : varchar(120)
+  * phone : varchar(30)
+  * address_line : text
+  village : varchar(100)
+  district : varchar(100)
+  * city : varchar(100)
+  * province : varchar(100)
+  * postal_code : varchar(10)
+  notes : varchar(255)
+  * is_default : tinyint(1)
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+' ========================================
+' DOMAIN: VOUCHER & PROMOSI
+' ========================================
+
+entity "vouchers" as vouchers {
+  * id : bigint <<PK>>
+  --
+  * code : varchar(50) <<UQ>>
+  * type : enum('percentage','fixed','free_shipping')
+  * value : decimal(12,2)
+  min_order_amount : decimal(12,2)
+  max_discount_amount : decimal(12,2)
+  usage_limit : int
+  usage_limit_per_user : int
+  * used_count : int
+  starts_at : timestamp
+  expires_at : timestamp
+  * is_active : tinyint(1)
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "voucher_usages" as voucher_usages {
+  * id : bigint <<PK>>
+  --
+  * voucher_id : bigint <<FK>>
+  * user_id : bigint <<FK>>
+  * order_id : bigint <<FK>>
+  * discount_amount : decimal(12,2)
+  created_at : timestamp
+}
+
+' ========================================
+' DOMAIN: ULASAN
+' ========================================
+
+entity "reviews" as reviews {
+  * id : bigint <<PK>>
+  --
+  * product_id : bigint <<FK>>
+  * user_id : bigint <<FK>>
+  * order_item_id : bigint <<FK,UQ>>
+  * rating : tinyint
+  title : varchar(120)
+  comment : text
+  photo_path : varchar(255)
+  * is_verified_purchase : tinyint(1)
+  * is_published : tinyint(1)
+  created_at : timestamp
+  updated_at : timestamp
+  deleted_at : timestamp
+}
+
+' ========================================
+' DOMAIN: INFRASTRUKTUR & NOTIFIKASI
+' ========================================
+
+entity "banners" as banners <<DORMANT>> {
+  * id : bigint <<PK>>
+  --
+  * title : varchar(150)
+  subtitle : varchar(255)
+  * image_path : varchar(255)
+  button_text : varchar(50)
+  button_url : varchar(255)
+  starts_at : timestamp
+  ends_at : timestamp
+  * sort_order : int
+  * is_active : tinyint(1)
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "notifications" as notifications <<DORMANT>> {
+  * id : bigint <<PK>>
+  --
+  * user_id : bigint <<FK>>
+  * type : varchar(80)
+  * title : varchar(150)
+  * message : text
+  data : json
+  read_at : timestamp
+  created_at : timestamp
+  updated_at : timestamp
+}
+
+entity "cache" as cache <<DORMANT>> {
+  * key : varchar(255) <<PK>>
+  --
+  * value : mediumtext
+  * expiration : bigint
+}
+
+entity "cache_locks" as cache_locks <<DORMANT>> {
+  * key : varchar(255) <<PK>>
+  --
+  * owner : varchar(255)
+  * expiration : bigint
+}
+
+entity "jobs" as jobs <<DORMANT>> {
+  * id : bigint <<PK>>
+  --
+  * queue : varchar(255)
+  * payload : longtext
+  * attempts : smallint
+  reserved_at : int
+  * available_at : int
+  * created_at : int
+}
+
+entity "job_batches" as job_batches <<DORMANT>> {
+  * id : varchar(255) <<PK>>
+  --
+  * name : varchar(255)
+  * total_jobs : int
+  * pending_jobs : int
+  * failed_jobs : int
+  * failed_job_ids : longtext
+  options : mediumtext
+  cancelled_at : int
+  created_at : int
+  finished_at : int
+}
+
+entity "failed_jobs" as failed_jobs <<DORMANT>> {
+  * id : bigint <<PK>>
+  --
+  * uuid : varchar(255) <<UQ>>
+  * connection : text
+  * queue : text
+  * payload : longtext
+  * exception : longtext
+  * failed_at : timestamp
+}
+
+' ========================================
+' RELATIONSHIPS
+' ========================================
+
+' User relationships
+users ||--o{ password_reset_tokens : "email"
+users ||--o{ sessions : "user_id"
+users ||--o{ addresses : "user_id"
+users ||--o{ carts : "user_id"
+users ||--o{ wishlists : "user_id"
+users ||--o{ orders : "user_id"
+users ||--o{ reviews : "user_id"
+users ||--o{ voucher_usages : "user_id"
+users ||--o{ inventory_movements : "created_by"
+users ||--o{ product_views : "user_id"
+users ||--o{ notifications : "user_id"
+
+' Catalog relationships
+categories ||--o{ products : "category_id"
+categories ||--o{ categories : "parent_id (self-ref)"
+products ||--o{ product_variants : "product_id"
+products ||--o{ product_images : "product_id"
+products ||--o{ wishlists : "product_id"
+products ||--o{ order_items : "product_id"
+products ||--o{ reviews : "product_id"
+products ||--o{ product_views : "product_id"
+
+product_variants ||--o{ product_images : "variant_id"
+product_variants ||--o{ cart_items : "product_variant_id"
+product_variants ||--o{ order_items : "product_variant_id"
+product_variants ||--o{ inventory_movements : "product_variant_id"
+product_variants ||--o{ stock_reservations : "product_variant_id"
+
+' Cart relationships
+carts ||--o{ cart_items : "cart_id"
+
+' Order relationships
+orders ||--o{ order_items : "order_id"
+orders ||--o{ payments : "order_id"
+orders ||--o{ shipments : "order_id"
+orders ||--o{ order_status_histories : "order_id"
+orders ||--o{ payment_initialization_attempts : "order_id"
+orders ||--o{ voucher_usages : "order_id"
+
+order_items ||--o{ stock_reservations : "order_item_id"
+order_items ||--o{ reviews : "order_item_id"
+
+' Payment relationships
+payments ||--o{ payment_initialization_attempts : "payment_id"
+
+' Voucher relationships
+vouchers ||--o{ voucher_usages : "voucher_id"
+
+' Legend
+note right of users
+  **LEGENDA STATUS**
+  **AKTIF**: Digunakan oleh controller/service
+  **DORMANT**: Tabel ada, tidak dipanggil
+  **PLANNED**: Tabel ada, fitur belum aktif
+end note
+
+@enduml

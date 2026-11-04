@@ -1,0 +1,57 @@
+@startuml
+title Class Diagram - Fitur Penjadwal dan Email Transaksional
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+
+class Database {
+  + db: array
+}
+
+class ReleaseExpiredOrdersCommand <<command>> {
+  + handle()
+}
+
+class ReviewReminderCommand <<command>> {
+  + handle()
+}
+
+class MailService <<service>> {
+  + sendOrderConfirmation(orderId: int)
+  + sendPaymentConfirmation(orderId: int)
+  + sendShipmentConfirmation(orderId: int)
+  + sendResetLink(email: string)
+  + sendReviewReminder(orderId: int)
+}
+
+class CheckoutService <<service>> {
+  + releaseExpiredReservations()
+}
+
+class Order <<model>> {
+  + status: string
+  + payment_status: string
+  + review_reminded_at: datetime
+}
+
+class StockReservation <<model>> {
+  + status: string
+  + expires_at: datetime
+  + orderItem()
+  + variant()
+}
+
+class ResendApi <<external>> {
+  + send(payload: array)
+}
+
+ReleaseExpiredOrdersCommand ..> Order : dependency
+ReleaseExpiredOrdersCommand ..> CheckoutService : dependency
+CheckoutService ..> StockReservation : dependency
+ReviewReminderCommand ..> Order : dependency
+ReviewReminderCommand ..> MailService : dependency
+MailService ..> Order : dependency
+MailService ..> ResendApi : dependency
+Order "*" -- "1" Database
+StockReservation "*" -- "1" Database
+@enduml

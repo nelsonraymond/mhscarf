@@ -1,0 +1,69 @@
+@startuml
+title Class Diagram - Fitur Checkout dan Reservasi Stok
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam classAttributeIconSize 0
+
+class Database {
+  + db: array
+}
+
+class CheckoutIndex <<view>> {
+  + render()
+  + shippingOptions()
+  + costSummary()
+}
+
+class CheckoutController <<controller>> {
+  + index()
+  + calculateShipping(addressId: int)
+  + store()
+}
+
+class CheckoutService <<service>> {
+  + verifyServerSide(items: array)
+  + createOrder(userId: int, payload: array, token: string)
+  + reserveStock(orderId: int)
+  + releaseExpiredReservations()
+}
+
+class Order <<model>> {
+  + order_number: string
+  + status: string
+  + payment_status: string
+  + grand_total: decimal
+  + checkout_token: string
+  + user()
+  + items()
+  + payments()
+  + statusHistories()
+}
+
+class OrderItem <<model>> {
+  + quantity: int
+  + unit_price: decimal
+  + subtotal: decimal
+  + order()
+  + product()
+  + variant()
+}
+
+class StockReservation <<model>> {
+  + quantity: int
+  + status: string
+  + expires_at: datetime
+  + orderItem()
+  + variant()
+}
+
+CheckoutIndex ..> CheckoutController : dependency
+CheckoutController ..> CheckoutService : dependency
+CheckoutService ..> Order : dependency
+CheckoutService ..> OrderItem : dependency
+CheckoutService ..> StockReservation : dependency
+Order "1" -- "*" OrderItem
+OrderItem "1" -- "*" StockReservation
+Order "*" -- "1" Database
+OrderItem "*" -- "1" Database
+StockReservation "*" -- "1" Database
+@enduml

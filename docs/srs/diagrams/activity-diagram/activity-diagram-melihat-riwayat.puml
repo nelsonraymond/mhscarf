@@ -1,0 +1,44 @@
+@startuml
+title Activity Diagram - Melihat Riwayat, Detail, dan Membatalkan Pesanan
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Customer|
+start
+:Membuka halaman "Riwayat Pesanan" dari menu akun;
+
+|Sistem|
+if (Terdapat pesanan milik aktor?) then (ya)
+  :Menampilkan daftar pesanan dengan status, tanggal, dan total;
+else (tidak)
+  :Menampilkan empty state dan tautan ke katalog produk;
+  stop
+endif
+
+|Customer|
+:Memilih salah satu pesanan untuk melihat detail;
+
+|Sistem|
+:Menampilkan detail pesanan lengkap (item, alamat, ongkir, status, riwayat status);
+
+|Customer|
+if (Ingin membatalkan pesanan?) then (ya)
+  :Menekan tombol "Batalkan Pesanan";
+  |Sistem|
+  if (Status pesanan masih pending?) then (ya)
+    :Meminta konfirmasi pembatalan;
+    |Customer|
+    :Mengonfirmasi pembatalan;
+    |Sistem|
+    :Memperbarui status menjadi cancelled;
+    :Melepaskan reservasi stok dan memulihkan ke etalase;
+    :Memperbarui tampilan detail pesanan dengan konfirmasi;
+  else (tidak: processing, packed, shipped, dst.)
+    :Menampilkan pesan "Pesanan tidak dapat dibatalkan,
+    silakan hubungi admin";
+  endif
+else (tidak)
+endif
+
+stop
+@enduml

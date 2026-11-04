@@ -1,0 +1,30 @@
+@startuml
+title Activity Diagram - Mengelola Produk dan Galeri Gambar
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Admin|
+start
+:Membuka formulir produk dan mengisi data (nama, kategori, harga, deskripsi);
+:Mengunggah satu atau beberapa gambar produk;
+
+|Sistem|
+:Memvalidasi input data produk;
+:Mengirimkan berkas gambar ke Supabase Storage;
+
+|Supabase Storage|
+if (Berkas valid dan layanan tersedia?) then (ya)
+  :Mengembalikan URL referensi gambar;
+else (tidak)
+  |Sistem|
+  :Menampilkan pesan kesalahan unggah dan membatalkan penyimpanan gambar;
+  stop
+endif
+
+|Sistem|
+:Menyimpan data produk beserta URL referensi gambar ke basis data;
+:Membentuk slug otomatis yang unik;
+:Menampilkan konfirmasi keberhasilan;
+
+stop
+@enduml

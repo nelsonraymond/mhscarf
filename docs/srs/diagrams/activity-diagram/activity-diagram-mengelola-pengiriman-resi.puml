@@ -1,0 +1,28 @@
+@startuml
+title Activity Diagram - Mengelola Pengiriman dan Nomor Resi
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Admin|
+start
+:Membuka pesanan berstatus packed;
+:Mengisi nama kurir, layanan, dan nomor resi AWB;
+:Menyimpan data dan mengonfirmasi transisi ke shipped;
+
+|Sistem|
+if (Status pembayaran = paid?) then (ya)
+  if (Field kurir, layanan, dan AWB lengkap?) then (ya)
+    :Menyimpan data pengiriman;
+    :Mengubah status pesanan menjadi shipped;
+    :Mencatat riwayat status;
+    :Commit transaksi basis data;
+    :Memicu pengiriman email konfirmasi pengiriman ke pelanggan (UC-20);
+  else (tidak)
+    :Menolak transisi dan menampilkan field yang kurang;
+  endif
+else (tidak)
+  :Menolak transisi dengan pesan "Pembayaran belum lunas";
+endif
+
+stop
+@enduml

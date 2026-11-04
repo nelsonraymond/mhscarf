@@ -1,0 +1,59 @@
+@startuml
+title Activity Diagram - Menerima dan Memproses Webhook Pembayaran
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Midtrans Payment Gateway|
+start
+:Mengirimkan notifikasi HTTP POST ke endpoint webhook aplikasi
+saat terjadi perubahan status pembayaran;
+
+|Sistem|
+:Memvalidasi signature_key menggunakan algoritma SHA-512
+dan Server Key Midtrans tersimpan;
+if (Signature SHA-512 valid?) then (ya)
+else (tidak)
+  :Menolak notifikasi, mencatat percobaan dalam log keamanan,
+  mengembalikan respons HTTP 4xx;
+  stop
+endif
+
+:Memeriksa idempotensi berdasarkan transaction_id Midtrans;
+if (Notifikasi merupakan duplikat?) then (ya)
+  :Mengabaikan pemrosesan ulang dan mengembalikan respons HTTP 200;
+  stop
+else (tidak)
+endif
+
+:Mencocokkan order_id dengan pesanan di basis data;
+if (Order_id ditemukan?) then (ya)
+else (tidak)
+  :Mencatat kejadian dalam log, mengembalikan respons HTTP 4xx;
+  stop
+endif
+
+:Memverifikasi gross_amount dengan toleransi selisih hingga Rp1;
+if (Nominal cocok dalam toleransi Rp1?) then (ya)
+else (tidak)
+  :Mencatat ketidaksesuaian di log keamanan, menolak pembaruan status;
+  stop
+endif
+
+if (Status pembayaran menjadi paid/settlement?) then (ya)
+  if (Reservasi stok masih berlaku (<15 menit)?) then (ya)
+    :Memperbarui status pembayaran menjadi paid dan status pesanan sesuai state machine;
+    :Memicu pengiriman email konfirmasi pembayaran (UC-20) pasca-commit;
+  else (tidak, lewat TTL)
+    :Memperbarui status pembayaran menjadi paid
+    tetapi tidak mengubah status pesanan (mungkin sudah dicancel sweeper);
+    :Mengirim notifikasi khusus ke admin via dashboard untuk penanganan manual;
+  endif
+else (tidak: cancel/deny/expire)
+  :Memperbarui status pembayaran dan pesanan sesuai aturan state machine
+  tanpa memicu email konfirmasi pembayaran;
+endif
+
+:Mengembalikan respons HTTP 200 ke Midtrans;
+
+stop
+@enduml

@@ -1,0 +1,26 @@
+@startuml
+title Activity Diagram - Mengelola Kode Voucher Promo
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Admin|
+start
+:Membuka formulir voucher;
+:Mengisi kode, tipe diskon, nilai, kuota, minimum belanja, dan periode berlaku;
+:Menekan tombol simpan;
+
+|Sistem|
+:Memvalidasi keunikan kode voucher;
+if (Nilai diskon valid? (misal: persentase <= 100, nominal > 0)) then (ya)
+  if (Periode masa berlaku valid? (tanggal mulai < tanggal selesai)) then (ya)
+    :Menyimpan voucher ke basis data;
+    :Memperbarui status aktif/nonaktif voucher;
+  else (tidak)
+    :Menolak penyimpanan dengan pesan kesalahan periode tanggal;
+  endif
+else (tidak)
+  :Menolak penyimpanan dengan pesan kesalahan nilai diskon;
+endif
+
+stop
+@enduml

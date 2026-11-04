@@ -1,0 +1,37 @@
+@startuml
+title Activity Diagram - Mengelola Profil Akun dan Buku Alamat
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+|Customer|
+start
+:Membuka halaman akun dan memilih menu "Profil" atau "Alamat";
+
+if (Menu dipilih?) then (Profil)
+  :Mengubah data profil dan menekan simpan;
+  |Sistem|
+  if (Validasi data lolos?) then (ya)
+    :Menyimpan perubahan profil dan menampilkan konfirmasi;
+  else (tidak)
+    :Menampilkan pesan validasi per kolom dan menolak penyimpanan;
+  endif
+else (Alamat)
+  :Menambah, mengubah, atau menghapus alamat pengiriman;
+  |Sistem|
+  if (Data wajib alamat lengkap?) then (ya)
+    if (Aksi menghapus alamat default atau alamat terpakai pesanan berjalan?) then (ya)
+      :Menolak penghapusan atau meminta penetapan default baru;
+    else (tidak)
+      :Menyimpan perubahan alamat;
+    endif
+  else (tidak)
+    :Menampilkan pesan validasi per kolom dan menolak penyimpanan;
+  endif
+  |Customer|
+  :Menetapkan alamat default bila diperlukan;
+  |Sistem|
+  :Memperbarai flag alamat default dan menampilkan pemberitahuan;
+endif
+
+stop
+@enduml
