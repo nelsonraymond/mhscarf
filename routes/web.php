@@ -3,6 +3,7 @@
 use App\Http\Controllers\AddressController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Admin\TransactionalEmailTestController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ProductImageController;
 use App\Http\Controllers\Admin\ProductVariantController;
@@ -133,6 +134,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::post('/logout', [AdminAuthController::class, 'destroy'])->name('logout');
+        Route::post('/transactional-email-test', TransactionalEmailTestController::class)
+            ->middleware('throttle:transactional-email-test')
+            ->name('transactional-email-test.store');
 
         // Order Management (state machine enforced by OrderService)
         Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
@@ -169,3 +173,14 @@ Route::patch('/vouchers/{voucher}/toggle', [AdminVoucherController::class, 'togg
 Route::resource('vouchers', AdminVoucherController::class)->except(['show']);
     });
 });
+
+if (app()->environment('local')) {
+    Route::get('/_debug-app-key', function () {
+        return response()->json([
+            'key_loaded' => !empty(config('app.key')),
+            'key_length' => strlen((string) config('app.key')),
+            'env_loaded' => !empty(env('APP_KEY')),
+            'config_cached' => app()->configurationIsCached(),
+        ]);
+    });
+}

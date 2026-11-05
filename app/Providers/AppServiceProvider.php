@@ -13,9 +13,6 @@ use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
         $this->app->bind(
@@ -24,12 +21,9 @@ class AppServiceProvider extends ServiceProvider
         );
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
-        Mail::extend('resend', function (array $config) {
+        Mail::extend('resend_timed', function (array $config) {
             return new TimedResendTransport(
                 apiKey: (string) config('services.resend.key', ''),
                 baseUrl: (string) config('services.resend.base_url', 'api.resend.com'),
@@ -49,6 +43,13 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perMinute(5)->by($request->ip().'|'.$email),
                 Limit::perHour(20)->by($request->ip()),
             ];
+        });
+
+        RateLimiter::for('transactional-email-test', function (Request $request) {
+            $adminId = $request->user()?->getAuthIdentifier() ?? 'guest';
+
+            return Limit::perMinute(1)
+                ->by($adminId . '|' . $request->ip());
         });
     }
 }

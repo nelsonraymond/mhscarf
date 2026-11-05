@@ -65,6 +65,13 @@ return [
             'transport' => 'resend',
         ],
 
+        'resend_timed' => [
+            'transport' => 'resend_timed',
+            'key' => env('RESEND_API_KEY'),
+            'connect_timeout' => (float) env('RESEND_CONNECT_TIMEOUT', 3),
+            'timeout' => (float) env('RESEND_TIMEOUT', 10),
+        ],
+
         'sendmail' => [
             'transport' => 'sendmail',
             'path' => env('MAIL_SENDMAIL_PATH', '/usr/sbin/sendmail -bs -i'),
@@ -113,6 +120,11 @@ return [
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
+    ],
+
+    'transactional_test' => [
+        'enabled' => (bool) env('TRANSACTIONAL_EMAIL_TEST_ENABLED', false),
+        'recipient' => env('TRANSACTIONAL_EMAIL_TEST_RECIPIENT', 'nelsonraymondwu@gmail.com'),
     ],
 
 ];

@@ -21,7 +21,7 @@ return [
     'resend' => [
         'key' => env('RESEND_API_KEY'),
         'base_url' => env('RESEND_BASE_URL', 'api.resend.com'),
-        'timeout' => (int) env('RESEND_TIMEOUT', 8),
+        'timeout' => (int) env('RESEND_TIMEOUT', 10),
         'connect_timeout' => (int) env('RESEND_CONNECT_TIMEOUT', 3),
     ],
 
