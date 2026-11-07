@@ -64,7 +64,7 @@ module.exports = exports.launcher;
 module.exports.launcher = exports.launcher;
 `.trimStart();
 
-fs.writeFileSync(path.join(dir, "launcher.js"), bridge);
+fs.copyFileSync("launcher.js", path.join(dir, "launcher.js"));
 config.handler = "launcher.js";
 config.filePathMap = map;
 fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n");
