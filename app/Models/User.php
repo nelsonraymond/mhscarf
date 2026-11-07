@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\PasswordResetMail;
+use Throwable;
 
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
@@ -46,6 +50,25 @@ class User extends Authenticatable
     public function isCustomer(): bool
     {
         return $this->role === 'customer';
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $url = route('password.reset', [
+            'token' => $token,
+            'email' => $this->getEmailForPasswordReset(),
+        ]);
+
+        try {
+            Mail::mailer('resend_timed')
+                ->to($this->getEmailForPasswordReset())
+                ->send(new PasswordResetMail($url));
+        } catch (Throwable $exception) {
+            // Keep the public response identical for known and unknown addresses.
+            Log::warning('Password reset email delivery failed', [
+                'exception' => $exception::class,
+            ]);
+        }
     }
 
     public function addresses(): HasMany

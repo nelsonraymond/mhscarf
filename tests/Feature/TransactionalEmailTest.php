@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Contracts\PaymentGatewayInterface;
 use App\Mail\OrderPlacedMail;
 use App\Mail\PaymentReceivedMail;
 use App\Mail\ShipmentDispatchedMail;
@@ -17,6 +18,7 @@ use App\Models\Shipment;
 use App\Models\StockReservation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Mockery;
@@ -39,11 +41,11 @@ class TransactionalEmailTest extends TestCase
         ]);
     }
 
-    public function test_resend_mailer_builds_the_transport_with_the_configured_driver(): void
+    public function test_resend_timed_mailer_builds_the_transport_with_the_configured_driver(): void
     {
         config(['services.resend.key' => 'test-resend-key']);
 
-        $transport = Mail::mailer('resend')->getSymfonyTransport();
+        $transport = Mail::mailer('resend_timed')->getSymfonyTransport();
 
         $this->assertInstanceOf(TimedResendTransport::class, $transport);
     }
@@ -109,6 +111,84 @@ class TransactionalEmailTest extends TestCase
         });
         Mail::assertSentCount(1);
         $this->assertSame('paid', $order->fresh()->payment_status);
+    }
+
+    public function test_webhook_then_payment_status_poll_sends_one_confirmation(): void
+    {
+        Mail::fake();
+        [$order, $owner] = $this->createOrderWithPayment();
+        $this->mockGatewayStatuses([$order->order_number => $this->normalizedStatus($order, 'paid')]);
+
+        $this->postJson(route('payments.webhook'), ['order_id' => $order->order_number])->assertOk();
+        $this->actingAs($owner)->getJson(route('payments.status', $order))
+            ->assertOk()
+            ->assertJsonPath('paid', true);
+
+        Mail::assertSentTimes(PaymentReceivedMail::class, 1);
+    }
+
+    public function test_payment_status_poll_then_webhook_sends_one_confirmation(): void
+    {
+        Mail::fake();
+        [$order, $owner] = $this->createOrderWithPayment();
+        $this->mockGatewayStatuses([$order->order_number => $this->normalizedStatus($order, 'paid')]);
+
+        $this->actingAs($owner)->getJson(route('payments.status', $order))
+            ->assertOk()
+            ->assertJsonPath('paid', true);
+        $this->postJson(route('payments.webhook'), ['order_id' => $order->order_number])->assertOk();
+
+        Mail::assertSentTimes(PaymentReceivedMail::class, 1);
+        $this->assertSame('paid', $order->fresh()->payment_status);
+    }
+
+    public function test_payment_status_poll_does_not_send_success_email_for_pending_or_failed_status(): void
+    {
+        Mail::fake();
+        [$pendingOrder, $pendingOwner] = $this->createOrderWithPayment();
+        [$failedOrder, $failedOwner] = $this->createOrderWithPayment();
+        $this->mockGatewayStatuses([
+            $pendingOrder->order_number => $this->normalizedStatus($pendingOrder, 'pending'),
+            $failedOrder->order_number => $this->normalizedStatus($failedOrder, 'failed'),
+        ]);
+
+        $this->actingAs($pendingOwner)->getJson(route('payments.status', $pendingOrder))
+            ->assertOk()
+            ->assertJsonPath('payment_status', 'pending');
+        $this->actingAs($failedOwner)->getJson(route('payments.status', $failedOrder))
+            ->assertOk()
+            ->assertJsonPath('payment_status', 'failed');
+
+        Mail::assertNothingSent();
+    }
+
+    public function test_mail_transport_failure_does_not_fail_webhook_or_payment_poll_response(): void
+    {
+        [$webhookOrder] = $this->createOrderWithPayment();
+        [$polledOrder, $polledOwner] = $this->createOrderWithPayment();
+        $this->mockGatewayStatuses([
+            $webhookOrder->order_number => $this->normalizedStatus($webhookOrder, 'paid'),
+            $polledOrder->order_number => $this->normalizedStatus($polledOrder, 'paid'),
+        ]);
+        Mail::shouldReceive('to')->twice()->andThrow(new RuntimeException('Simulated provider failure'));
+
+        $this->postJson(route('payments.webhook'), ['order_id' => $webhookOrder->order_number])
+            ->assertOk()
+            ->assertJsonPath('data.payment_status', 'paid');
+        $this->actingAs($polledOwner)->getJson(route('payments.status', $polledOrder))
+            ->assertOk()
+            ->assertJsonPath('paid', true);
+    }
+
+    public function test_production_log_mailer_emits_a_warning_without_configuration_details(): void
+    {
+        $this->app->detectEnvironment(fn () => 'production');
+        config(['mail.default' => 'log']);
+        Log::shouldReceive('warning')->once()->with(
+            'Transactional email is configured to use the log mailer in production; emails will not be delivered.'
+        );
+
+        (new \App\Providers\AppServiceProvider($this->app))->boot();
     }
 
     public function test_pending_payment_does_not_send_success_email(): void
@@ -388,6 +468,37 @@ class TransactionalEmailTest extends TestCase
             'transaction_status' => $transactionStatus,
             'payment_type' => 'bank_transfer',
             'settlement_time' => now()->toDateTimeString(),
+        ];
+    }
+
+    /** @param array<string, array<string, mixed>> $statuses */
+    private function mockGatewayStatuses(array $statuses): void
+    {
+        $gateway = \Mockery::mock(PaymentGatewayInterface::class);
+        $gateway->shouldReceive('getName')->zeroOrMoreTimes()->andReturn('midtrans');
+        $gateway->shouldReceive('verifyWebhook')->zeroOrMoreTimes()->andReturnTrue();
+        $gateway->shouldReceive('parseWebhook')->zeroOrMoreTimes()->andReturnUsing(
+            fn (array $payload): array => $statuses[$payload['order_id']]
+        );
+        $gateway->shouldReceive('fetchStatus')->zeroOrMoreTimes()->andReturnUsing(
+            fn (string $orderNumber): ?array => $statuses[$orderNumber] ?? null
+        );
+
+        $this->app->instance(PaymentGatewayInterface::class, $gateway);
+        $this->app->forgetInstance(\App\Services\PaymentService::class);
+    }
+
+    /** @return array<string, mixed> */
+    private function normalizedStatus(Order $order, string $status): array
+    {
+        return [
+            'order_number' => $order->order_number,
+            'transaction_reference' => 'TRX-'.$order->order_number,
+            'status' => $status,
+            'payment_method' => 'bank_transfer',
+            'amount' => (float) $order->grand_total,
+            'paid_at' => $status === 'paid' ? now() : null,
+            'raw' => ['transaction_status' => $status],
         ];
     }
 }

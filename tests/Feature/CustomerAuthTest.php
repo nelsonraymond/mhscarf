@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Laravel\Socialite\Contracts\Provider;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\User as SocialiteUser;
@@ -170,6 +171,7 @@ class CustomerAuthTest extends TestCase
 
     public function test_customer_can_request_password_reset_link(): void
     {
+        Mail::fake();
         $user = User::factory()->customer()->create([
             'email' => 'customer_reset@example.com',
         ]);
@@ -184,6 +186,7 @@ class CustomerAuthTest extends TestCase
 
     public function test_requesting_reset_for_nonexistent_email_does_not_leak_enumeration(): void
     {
+        Mail::fake();
         $response = $this->post(route('password.email'), [
             'email' => 'doesnotexist@example.com',
         ]);

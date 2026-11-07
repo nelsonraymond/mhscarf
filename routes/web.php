@@ -27,6 +27,7 @@ use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\JournalController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
+use App\Http\Controllers\Cron\ReviewReminderCronController;
 
 
 Route::get('/', HomeController::class)->name('home');
@@ -114,6 +115,9 @@ Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('revi
 // Payment Gateway Webhook (public; CSRF-excluded in bootstrap/app.php; signature verified in service)
 Route::post('/webhooks/payment', [PaymentController::class, 'webhook'])->name('payments.webhook');
 
+Route::get('/api/cron/review-reminders', ReviewReminderCronController::class)
+    ->name('cron.review-reminders');
+
 // Shopping Cart Routes (Guests and Customers)
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 Route::post('/cart/items', [CartController::class, 'store'])->name('cart.items.store');
@@ -173,14 +177,3 @@ Route::patch('/vouchers/{voucher}/toggle', [AdminVoucherController::class, 'togg
 Route::resource('vouchers', AdminVoucherController::class)->except(['show']);
     });
 });
-
-if (app()->environment('local')) {
-    Route::get('/_debug-app-key', function () {
-        return response()->json([
-            'key_loaded' => !empty(config('app.key')),
-            'key_length' => strlen((string) config('app.key')),
-            'env_loaded' => !empty(env('APP_KEY')),
-            'config_cached' => app()->configurationIsCached(),
-        ]);
-    });
-}

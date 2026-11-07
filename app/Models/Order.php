@@ -42,6 +42,13 @@ class Order extends Model
         'placed_at',
         'delivered_at',
         'review_reminded_at',
+        'review_reminder_claimed_at',
+        'review_reminder_claim_token',
+        'review_reminder_started_at',
+        'review_reminder_item_ids',
+        'review_reminder_payload',
+        'review_reminder_abandoned_at',
+        'review_reminder_skipped_at',
     ];
 
     /**
@@ -58,6 +65,12 @@ class Order extends Model
             'placed_at' => 'datetime',
             'delivered_at' => 'datetime',
             'review_reminded_at' => 'datetime',
+            'review_reminder_claimed_at' => 'datetime',
+            'review_reminder_started_at' => 'datetime',
+            'review_reminder_item_ids' => 'array',
+            'review_reminder_payload' => 'array',
+            'review_reminder_abandoned_at' => 'datetime',
+            'review_reminder_skipped_at' => 'datetime',
         ];
     }
 

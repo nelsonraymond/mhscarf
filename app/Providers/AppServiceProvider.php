@@ -7,6 +7,7 @@ use App\Mail\Transport\TimedResendTransport;
 use App\Services\Payments\MidtransPaymentGateway;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -34,6 +35,10 @@ class AppServiceProvider extends ServiceProvider
 
         if ($this->app->environment('production')) {
             \URL::forceScheme('https');
+
+            if (config('mail.default') === 'log') {
+                Log::warning('Transactional email is configured to use the log mailer in production; emails will not be delivered.');
+            }
         }
 
         RateLimiter::for('admin-login', function (Request $request) {

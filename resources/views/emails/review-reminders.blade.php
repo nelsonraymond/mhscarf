@@ -1,16 +1,24 @@
-<x-mail::message>
-# Halo, {{ $order->user->name }}
+@extends('emails.transactional.layout')
 
-Pesanan **#{{ $order->order_number }}** sudah tiba. Kami ingin tahu pendapat Anda. Ulasan Anda membantu pembeli lain memilih hijab yang tepat.
+@section('title', 'Pengingat Ulasan — MH SCARF')
 
-@foreach ($items as $item)
-- {{ $item->product_name }} ({{ $item->variant_name }})
-@endforeach
+@section('content')
+    <h1 class="heading">Halo,</h1>
+    <p>Pesanan <strong>#{{ $order->order_number }}</strong> sudah tiba. Kami ingin tahu pendapat Anda. Ulasan Anda membantu pembeli lain memilih hijab yang tepat.</p>
 
-<x-mail::button :url="route('orders.show', $order)">
-Beri Ulasan
-</x-mail::button>
+    <table class="details" role="presentation">
+        <thead>
+            <tr><th>Produk</th><th>Ulasan</th></tr>
+        </thead>
+        <tbody>
+            @foreach ($items as $item)
+                <tr>
+                    <td>{{ $item->product_name }} ({{ $item->variant_name }})</td>
+                    <td><a href="{{ route('reviews.create', $item) }}">Tulis ulasan</a></td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
 
-Terima kasih,<br>
-{{ config('app.name') }}
-</x-mail::message>
+    <p>Terima kasih telah berbelanja di MH SCARF.</p>
+@endsection

@@ -25,6 +25,14 @@ return [
         'connect_timeout' => (int) env('RESEND_CONNECT_TIMEOUT', 3),
     ],
 
+    'cron' => [
+        'secret' => env('CRON_SECRET'),
+    ],
+
+    'review_reminders' => [
+        'batch_size' => (int) env('REVIEW_REMINDER_BATCH_SIZE', 1),
+    ],
+
     'rajaongkir' => [
         'key' => env('RAJAONGKIR_API_KEY'),
         'base_url' => env('RAJAONGKIR_BASE_URL', 'https://rajaongkir.komerce.id/api/v1'),

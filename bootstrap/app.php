@@ -5,6 +5,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use App\Console\Commands\ReleaseExpiredOrders;
+use App\Console\Commands\SendReviewReminders;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -12,14 +14,22 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    ->withCommands([
+    ReleaseExpiredOrders::class,
+    SendReviewReminders::class,
+])
     ->withMiddleware(function (Middleware $middleware): void {
-         $middleware->trustProxies(at: '*');
+        $middleware->authenticateSessions();
+        $middleware->trustProxies(at: '*');
 
-    $middleware->trustHosts(at: fn () => [parse_url((string) config('app.url'), PHP_URL_HOST)]);
+        $middleware->trustHosts(at: fn () => [
+            '^mhscarf\.shop$',
+            '^www\.mhscarf\.shop$',
+            '^mhscarf\.vercel\.app$',
+            '^localhost$',
+            '^127\.0\.0\.1$',
+        ]);
 
-    $middleware->redirectGuestsTo(function (Request $request): string {
-        return $request->is('admin*') ? route('admin.login') : route('login');
-    });
         $middleware->redirectGuestsTo(function (Request $request): string {
             return $request->is('admin*') ? route('admin.login') : route('login');
         });
