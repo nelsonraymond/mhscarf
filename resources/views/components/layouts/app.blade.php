@@ -72,7 +72,7 @@
 
     {{-- Floating WhatsApp Button --}}
 <a
-    href="https://wa.me/6281234567890?text={{ urlencode('Halo MH Scarf, saya ingin bertanya tentang produk scarf.') }}"
+    href="https://wa.me/628990991531?text={{ urlencode('Halo MH Scarf, saya ingin bertanya tentang produk scarf.') }}"
     target="_blank"
     rel="noopener noreferrer"
     aria-label="Chat dengan MH Scarf melalui WhatsApp"

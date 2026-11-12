@@ -58,7 +58,7 @@ class OrderTest extends TestCase
         $address = Address::factory()->create([
             'user_id' => $customer->id,
             'recipient_name' => 'Aisyah Putri',
-            'phone' => '081234567890',
+            'phone' => '08990991531',
             'address_line' => 'Jl. Anggrek No. 20',
             'city' => 'Bandung',
             'province' => 'Jawa Barat',

@@ -34,7 +34,7 @@
                     </a>
 
                     {{-- WhatsApp --}}
-                    <a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer"
+                    <a href="https://wa.me/628990991531" target="_blank" rel="noopener noreferrer"
                         class="group inline-flex h-10 w-10 items-center justify-center rounded-full border border-line transition duration-200 hover:-translate-y-1 hover:border-pink-deep hover:bg-pink-soft hover:text-pink-deep hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-pink-deep"
                         aria-label="WhatsApp MH Scarf">
                         <svg class="h-[19px] w-[19px]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -50,7 +50,7 @@
                 <div class="space-y-4 text-sm leading-6 text-muted">
                     <p>
                         <span class="block">Chat with Us :</span>
-                        <a href="tel:+6281234567890" class="text-ink transition hover:text-pink-deep">0812 - 3456 - 7890</a>
+                        <a href="tel:+628990991531" class="text-ink transition hover:text-pink-deep">0899 - 0991 - 531</a>
                     </p>
                     <p>Monday - Sunday :<br><span class="text-ink">8:30 AM - 9:00 PM</span></p>
                 </div>

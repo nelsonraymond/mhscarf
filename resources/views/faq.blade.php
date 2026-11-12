@@ -2,7 +2,7 @@
     @section('title', 'FAQ — MH Scarf')
 
     @php
-        $waNumber = '6281234567890'; // samakan dengan nomor WhatsApp di footer
+        $waNumber = '628990991531'; // samakan dengan nomor WhatsApp di footer
 
         $groups = [
             [

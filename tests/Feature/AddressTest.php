@@ -27,7 +27,7 @@ class AddressTest extends TestCase
         $addressData = [
             'label' => 'Rumah',
             'recipient_name' => 'Siti Aisyah',
-            'phone' => '081234567890',
+            'phone' => '08990991531',
             'address_line' => 'Jl. Mawar No. 10',
             'village' => 'Cihapit',
             'district' => 'Bandung Wetan',
@@ -87,7 +87,7 @@ class AddressTest extends TestCase
 
         $updateResponse = $this->actingAs($user2)->put(route('addresses.update', $address1), [
             'recipient_name' => 'Hacker Name',
-            'phone' => '081234567890',
+            'phone' => '08990991531',
             'address_line' => 'Jl. Ilegal No. 1',
             'city' => 'Surabaya',
             'province' => 'Jawa Timur',
